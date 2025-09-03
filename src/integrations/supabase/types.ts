@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          order_items: Json
+          shipping_address: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id?: string
+          order_items: Json
+          shipping_address: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          order_items?: Json
+          shipping_address?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string
+          description: string | null
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      store_config: {
+        Row: {
+          created_at: string
+          facebook_link: string | null
+          id: string
+          instagram_link: string | null
+          payment_details: string | null
+          updated_at: string
+          whatsapp_link: string | null
+        }
+        Insert: {
+          created_at?: string
+          facebook_link?: string | null
+          id?: string
+          instagram_link?: string | null
+          payment_details?: string | null
+          updated_at?: string
+          whatsapp_link?: string | null
+        }
+        Update: {
+          created_at?: string
+          facebook_link?: string | null
+          id?: string
+          instagram_link?: string | null
+          payment_details?: string | null
+          updated_at?: string
+          whatsapp_link?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
