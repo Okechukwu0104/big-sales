@@ -129,6 +129,23 @@ const AdminDashboard = () => {
               </Button>
             </CardContent>
           </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Package className="mr-2 h-5 w-5" />
+                Balance Sheet
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                View income, expenses, and financial overview.
+              </p>
+              <Button asChild className="w-full">
+                <Link to="/admin/balance">View Balance</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
