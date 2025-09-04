@@ -29,9 +29,11 @@ export const Header = () => {
     <header className="bg-background border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold text-primary">BIG SALES</h1>
-          </Link>
+        <Link to="/" className="flex items-center space-x-2">
+          <h1 className="text-2xl font-bold glow-text gradient-primary bg-clip-text text-transparent">
+            BIG SALES
+          </h1>
+        </Link>
           
           <div className="flex items-center space-x-4">
             {/* Social Media Links */}

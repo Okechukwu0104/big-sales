@@ -41,7 +41,7 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold text-primary">BIG SALES Admin</h1>
+              <h1 className="text-2xl font-bold glow-text gradient-primary bg-clip-text text-transparent">BIG SALES Admin</h1>
             </Link>
             <Button variant="outline" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" />
