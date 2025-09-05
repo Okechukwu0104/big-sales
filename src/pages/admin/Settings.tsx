@@ -6,9 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, MessageCircle, Instagram, Facebook } from 'lucide-react';
+import { ArrowLeft, Save, MessageCircle, Instagram, Facebook, Globe } from 'lucide-react';
+import { StoreConfig, AfricanCountry } from '@/types';
 
 const AdminSettings = () => {
   const { toast } = useToast();
@@ -18,6 +20,9 @@ const AdminSettings = () => {
     whatsapp_link: '',
     instagram_link: '',
     facebook_link: '',
+    selected_country: 'Nigeria',
+    currency_code: 'NGN',
+    currency_symbol: '₦',
   });
 
   const { data: storeConfig, isLoading } = useQuery({
@@ -29,7 +34,27 @@ const AdminSettings = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as StoreConfig;
+    },
+  });
+
+  const { data: countries } = useQuery({
+    queryKey: ['african-countries'],
+    queryFn: async () => {
+      // Hardcoded data to avoid Supabase type issues
+      const africanCountries: AfricanCountry[] = [
+        { id: '1', name: 'Nigeria', currency_code: 'NGN', currency_symbol: '₦', created_at: '' },
+        { id: '2', name: 'South Africa', currency_code: 'ZAR', currency_symbol: 'R', created_at: '' },
+        { id: '3', name: 'Kenya', currency_code: 'KES', currency_symbol: 'KSh', created_at: '' },
+        { id: '4', name: 'Ghana', currency_code: 'GHS', currency_symbol: '₵', created_at: '' },
+        { id: '5', name: 'Egypt', currency_code: 'EGP', currency_symbol: '£E', created_at: '' },
+        { id: '6', name: 'Morocco', currency_code: 'MAD', currency_symbol: 'DH', created_at: '' },
+        { id: '7', name: 'Tanzania', currency_code: 'TZS', currency_symbol: 'TSh', created_at: '' },
+        { id: '8', name: 'Uganda', currency_code: 'UGX', currency_symbol: 'USh', created_at: '' },
+        { id: '9', name: 'Ethiopia', currency_code: 'ETB', currency_symbol: 'Br', created_at: '' },
+        { id: '10', name: 'Zimbabwe', currency_code: 'ZWL', currency_symbol: 'Z$', created_at: '' },
+      ];
+      return africanCountries;
     },
   });
 
@@ -41,6 +66,9 @@ const AdminSettings = () => {
         whatsapp_link: storeConfig.whatsapp_link || '',
         instagram_link: storeConfig.instagram_link || '',
         facebook_link: storeConfig.facebook_link || '',
+        selected_country: storeConfig.selected_country || 'Nigeria',
+        currency_code: storeConfig.currency_code || 'NGN',
+        currency_symbol: storeConfig.currency_symbol || '₦',
       });
     }
   }, [storeConfig]);
@@ -75,6 +103,18 @@ const AdminSettings = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleCountryChange = (countryName: string) => {
+    const selectedCountry = countries?.find(c => c.name === countryName);
+    if (selectedCountry) {
+      setFormData(prev => ({
+        ...prev,
+        selected_country: selectedCountry.name,
+        currency_code: selectedCountry.currency_code,
+        currency_symbol: selectedCountry.currency_symbol,
+      }));
+    }
+  };
+
   if (isLoading) return <div>Loading...</div>;
 
   return (
@@ -98,6 +138,32 @@ const AdminSettings = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Country and Currency Selection */}
+              <div>
+                <Label htmlFor="selected_country" className="text-base font-semibold flex items-center space-x-2">
+                  <Globe className="h-4 w-4" />
+                  <span>Country & Currency</span>
+                </Label>
+                <p className="text-muted-foreground text-sm mb-2">
+                  Select your country to automatically set the appropriate currency for your store.
+                </p>
+                <Select value={formData.selected_country} onValueChange={handleCountryChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries?.map((country) => (
+                      <SelectItem key={country.id} value={country.name}>
+                        {country.name} ({country.currency_symbol} {country.currency_code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="mt-2 p-2 bg-muted rounded text-sm">
+                  <strong>Selected Currency:</strong> {formData.currency_symbol} {formData.currency_code}
+                </div>
+              </div>
+
               {/* Payment Details */}
               <div>
                 <Label htmlFor="payment_details" className="text-base font-semibold">

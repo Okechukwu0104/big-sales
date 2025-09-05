@@ -34,6 +34,17 @@ export interface StoreConfig {
   whatsapp_link: string | null;
   instagram_link: string | null;
   facebook_link: string | null;
+  selected_country: string | null;
+  currency_code: string | null;
+  currency_symbol: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AfricanCountry {
+  id: string;
+  name: string;
+  currency_code: string;
+  currency_symbol: string;
+  created_at: string;
 }

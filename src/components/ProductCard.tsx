@@ -2,8 +2,9 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/types';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/components/ui/cart-provider';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrency } from '@/hooks/useCurrency';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -11,8 +12,9 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
   const { toast } = useToast();
+  const { formatPrice } = useCurrency();
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -60,7 +62,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         
         <div className="flex items-center justify-between">
           <span className="text-2xl font-bold text-primary">
-            ${product.price.toFixed(2)}
+            {formatPrice(product.price)}
           </span>
         </div>
       </CardContent>

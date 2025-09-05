@@ -25,7 +25,9 @@ const Home = () => {
       <main className="container mx-auto px-4 py-8">
         <section className="mb-12">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-4">Welcome to BIG SALES</h1>
+            <h1 className="text-6xl font-bold mb-4">
+              Welcome to <span className="glow-text">BIG SALES</span>
+            </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Discover amazing products at unbeatable prices. Quality guaranteed, fast shipping, excellent customer service.
             </p>

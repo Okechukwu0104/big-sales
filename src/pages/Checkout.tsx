@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/components/ui/cart-provider';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -14,7 +15,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
 
 const Checkout = () => {
-  const { cartItems, getTotalPrice, clearCart } = useCart();
+  const { cartItems, getTotalPrice, clearCart } = useCartContext();
+  const { formatPrice } = useCurrency();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -200,12 +202,12 @@ const Checkout = () => {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex justify-between">
                       <span>{item.product.name} x {item.quantity}</span>
-                      <span>${(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span>{formatPrice(item.product.price * item.quantity)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between font-semibold text-lg border-t pt-2">
                     <span>Total</span>
-                    <span>${getTotalPrice().toFixed(2)}</span>
+                    <span>{formatPrice(getTotalPrice())}</span>
                   </div>
                 </div>
               </CardContent>

@@ -6,13 +6,15 @@ import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/components/ui/cart-provider';
+import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { addToCart } = useCart();
+  const { addToCart } = useCartContext();
+  const { formatPrice } = useCurrency();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
 
@@ -117,7 +119,7 @@ const ProductDetail = () => {
                   <Badge variant="secondary">Featured</Badge>
                 )}
               </div>
-              <p className="text-3xl font-bold text-primary">${product.price.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-primary">{formatPrice(product.price)}</p>
             </div>
 
             {product.description && (

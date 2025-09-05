@@ -1,12 +1,14 @@
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/components/ui/cart-provider';
+import { useCurrency } from '@/hooks/useCurrency';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, getTotalPrice } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getTotalPrice } = useCartContext();
+  const { formatPrice } = useCurrency();
 
   if (cartItems.length === 0) {
     return (
@@ -62,7 +64,7 @@ const Cart = () => {
 
                     <div className="flex-1">
                       <h3 className="font-semibold">{item.product.name}</h3>
-                      <p className="text-muted-foreground">${item.product.price.toFixed(2)} each</p>
+                      <p className="text-muted-foreground">{formatPrice(item.product.price)} each</p>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -85,7 +87,7 @@ const Cart = () => {
                     </div>
 
                     <div className="text-right">
-                      <p className="font-semibold">${(item.product.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-semibold">{formatPrice(item.product.price * item.quantity)}</p>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -110,11 +112,11 @@ const Cart = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${getTotalPrice().toFixed(2)}</span>
+                    <span>{formatPrice(getTotalPrice())}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-lg border-t pt-2">
                     <span>Total</span>
-                    <span>${getTotalPrice().toFixed(2)}</span>
+                    <span>{formatPrice(getTotalPrice())}</span>
                   </div>
                 </div>
               </CardContent>

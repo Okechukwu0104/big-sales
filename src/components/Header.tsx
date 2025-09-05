@@ -1,14 +1,14 @@
 import { ShoppingCart, MessageCircle, Instagram, Facebook } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCart } from '@/hooks/useCart';
+import { useCartContext } from '@/components/ui/cart-provider';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StoreConfig } from '@/types';
 import { Link } from 'react-router-dom';
 
 export const Header = () => {
-  const { getTotalItems } = useCart();
+  const { getTotalItems } = useCartContext();
   
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
