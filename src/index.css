@@ -17,16 +17,16 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 20 15% 10%;
 
-    --primary: 25 95% 53%; /* Orange */
+    --primary: 14 100% 57%; /* Vibrant Orange #FF5722 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 225 73% 57%; /* Royal Blue */
+    --secondary: 207 90% 54%; /* Bright Blue #2196F3 */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 25 20% 95%;
     --muted-foreground: 20 10% 46%;
 
-    --accent: 25 95% 53%;
+    --accent: 122 39% 49%; /* Fresh Green #4CAF50 */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
