@@ -68,8 +68,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </CardContent>
       
       <CardFooter className="p-4 pt-0">
-        <Button onClick={handleAddToCart} className="w-full">
-          Add to Cart
+        <Button 
+          onClick={handleAddToCart} 
+          className="w-full" 
+          disabled={!product.in_stock}
+        >
+          {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
         </Button>
       </CardFooter>
     </Card>

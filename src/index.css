@@ -20,7 +20,7 @@ All colors MUST be HSL.
     --primary: 25 95% 53%; /* Orange */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 91% 50%; /* Royal Blue */
+    --secondary: 225 73% 57%; /* Royal Blue */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 25 20% 95%;
@@ -70,7 +70,7 @@ All colors MUST be HSL.
     --primary: 25 95% 53%; /* Orange */
     --primary-foreground: 20 15% 4%;
 
-    --secondary: 220 91% 50%; /* Royal Blue */
+    --secondary: 225 73% 57%; /* Royal Blue */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 24 10% 14%;

@@ -22,6 +22,7 @@ const AdminProducts = () => {
     name: '',
     description: '',
     price: '',
+    quantity: '',
     featured: false,
     image: null as File | null
   });
@@ -62,7 +63,7 @@ const AdminProducts = () => {
 
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...productData, image_url }])
+        .insert([{ ...productData, image_url, quantity: parseInt(productData.quantity) || 0 }])
         .select()
         .single();
       
@@ -103,7 +104,7 @@ const AdminProducts = () => {
 
       const { data, error } = await supabase
         .from('products')
-        .update(updateData)
+        .update({ ...updateData, quantity: parseInt(updateData.quantity) || 0 })
         .eq('id', editingProduct!.id)
         .select()
         .single();
@@ -141,7 +142,7 @@ const AdminProducts = () => {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', price: '', featured: false, image: null });
+    setFormData({ name: '', description: '', price: '', quantity: '', featured: false, image: null });
     setEditingProduct(null);
   };
 
@@ -156,6 +157,7 @@ const AdminProducts = () => {
       name: product.name,
       description: product.description || '',
       price: product.price.toString(),
+      quantity: product.quantity?.toString() || '0',
       featured: product.featured,
       image: null
     });
@@ -169,6 +171,7 @@ const AdminProducts = () => {
       name: formData.name,
       description: formData.description || null,
       price: parseFloat(formData.price),
+      quantity: formData.quantity,
       featured: formData.featured,
     };
 
@@ -245,6 +248,18 @@ const AdminProducts = () => {
                 </div>
                 
                 <div>
+                  <Label htmlFor="quantity">Quantity Available</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="0"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                    required
+                  />
+                </div>
+                
+                <div>
                   <Label htmlFor="image">Product Image</Label>
                   <Input
                     id="image"
@@ -299,9 +314,16 @@ const AdminProducts = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold">{product.name}</h3>
                     <p className="text-muted-foreground text-sm">{product.description}</p>
-                    <p className="font-bold text-primary">${product.price}</p>
+                    <div className="flex items-center gap-4">
+                      <p className="font-bold text-primary">${product.price}</p>
+                      <span className={`text-sm px-2 py-1 rounded ${
+                        product.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.in_stock ? `${product.quantity} in stock` : 'Out of stock'}
+                      </span>
+                    </div>
                     {product.featured && (
-                      <span className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                      <span className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 rounded mt-1">
                         Featured
                       </span>
                     )}

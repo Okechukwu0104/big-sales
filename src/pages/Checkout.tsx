@@ -7,16 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCartContext } from '@/components/ui/cart-provider';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useInventory } from '@/hooks/useInventory';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { StoreConfig } from '@/types';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
+import { generateWhatsAppLink } from '@/utils/socialLinks';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
   const { formatPrice } = useCurrency();
+  const { updateInventory } = useInventory();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -58,12 +61,36 @@ const Checkout = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      clearCart();
+    onSuccess: async () => {
+      // Update inventory
+      updateInventory(cartItems);
+
+      // Get store config for WhatsApp
+      const { data: storeConfig } = await supabase
+        .from('store_config')
+        .select('whatsapp_link')
+        .single();
+
       toast({
         title: "Order placed successfully!",
         description: "Please make payment and contact us with proof of payment.",
       });
+
+      // Generate WhatsApp link if available
+      if (storeConfig?.whatsapp_link) {
+        const whatsappLink = generateWhatsAppLink(storeConfig.whatsapp_link, cartItems, {
+          name: formData.customerName,
+          email: formData.customerEmail,
+          phone: formData.customerPhone,
+          address: formData.shippingAddress
+        });
+        
+        if (whatsappLink) {
+          window.open(whatsappLink, '_blank');
+        }
+      }
+
+      clearCart();
       navigate('/order-success');
     },
     onError: (error) => {

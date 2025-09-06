@@ -5,6 +5,8 @@ export interface Product {
   price: number;
   image_url: string | null;
   featured: boolean;
+  quantity: number;
+  in_stock: boolean;
   created_at: string;
   updated_at: string;
 }
