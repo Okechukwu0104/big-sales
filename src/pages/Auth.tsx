@@ -55,20 +55,30 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8">
-          <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground">
+    <div className="min-h-screen gradient-hero flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-accent/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
+      
+      <div className="w-full max-w-md relative z-10">
+        <div className="mb-8 float">
+          <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground hover:scale-105 transition-all duration-300">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Store
           </Link>
         </div>
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">
+        <Card className="card-modern backdrop-blur-sm">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-3xl font-bold hero-text">
               {isLogin ? 'Admin Login' : 'Create Admin Account'}
             </CardTitle>
+            <p className="text-muted-foreground mt-2">
+              {isLogin ? 'Welcome back! Sign in to your account' : 'Create your admin account to get started'}
+            </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -94,7 +104,7 @@ const Auth = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full shimmer" size="lg" disabled={loading}>
                 {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
               </Button>
             </form>
