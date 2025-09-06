@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      african_countries: {
+        Row: {
+          created_at: string | null
+          currency_code: string
+          currency_symbol: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency_code: string
+          currency_symbol: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          currency_code?: string
+          currency_symbol?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -60,8 +84,10 @@ export type Database = {
           featured: boolean | null
           id: string
           image_url: string | null
+          in_stock: boolean | null
           name: string
           price: number
+          quantity: number | null
           updated_at: string
         }
         Insert: {
@@ -70,8 +96,10 @@ export type Database = {
           featured?: boolean | null
           id?: string
           image_url?: string | null
+          in_stock?: boolean | null
           name: string
           price: number
+          quantity?: number | null
           updated_at?: string
         }
         Update: {
@@ -80,8 +108,10 @@ export type Database = {
           featured?: boolean | null
           id?: string
           image_url?: string | null
+          in_stock?: boolean | null
           name?: string
           price?: number
+          quantity?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -89,28 +119,37 @@ export type Database = {
       store_config: {
         Row: {
           created_at: string
+          currency_code: string | null
+          currency_symbol: string | null
           facebook_link: string | null
           id: string
           instagram_link: string | null
           payment_details: string | null
+          selected_country: string | null
           updated_at: string
           whatsapp_link: string | null
         }
         Insert: {
           created_at?: string
+          currency_code?: string | null
+          currency_symbol?: string | null
           facebook_link?: string | null
           id?: string
           instagram_link?: string | null
           payment_details?: string | null
+          selected_country?: string | null
           updated_at?: string
           whatsapp_link?: string | null
         }
         Update: {
           created_at?: string
+          currency_code?: string | null
+          currency_symbol?: string | null
           facebook_link?: string | null
           id?: string
           instagram_link?: string | null
           payment_details?: string | null
+          selected_country?: string | null
           updated_at?: string
           whatsapp_link?: string | null
         }
