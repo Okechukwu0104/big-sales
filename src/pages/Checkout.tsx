@@ -45,7 +45,7 @@ const Checkout = () => {
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('orders')
         .insert({
           customer_name: formData.customerName,
@@ -54,12 +54,10 @@ const Checkout = () => {
           shipping_address: formData.shippingAddress,
           order_items: cartItems as any,
           total_amount: getTotalPrice(),
-        })
-        .select()
-        .single();
+        });
 
       if (error) throw error;
-      return data;
+      return null;
     },
     onSuccess: async () => {
       // Update inventory
