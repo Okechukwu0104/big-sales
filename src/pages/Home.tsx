@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
+import bigSalesLogo from '@/assets/big-sales-logo.png';
 
 const Home = () => {
   const { data: products, isLoading } = useQuery({
@@ -32,9 +33,16 @@ const Home = () => {
       <main className="container mx-auto px-4 py-8 relative z-10">
         <section className="mb-16">
           <div className="text-center mb-12">
-            <h1 className="text-7xl md:text-8xl font-bold mb-6 float">
-              Welcome to <span className="glow-text">BIG SALES</span>
-            </h1>
+            <div className="mb-6 flex justify-center">
+              <img 
+                src={bigSalesLogo} 
+                alt="BIG SALES" 
+                className="h-24 md:h-32 lg:h-40 w-auto object-contain float glow-bronze"
+              />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 hero-text">
+              Welcome to Our Store
+            </h2>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Discover amazing products at unbeatable prices. Quality guaranteed, fast shipping, excellent customer service.
             </p>
