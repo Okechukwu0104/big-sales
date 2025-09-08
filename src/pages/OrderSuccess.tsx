@@ -43,7 +43,7 @@ const OrderSuccess = () => {
 
     const message = 
       `*Additional Remarks:*%0A` +
-      `${customerRemark || 'No additional remarks'}`;
+      `${customerRemark || 'type something...'}`;
 
     const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${message}`;
     const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;

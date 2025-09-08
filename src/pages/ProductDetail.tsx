@@ -36,13 +36,18 @@ const ProductDetail = () => {
   });
 
   const handleAddToCart = () => {
-    if (product) {
+    if (product && product.quantity >= quantity) {
       addToCart(product, quantity);
       toast({
         title: "Added to cart",
         description: `${quantity} x ${product.name} has been added to your cart.`,
       });
     }
+    
+    return toast({
+        title: "Quantity exceeding stock",
+        description: `${quantity} exceeds our total stock.`,
+      });
   };
 
   if (isLoading) {
