@@ -57,12 +57,27 @@ const Checkout = () => {
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 
-    // Use the pre-configured message from admin settings
-    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about my order');
+    // Create order summary
+    const orderSummary = cartItems.map(item => 
+      `• ${item.product.name} x ${item.quantity} - ${formatPrice(item.product.price * item.quantity)}`
+    ).join('%0A');
+
+    const totalAmount = formatPrice(getTotalPrice());
+
+    // Combine pre-configured message with order summary
+    const baseMessage = storeConfig.whatsapp_message || 'Hello, I have completed my order and made payment. Here are my order details:';
+    
+    const fullMessage = `${baseMessage}%0A%0A` +
+      `*Order Summary:*%0A` +
+      `${orderSummary}%0A` +
+      `*Total: ${totalAmount}*%0A%0A` +
+      `*My Details:*%0A` +
+      `Name: ${formData.customerName || 'Not provided'}%0A` +
+      `Phone: ${formData.customerPhone || 'Not provided'}`;
 
     // Create both deep link and web link
-    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${encodedMessage}`;
-    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${fullMessage}`;
+    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
 
     // Try to open the deep link with fallback
     const fallbackTimer = setTimeout(() => {
