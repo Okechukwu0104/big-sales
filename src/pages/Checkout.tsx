@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { StoreConfig } from '@/types';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle, CheckCircle } from 'lucide-react';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
@@ -28,6 +28,8 @@ const Checkout = () => {
     customerPhone: '',
     shippingAddress: '',
   });
+  
+  const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
 
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
@@ -42,7 +44,7 @@ const Checkout = () => {
     },
   });
 
-  // Function to open WhatsApp with the pre-configured message
+  // Improved WhatsApp function without click simulation
   const openWhatsApp = () => {
     if (!storeConfig?.whatsapp_number) {
       toast({
@@ -73,30 +75,20 @@ const Checkout = () => {
       `*Total: ${totalAmount}*%0A%0A` +
       `*My Details:*%0A` +
       `Name: ${formData.customerName || 'Not provided'}%0A` +
-      `Phone: ${formData.customerPhone || 'Not provided'}`;
+      `Email: ${formData.customerEmail || 'Not provided'}%0A` +
+      `Phone: ${formData.customerPhone || 'Not provided'}%0A` +
+      `Address: ${formData.shippingAddress || 'Not provided'}`;
 
-    // Create both deep link and web link
-    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${fullMessage}`;
-    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
-
-    // Try to open the deep link with fallback
-    const fallbackTimer = setTimeout(() => {
-      window.open(webLink, '_blank');
-    }, 1000);
-
-    const link = document.createElement('a');
-    link.href = deepLink;
-    link.target = '_blank';
+    // Check if we're on a mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    link.addEventListener('click', () => {
-      clearTimeout(fallbackTimer);
-    });
+    // Create appropriate link based on device
+    const link = isMobile 
+      ? `whatsapp://send?phone=${phoneNumber}&text=${fullMessage}`
+      : `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
     
-    setTimeout(() => {
-      clearTimeout(fallbackTimer);
-    }, 500);
-    
-    link.click();
+    // Open the link directly
+    window.open(link, '_blank');
   };
 
   const createOrderMutation = useMutation({
@@ -159,6 +151,14 @@ const Checkout = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const handlePaymentConfirmation = () => {
+    setHasConfirmedPayment(true);
+    toast({
+      title: "Payment confirmed",
+      description: "You can now place your order and contact us via WhatsApp.",
+    });
   };
 
   if (cartItems.length === 0) {
@@ -246,14 +246,39 @@ const Checkout = () => {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  size="lg"
-                  disabled={createOrderMutation.isPending}
-                >
-                  {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
-                </Button>
+                <div className="border-t pt-4">
+                  <div className="flex items-center mb-4">
+                    <Button
+                      type="button"
+                      onClick={handlePaymentConfirmation}
+                      className="mr-3"
+                      variant={hasConfirmedPayment ? "default" : "outline"}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      I've Paid
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {hasConfirmedPayment 
+                        ? "Payment confirmed ✓" 
+                        : "Please confirm payment first"}
+                    </span>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    size="lg"
+                    disabled={createOrderMutation.isPending || !hasConfirmedPayment}
+                  >
+                    {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
+                  </Button>
+                  
+                  {!hasConfirmedPayment && (
+                    <p className="text-sm text-destructive mt-2">
+                      Please confirm your payment before placing the order.
+                    </p>
+                  )}
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -302,11 +327,16 @@ const Checkout = () => {
                         variant="outline" 
                         className="w-full" 
                         onClick={openWhatsApp}
-                        disabled={!storeConfig?.whatsapp_number}
+                        disabled={!storeConfig?.whatsapp_number || !hasConfirmedPayment}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
                         Contact via WhatsApp
                       </Button>
+                      {!hasConfirmedPayment && (
+                        <p className="text-sm text-destructive">
+                          Please confirm payment before contacting via WhatsApp.
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         Click to open WhatsApp with the store's pre-configured message
                       </p>
