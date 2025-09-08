@@ -107,33 +107,51 @@ I have made the payment as instructed. Please confirm my order.`;
   };
 
   const createOrderMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from('orders')
-        .insert({
-          customer_name: formData.customerName,
-          customer_email: formData.customerEmail,
-          customer_phone: formData.customerPhone,
-          shipping_address: formData.shippingAddress,
-          order_items: cartItems as any,
-          total_amount: getTotalPrice(),
-        });
+  mutationFn: async () => {
+    // First create the order
+    const { error } = await supabase
+      .from('orders')
+      .insert({
+        customer_name: formData.customerName,
+        customer_email: formData.customerEmail,
+        customer_phone: formData.customerPhone,
+        shipping_address: formData.shippingAddress,
+        order_items: cartItems as any,
+        total_amount: getTotalPrice(),
+      });
 
-      if (error) throw error;
-       for (const item of cartItems) {
-        const { error: inventoryError } = await supabase
-          .from('products')
-          .update({ quantity: item.product.quantity - item.quantity })
-          .eq('product_id', item.product.id);
-          
-        if (inventoryError) {
-          console.error(`Error updating inventory for product ${item.product.id}:`, inventoryError);
-          // Continue with other products even if one fails
-        }
+    if (error) throw error;
+    
+    // Then update inventory for each product in the cart
+    for (const item of cartItems) {
+      // First get the current quantity from the database
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('quantity')
+        .eq('id', item.product.id)
+        .single();
+        
+      if (fetchError) {
+        console.error(`Error fetching product ${item.product.id}:`, fetchError);
+        continue;
       }
-      return null;
-
-    },
+      
+      // Calculate new quantity
+      const newQuantity = product.quantity - item.quantity;
+      
+      // Update the product quantity
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ quantity: newQuantity })
+        .eq('id', item.product.id);
+        
+      if (updateError) {
+        console.error(`Error updating inventory for product ${item.product.id}:`, updateError);
+      }
+    }
+    
+    return null;
+  },
 
     
     onSuccess: async () => {
