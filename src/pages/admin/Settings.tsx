@@ -180,8 +180,8 @@ const AdminSettings = () => {
     
     const username = sanitizeUsername(formData.instagram_username);
     return {
-      webLink: `instagram://user?username=${username}`,
-      deepLink: `https://www.instagram.com/${username}/`
+      deepLink: `instagram://user?username=${username}`,
+      webLink: `https://www.instagram.com/${username}/`
     };
   };
 
@@ -191,8 +191,8 @@ const AdminSettings = () => {
     
     const username = sanitizeUsername(formData.facebook_username);
     return {
-      webLink: `fb://profile/${username}`,
-      deepLink: `https://www.facebook.com/${username}/`
+      deepLink: `fb://profile/${username}`,
+      webLink: `https://www.facebook.com/${username}/`
     };
   };
 
