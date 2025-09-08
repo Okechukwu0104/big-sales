@@ -42,7 +42,29 @@ const Checkout = () => {
     },
   });
 
-  // Function to open WhatsApp with the pre-configured message
+  // Function to generate order summary message
+  const generateOrderSummary = () => {
+    const itemsList = cartItems.map(item => 
+      `${item.product.name} x ${item.quantity} - ${formatPrice(item.product.price * item.quantity)}`
+    ).join('\n');
+    
+    return `Hello, I just placed an order with the following details:
+
+Customer Information:
+Name: ${formData.customerName}
+Email: ${formData.customerEmail}
+Phone: ${formData.customerPhone}
+Shipping Address: ${formData.shippingAddress}
+
+Order Summary:
+${itemsList}
+
+Total Amount: ${formatPrice(getTotalPrice())}
+
+I have made the payment as instructed. Please confirm my order.`;
+  };
+
+  // Function to open WhatsApp with the order summary message
   const openWhatsApp = () => {
     if (!storeConfig?.whatsapp_number) {
       toast({
@@ -57,8 +79,8 @@ const Checkout = () => {
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 
-    // Use the pre-configured message from admin settings
-    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about my order');
+    // Use the generated order summary message
+    const encodedMessage = encodeURIComponent(generateOrderSummary());
 
     // Create both deep link and web link
     const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${encodedMessage}`;
@@ -109,7 +131,7 @@ const Checkout = () => {
         description: "Please make payment and contact us with proof of payment.",
       });
 
-      // Open WhatsApp with the pre-configured message
+      // Open WhatsApp with the order summary message
       if (storeConfig?.whatsapp_number) {
         openWhatsApp();
       }
@@ -280,20 +302,20 @@ const Checkout = () => {
                   
                   <div className="border-t pt-4">
                     <p className="text-sm text-muted-foreground mb-2">
-                      After placing your order and making payment:
+                      After placing your order and making payment, click below to send your order details via WhatsApp:
                     </p>
                     <div className="space-y-2">
                       <Button 
                         variant="outline" 
                         className="w-full" 
                         onClick={openWhatsApp}
-                        disabled={!storeConfig?.whatsapp_number}
+                        disabled={!storeConfig?.whatsapp_number || createOrderMutation.isPending}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
-                        Contact via WhatsApp
+                        Send Order Details via WhatsApp
                       </Button>
                       <p className="text-xs text-muted-foreground">
-                        Click to open WhatsApp with the store's pre-configured message
+                        This will open WhatsApp with your order summary and customer information
                       </p>
                     </div>
                   </div>
