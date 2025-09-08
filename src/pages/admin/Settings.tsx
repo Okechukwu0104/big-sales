@@ -19,8 +19,8 @@ const AdminSettings = () => {
     payment_details: '',
     whatsapp_number: '',
     whatsapp_message: 'Hello, I have a question about your store',
-    instagram_link: '',
-    facebook_link: '',
+    instagram_username: '',
+    facebook_username: '',
     selected_country: 'Nigeria',
     currency_code: 'NGN',
     currency_symbol: '₦',
@@ -42,8 +42,8 @@ const AdminSettings = () => {
               payment_details: '',
               whatsapp_number: '',
               whatsapp_message: 'Hello, I have a question about your store',
-              instagram_link: '',
-              facebook_link: '',
+              instagram_username: '',
+              facebook_username: '',
               selected_country: 'Nigeria',
               currency_code: 'NGN',
               currency_symbol: '₦',
@@ -86,8 +86,8 @@ const AdminSettings = () => {
         payment_details: storeConfig.payment_details || '',
         whatsapp_number: storeConfig.whatsapp_number || '',
         whatsapp_message: storeConfig.whatsapp_message || 'Hello, I have a question about your store',
-        instagram_link: storeConfig.instagram_link || '',
-        facebook_link: storeConfig.facebook_link || '',
+        instagram_username: storeConfig.instagram_username || '',
+        facebook_username: storeConfig.facebook_username || '',
         selected_country: storeConfig.selected_country || 'Nigeria',
         currency_code: storeConfig.currency_code || 'NGN',
         currency_symbol: storeConfig.currency_symbol || '₦',
@@ -148,6 +148,11 @@ const AdminSettings = () => {
     }
   };
 
+  // Function to sanitize username (remove @ symbols and trim)
+  const sanitizeUsername = (username: string) => {
+    return username.replace(/@/g, '').trim();
+  };
+
   // Function to generate WhatsApp deep link with proper fallback
   const generateWhatsAppLink = () => {
     if (!formData.whatsapp_number) return null;
@@ -169,13 +174,47 @@ const AdminSettings = () => {
     };
   };
 
-  // Test the WhatsApp link with improved fallback
-  const testWhatsAppLink = () => {
-    const links = generateWhatsAppLink();
+  // Function to generate Instagram links
+  const generateInstagramLink = () => {
+    if (!formData.instagram_username) return null;
     
-    if (!links || !links.phoneNumber) {
+    const username = sanitizeUsername(formData.instagram_username);
+    return {
+      deepLink: `instagram://user?username=${username}`,
+      webLink: `https://www.instagram.com/${username}/`
+    };
+  };
+
+  // Function to generate Facebook links
+  const generateFacebookLink = () => {
+    if (!formData.facebook_username) return null;
+    
+    const username = sanitizeUsername(formData.facebook_username);
+    return {
+      deepLink: `fb://profile/${username}`,
+      webLink: `https://www.facebook.com/${username}/`
+    };
+  };
+
+  // Generic function to test social media links with fallback
+  const testSocialLink = (platform: 'whatsapp' | 'instagram' | 'facebook') => {
+    let links: { deepLink: string; webLink: string } | null = null;
+
+    switch (platform) {
+      case 'whatsapp':
+        links = generateWhatsAppLink();
+        break;
+      case 'instagram':
+        links = generateInstagramLink();
+        break;
+      case 'facebook':
+        links = generateFacebookLink();
+        break;
+    }
+
+    if (!links) {
       toast({ 
-        title: "Please enter a valid WhatsApp number first", 
+        title: `Please enter a valid ${platform} username first`, 
         variant: "destructive" 
       });
       return;
@@ -183,7 +222,7 @@ const AdminSettings = () => {
 
     // Create a timeout for fallback
     const fallbackTimer = setTimeout(() => {
-      window.open(links.webLink, '_blank');
+      window.open(links!.webLink, '_blank');
     }, 1000);
 
     // Try to open the deep link
@@ -205,13 +244,25 @@ const AdminSettings = () => {
     link.click();
   };
 
-  // Copy WhatsApp link to clipboard (use web link as it's more reliable)
-  const copyWhatsAppLink = async () => {
-    const links = generateWhatsAppLink();
-    
-    if (!links || !links.phoneNumber) {
+  // Copy link to clipboard
+  const copySocialLink = async (platform: 'whatsapp' | 'instagram' | 'facebook') => {
+    let links: { deepLink: string; webLink: string } | null = null;
+
+    switch (platform) {
+      case 'whatsapp':
+        links = generateWhatsAppLink();
+        break;
+      case 'instagram':
+        links = generateInstagramLink();
+        break;
+      case 'facebook':
+        links = generateFacebookLink();
+        break;
+    }
+
+    if (!links) {
       toast({ 
-        title: "Please enter a valid WhatsApp number first", 
+        title: `Please enter a valid ${platform} username first`, 
         variant: "destructive" 
       });
       return;
@@ -219,7 +270,7 @@ const AdminSettings = () => {
     
     try {
       await navigator.clipboard.writeText(links.webLink);
-      toast({ title: "WhatsApp web link copied to clipboard!" });
+      toast({ title: `${platform.charAt(0).toUpperCase() + platform.slice(1)} link copied to clipboard!` });
     } catch (err) {
       toast({ 
         title: "Failed to copy link", 
@@ -353,7 +404,7 @@ const AdminSettings = () => {
                   <div className="flex flex-wrap gap-2">
                     <Button 
                       type="button" 
-                      onClick={testWhatsAppLink}
+                      onClick={() => testSocialLink('whatsapp')}
                       disabled={!formData.whatsapp_number}
                       className="flex items-center"
                     >
@@ -363,7 +414,7 @@ const AdminSettings = () => {
                     
                     <Button 
                       type="button" 
-                      onClick={copyWhatsAppLink}
+                      onClick={() => copySocialLink('whatsapp')}
                       disabled={!formData.whatsapp_number}
                       variant="outline"
                       className="flex items-center"
@@ -387,37 +438,81 @@ const AdminSettings = () => {
               <div className="space-y-4">
                 <h3 className="text-base font-semibold">Social Media Links</h3>
                 <p className="text-muted-foreground text-sm">
-                  Add your social media profile links. These will appear on your store for customers to follow you.
+                  Add your social media usernames (without @ symbol). These will appear on your store for customers to follow you.
                 </p>
 
                 <div>
-                  <Label htmlFor="instagram_link" className="flex items-center space-x-2">
+                  <Label htmlFor="instagram_username" className="flex items-center space-x-2">
                     <Instagram className="h-4 w-4" />
-                    <span>Instagram Link</span>
+                    <span>Instagram Username</span>
                   </Label>
+                  <p className="text-muted-foreground text-xs mb-2">
+                    Enter your Instagram username without @ symbol
+                  </p>
                   <Input
-                    id="instagram_link"
-                    type="url"
-                    value={formData.instagram_link}
-                    onChange={(e) => handleInputChange('instagram_link', e.target.value)}
-                    placeholder="https://instagram.com/yourstore"
+                    id="instagram_username"
+                    value={formData.instagram_username}
+                    onChange={(e) => handleInputChange('instagram_username', e.target.value)}
+                    placeholder="yourstore"
                     className="mt-1"
                   />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Button 
+                      type="button" 
+                      onClick={() => testSocialLink('instagram')}
+                      disabled={!formData.instagram_username}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Test Instagram Link
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={() => copySocialLink('instagram')}
+                      disabled={!formData.instagram_username}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Copy Link
+                    </Button>
+                  </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="facebook_link" className="flex items-center space-x-2">
+                  <Label htmlFor="facebook_username" className="flex items-center space-x-2">
                     <Facebook className="h-4 w-4" />
-                    <span>Facebook Link</span>
+                    <span>Facebook Username</span>
                   </Label>
+                  <p className="text-muted-foreground text-xs mb-2">
+                    Enter your Facebook username
+                  </p>
                   <Input
-                    id="facebook_link"
-                    type="url"
-                    value={formData.facebook_link}
-                    onChange={(e) => handleInputChange('facebook_link', e.target.value)}
-                    placeholder="https://facebook.com/yourstore"
+                    id="facebook_username"
+                    value={formData.facebook_username}
+                    onChange={(e) => handleInputChange('facebook_username', e.target.value)}
+                    placeholder="yourstore"
                     className="mt-1"
                   />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Button 
+                      type="button" 
+                      onClick={() => testSocialLink('facebook')}
+                      disabled={!formData.facebook_username}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Test Facebook Link
+                    </Button>
+                    <Button 
+                      type="button" 
+                      onClick={() => copySocialLink('facebook')}
+                      disabled={!formData.facebook_username}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Copy Link
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -437,24 +532,23 @@ const AdminSettings = () => {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>WhatsApp Linking Guide</CardTitle>
+            <CardTitle>Social Media Linking Guide</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div>
-              <h4 className="font-semibold">Important Notes:</h4>
+              <h4 className="font-semibold">How it works:</h4>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>WhatsApp may block direct deep linking from some browsers</li>
-                <li>Always include country code (e.g., +234 for Nigeria, +27 for South Africa)</li>
-                <li>On desktop, links will open web.whatsapp.com</li>
-                <li>On mobile, the app will try to open first, then fall back to web</li>
+                <li>On mobile devices: Links will try to open the native app first</li>
+                <li>If app is not installed: Links will fall back to web version</li>
+                <li>On desktop: Links will open the web version directly</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold">Format Example:</h4>
+              <h4 className="font-semibold">Username Format:</h4>
               <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
-                +2348012345678 (Nigeria)<br/>
-                +278012345678 (South Africa)<br/>
-                +254712345678 (Kenya)
+                Instagram: yourusername (without @)<br/>
+                Facebook: yourusername or profile ID<br/>
+                WhatsApp: +2348012345678 (with country code)
               </p>
             </div>
           </CardContent>
