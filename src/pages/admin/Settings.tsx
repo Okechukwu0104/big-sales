@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, MessageCircle, Instagram, Facebook, Globe } from 'lucide-react';
+import { ArrowLeft, Save, MessageCircle, Instagram, Facebook, Globe, Phone } from 'lucide-react';
 import { StoreConfig, AfricanCountry } from '@/types';
 
 const AdminSettings = () => {
@@ -17,7 +17,8 @@ const AdminSettings = () => {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     payment_details: '',
-    whatsapp_link: '',
+    whatsapp_number: '',
+    whatsapp_message: 'Hello BIG SALES, I have paid/ would like to pay for a product',
     instagram_link: '',
     facebook_link: '',
     selected_country: 'Nigeria',
@@ -34,13 +35,13 @@ const AdminSettings = () => {
         .single();
       
       if (error) {
-        // If no config exists, create a default one
         if (error.code === 'PGRST116') {
           const { data: newData, error: insertError } = await supabase
             .from('store_config')
             .insert([{
               payment_details: '',
-              whatsapp_link: '',
+              whatsapp_number: '',
+              whatsapp_message: 'Hello, I have a question about your store',
               instagram_link: '',
               facebook_link: '',
               selected_country: 'Nigeria',
@@ -63,7 +64,6 @@ const AdminSettings = () => {
   const { data: countries } = useQuery({
     queryKey: ['african-countries'],
     queryFn: async () => {
-      // Hardcoded data to avoid Supabase type issues
       const africanCountries: AfricanCountry[] = [
         { id: '1', name: 'Nigeria', currency_code: 'NGN', currency_symbol: '₦', created_at: '' },
         { id: '2', name: 'South Africa', currency_code: 'ZAR', currency_symbol: 'R', created_at: '' },
@@ -80,12 +80,12 @@ const AdminSettings = () => {
     },
   });
 
-  // Update form data when store config loads
   useEffect(() => {
     if (storeConfig) {
       setFormData({
         payment_details: storeConfig.payment_details || '',
-        whatsapp_link: storeConfig.whatsapp_link || '',
+        whatsapp_number: storeConfig.whatsapp_number || '',
+        whatsapp_message: storeConfig.whatsapp_message || 'Hello, I have a question about your store',
         instagram_link: storeConfig.instagram_link || '',
         facebook_link: storeConfig.facebook_link || '',
         selected_country: storeConfig.selected_country || 'Nigeria',
@@ -97,9 +97,7 @@ const AdminSettings = () => {
 
   const updateConfigMutation = useMutation({
     mutationFn: async (configData: typeof formData) => {
-      // First check if we have a storeConfig with an ID
       if (!storeConfig || !storeConfig.id) {
-        // If no config exists, create a new one
         const { data, error } = await supabase
           .from('store_config')
           .insert([configData])
@@ -110,7 +108,6 @@ const AdminSettings = () => {
         return data;
       }
       
-      // Otherwise update the existing config
       const { data, error } = await supabase
         .from('store_config')
         .update(configData)
@@ -148,6 +145,33 @@ const AdminSettings = () => {
         currency_code: selectedCountry.currency_code,
         currency_symbol: selectedCountry.currency_symbol,
       }));
+    }
+  };
+
+  // Function to generate WhatsApp link
+  const generateWhatsAppLink = () => {
+    if (!formData.whatsapp_number) return '';
+    
+    // Clean the phone number - remove any non-digit characters except '+'
+    const cleanedNumber = formData.whatsapp_number.replace(/[^+\d]/g, '');
+    
+    // Encode the message
+    const encodedMessage = encodeURIComponent(formData.whatsapp_message);
+    
+    // Return the properly formatted WhatsApp link
+    return `https://wa.me/${cleanedNumber}?text=${encodedMessage}`;
+  };
+
+  // Test the WhatsApp link
+  const testWhatsAppLink = () => {
+    const link = generateWhatsAppLink();
+    if (link) {
+      window.open(link, '_blank');
+    } else {
+      toast({ 
+        title: "Please enter a valid WhatsApp number first", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -226,27 +250,78 @@ const AdminSettings = () => {
                 />
               </div>
 
+              {/* WhatsApp Configuration */}
+              <div className="space-y-4">
+                <h3 className="text-base font-semibold flex items-center space-x-2">
+                  <MessageCircle className="h-5 w-5" />
+                  <span>WhatsApp Configuration</span>
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Set up your WhatsApp business number for customers to contact you.
+                </p>
+
+                <div>
+                  <Label htmlFor="whatsapp_number" className="flex items-center space-x-2">
+                    <Phone className="h-4 w-4" />
+                    <span>WhatsApp Number</span>
+                  </Label>
+                  <p className="text-muted-foreground text-xs mb-2">
+                    Include country code (e.g., +2348012345678 for Nigeria)
+                  </p>
+                  <Input
+                    id="whatsapp_number"
+                    type="tel"
+                    value={formData.whatsapp_number}
+                    onChange={(e) => handleInputChange('whatsapp_number', e.target.value)}
+                    placeholder="+2348012345678"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="whatsapp_message" className="flex items-center space-x-2">
+                    <MessageCircle className="h-4 w-4" />
+                    <span>Default Message</span>
+                  </Label>
+                  <p className="text-muted-foreground text-xs mb-2">
+                    Pre-filled message when customers contact you
+                  </p>
+                  <Input
+                    id="whatsapp_message"
+                    value={formData.whatsapp_message}
+                    onChange={(e) => handleInputChange('whatsapp_message', e.target.value)}
+                    placeholder="Hello, I have a question about your store"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-4 pt-2">
+                  <Button 
+                    type="button" 
+                    onClick={testWhatsAppLink}
+                    disabled={!formData.whatsapp_number}
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Test WhatsApp Link
+                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    {formData.whatsapp_number ? (
+                      <>Link will open WhatsApp with your number</>
+                    ) : (
+                      <>Enter a number to test the link</>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Social Media Links */}
               <div className="space-y-4">
                 <h3 className="text-base font-semibold">Social Media Links</h3>
                 <p className="text-muted-foreground text-sm">
-                  Add your social media contact links. These will appear on your store for customers to reach you.
+                  Add your social media profile links. These will appear on your store for customers to follow you.
                 </p>
-
-                <div>
-                  <Label htmlFor="whatsapp_link" className="flex items-center space-x-2">
-                    <MessageCircle className="h-4 w-4" />
-                    <span>WhatsApp Link</span>
-                  </Label>
-                  <Input
-                    id="whatsapp_link"
-                    type="url"
-                    value={formData.whatsapp_link}
-                    onChange={(e) => handleInputChange('whatsapp_link', e.target.value)}
-                    placeholder="https://wa.me/1234567890"
-                    className="mt-1"
-                  />
-                </div>
 
                 <div>
                   <Label htmlFor="instagram_link" className="flex items-center space-x-2">
@@ -258,7 +333,7 @@ const AdminSettings = () => {
                     type="url"
                     value={formData.instagram_link}
                     onChange={(e) => handleInputChange('instagram_link', e.target.value)}
-                    placeholder="https://instagram.com/bigsales"
+                    placeholder="https://instagram.com/yourstore"
                     className="mt-1"
                   />
                 </div>
@@ -273,7 +348,7 @@ const AdminSettings = () => {
                     type="url"
                     value={formData.facebook_link}
                     onChange={(e) => handleInputChange('facebook_link', e.target.value)}
-                    placeholder="https://facebook.com/bigsales"
+                    placeholder="https://facebook.com/yourstore"
                     className="mt-1"
                   />
                 </div>
@@ -295,27 +370,28 @@ const AdminSettings = () => {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Quick Start Guide</CardTitle>
+            <CardTitle>WhatsApp Setup Guide</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div>
-              <h4 className="font-semibold">Payment Details:</h4>
+              <h4 className="font-semibold">Proper WhatsApp Number Format:</h4>
               <p className="text-muted-foreground">
-                Add your bank account, mobile money, or other payment details. 
-                Customers will see this information when they place an order.
+                Use the international format: +[country code][number without leading zero].<br />
+                Examples: +2348012345678 (Nigeria), +254712345678 (Kenya), +27612345678 (South Africa)
               </p>
             </div>
             <div>
-              <h4 className="font-semibold">WhatsApp Link:</h4>
+              <h4 className="font-semibold">Testing Your Link:</h4>
               <p className="text-muted-foreground">
-                Create a WhatsApp link like: https://wa.me/1234567890 
-                (replace with your phone number including country code)
+                Use the "Test WhatsApp Link" button to verify your setup works correctly.
+                This will open WhatsApp with your pre-configured message.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold">Social Media:</h4>
+              <h4 className="font-semibold">Why WhatsApp may be blocked:</h4>
               <p className="text-muted-foreground">
-                Add your Instagram and Facebook profile or page URLs to help customers contact you.
+                Some browsers block redirects to external apps. If the test doesn't work,
+                try copying the link and pasting it directly into your browser's address bar.
               </p>
             </div>
           </CardContent>
