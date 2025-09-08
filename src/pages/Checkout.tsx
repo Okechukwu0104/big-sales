@@ -66,7 +66,8 @@ const Checkout = () => {
     const totalAmount = formatPrice(getTotalPrice());
 
     // Combine pre-configured message with order summary
-    const baseMessage = storeConfig.whatsapp_message || 'Hello, I have completed my order and made payment. Here are my order details:';
+    // Combine pre-configured message with order summary
+    const baseMessage = 'Hello, I have completed my order and made payment. Here are my order details:';
     
     const fullMessage = `${baseMessage}%0A%0A` +
       `*Order Summary:*%0A` +
