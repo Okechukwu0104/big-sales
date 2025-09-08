@@ -120,8 +120,22 @@ I have made the payment as instructed. Please confirm my order.`;
         });
 
       if (error) throw error;
+       for (const item of cartItems) {
+        const { error: inventoryError } = await supabase
+          .from('products')
+          .update({ quantity: item.product.quantity - item.quantity })
+          .eq('product_id', item.product.id);
+          
+        if (inventoryError) {
+          console.error(`Error updating inventory for product ${item.product.id}:`, inventoryError);
+          // Continue with other products even if one fails
+        }
+      }
       return null;
+
     },
+
+    
     onSuccess: async () => {
       // Update inventory
       updateInventory(cartItems);
