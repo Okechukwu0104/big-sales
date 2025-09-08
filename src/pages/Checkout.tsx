@@ -42,7 +42,7 @@ const Checkout = () => {
     },
   });
 
-  // Function to open WhatsApp with the pre-configured message AND order summary
+  // Function to open WhatsApp with the pre-configured message
   const openWhatsApp = () => {
     if (!storeConfig?.whatsapp_number) {
       toast({
@@ -57,27 +57,12 @@ const Checkout = () => {
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 
-    // Create order summary
-    const orderSummary = cartItems.map(item => 
-      `• ${item.product.name} x ${item.quantity} - ${formatPrice(item.product.price * item.quantity)}`
-    ).join('%0A');
-
-    const totalAmount = formatPrice(getTotalPrice());
-
-    // Combine pre-configured message with order summary
-    const baseMessage = storeConfig.whatsapp_message || 'Hello, I have completed my order and made payment. Here are my order details:';
-    
-    const fullMessage = `${baseMessage}%0A%0A` +
-      `*Order Summary:*%0A` +
-      `${orderSummary}%0A` +
-      `*Total: ${totalAmount}*%0A%0A` +
-      `*My Details:*%0A` +
-      `Name: ${formData.customerName || 'Not provided'}%0A` +
-      `Phone: ${formData.customerPhone || 'Not provided'}`;
+    // Use the pre-configured message from admin settings
+    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about my order');
 
     // Create both deep link and web link
-    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${fullMessage}`;
-    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
+    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${encodedMessage}`;
+    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
 
     // Try to open the deep link with fallback
     const fallbackTimer = setTimeout(() => {
@@ -124,7 +109,7 @@ const Checkout = () => {
         description: "Please make payment and contact us with proof of payment.",
       });
 
-      // Open WhatsApp with the pre-configured message and order summary
+      // Open WhatsApp with the pre-configured message
       if (storeConfig?.whatsapp_number) {
         openWhatsApp();
       }
@@ -305,10 +290,10 @@ const Checkout = () => {
                         disabled={!storeConfig?.whatsapp_number}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
-                        Send Payment Proof via WhatsApp
+                        Contact via WhatsApp
                       </Button>
                       <p className="text-xs text-muted-foreground">
-                        This will open WhatsApp with your order details and payment confirmation message
+                        Click to open WhatsApp with the store's pre-configured message
                       </p>
                     </div>
                   </div>
