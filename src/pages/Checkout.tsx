@@ -42,29 +42,7 @@ const Checkout = () => {
     },
   });
 
-  // Function to generate order summary message
-  const generateOrderSummary = () => {
-    const itemsList = cartItems.map(item => 
-      `${item.product.name} x ${item.quantity} - ${formatPrice(item.product.price * item.quantity)}`
-    ).join('\n');
-    
-    return `Hello, I just placed an order with the following details:
-
-Customer Information:
-Name: ${formData.customerName}
-Email: ${formData.customerEmail}
-Phone: ${formData.customerPhone}
-Shipping Address: ${formData.shippingAddress}
-
-Order Summary:
-${itemsList}
-
-Total Amount: ${formatPrice(getTotalPrice())}
-
-I have made the payment as instructed. Please confirm my order.`;
-  };
-
-  // Function to open WhatsApp with the order summary message
+  // Function to open WhatsApp with the pre-configured message
   const openWhatsApp = () => {
     if (!storeConfig?.whatsapp_number) {
       toast({
@@ -79,8 +57,8 @@ I have made the payment as instructed. Please confirm my order.`;
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 
-    // Use the generated order summary message
-    const encodedMessage = encodeURIComponent(generateOrderSummary());
+    // Use the pre-configured message from admin settings
+    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about my order');
 
     // Create both deep link and web link
     const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${encodedMessage}`;
@@ -120,22 +98,8 @@ I have made the payment as instructed. Please confirm my order.`;
         });
 
       if (error) throw error;
-       for (const item of cartItems) {
-        const { error: inventoryError } = await supabase
-          .from('products')
-          .update({ quantity: item.product.quantity - item.quantity })
-          .eq('product_id', item.product.id);
-          
-        if (inventoryError) {
-          console.error(`Error updating inventory for product ${item.product.id}:`, inventoryError);
-          // Continue with other products even if one fails
-        }
-      }
       return null;
-
     },
-
-    
     onSuccess: async () => {
       // Update inventory
       updateInventory(cartItems);
@@ -145,7 +109,7 @@ I have made the payment as instructed. Please confirm my order.`;
         description: "Please make payment and contact us with proof of payment.",
       });
 
-      // Open WhatsApp with the order summary message
+      // Open WhatsApp with the pre-configured message
       if (storeConfig?.whatsapp_number) {
         openWhatsApp();
       }
@@ -316,20 +280,20 @@ I have made the payment as instructed. Please confirm my order.`;
                   
                   <div className="border-t pt-4">
                     <p className="text-sm text-muted-foreground mb-2">
-                      After placing your order and making payment, click below to send your order details via WhatsApp:
+                      After placing your order and making payment:
                     </p>
                     <div className="space-y-2">
                       <Button 
                         variant="outline" 
                         className="w-full" 
                         onClick={openWhatsApp}
-                        disabled={!storeConfig?.whatsapp_number || createOrderMutation.isPending}
+                        disabled={!storeConfig?.whatsapp_number}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
-                        Send Order Details via WhatsApp
+                        Contact via WhatsApp
                       </Button>
                       <p className="text-xs text-muted-foreground">
-                        This will open WhatsApp with your order summary and customer information
+                        Click to open WhatsApp with the store's pre-configured message
                       </p>
                     </div>
                   </div>
