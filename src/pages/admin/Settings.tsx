@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, MessageCircle, Instagram, Facebook, Globe, Phone } from 'lucide-react';
+import { ArrowLeft, Save, MessageCircle, Instagram, Facebook, Globe, Phone, ExternalLink } from 'lucide-react';
 import { StoreConfig, AfricanCountry } from '@/types';
 
 const AdminSettings = () => {
@@ -18,7 +18,7 @@ const AdminSettings = () => {
   const [formData, setFormData] = useState({
     payment_details: '',
     whatsapp_number: '',
-    whatsapp_message: 'Hello BIG SALES, I have paid/ would like to pay for a product',
+    whatsapp_message: 'Hello, I have a question about your store',
     instagram_link: '',
     facebook_link: '',
     selected_country: 'Nigeria',
@@ -148,28 +148,80 @@ const AdminSettings = () => {
     }
   };
 
-  // Function to generate WhatsApp link
+  // Function to generate WhatsApp deep link
   const generateWhatsAppLink = () => {
     if (!formData.whatsapp_number) return '';
     
-    // Clean the phone number - remove any non-digit characters except '+'
-    const cleanedNumber = formData.whatsapp_number.replace(/[^+\d]/g, '');
+    // Clean the phone number - remove any non-digit characters
+    const cleaned = formData.whatsapp_number.replace(/[^\d+]/g, '');
+    
+    // Remove the '+' sign for the deep link
+    const phoneNumber = cleaned.replace('+', '');
     
     // Encode the message
     const encodedMessage = encodeURIComponent(formData.whatsapp_message);
     
-    // Return the properly formatted WhatsApp link
-    return `https://wa.me/${cleanedNumber}?text=${encodedMessage}`;
+    // Return the WhatsApp deep link
+    return `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
   };
 
-  // Test the WhatsApp link
+  // Function to generate web fallback link
+  const generateWebWhatsAppLink = () => {
+    if (!formData.whatsapp_number) return '';
+    
+    // Clean the phone number - remove any non-digit characters except '+'
+    const cleaned = formData.whatsapp_number.replace(/[^\d+]/g, '');
+    
+    // Encode the message
+    const encodedMessage = encodeURIComponent(formData.whatsapp_message);
+    
+    // Return the web WhatsApp link
+    return `https://web.whatsapp.com/send?phone=${cleaned}&text=${encodedMessage}`;
+  };
+
+  // Test the WhatsApp link with fallback
   const testWhatsAppLink = () => {
-    const link = generateWhatsAppLink();
-    if (link) {
-      window.open(link, '_blank');
-    } else {
+    const deepLink = generateWhatsAppLink();
+    const webLink = generateWebWhatsAppLink();
+    
+    if (!deepLink) {
       toast({ 
         title: "Please enter a valid WhatsApp number first", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    // Try to open the deep link
+    window.location.href = deepLink;
+    
+    // Fallback to web version if deep linking fails
+    setTimeout(() => {
+      // If we're still on the same page after a short delay, open web version
+      if (!document.hidden) {
+        window.open(webLink, '_blank');
+      }
+    }, 500);
+  };
+
+  // Copy WhatsApp link to clipboard
+  const copyWhatsAppLink = async () => {
+    const deepLink = generateWhatsAppLink();
+    if (!deepLink) {
+      toast({ 
+        title: "Please enter a valid WhatsApp number first", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(deepLink);
+      toast({ title: "WhatsApp link copied to clipboard!" });
+    } catch (err) {
+      toast({ 
+        title: "Failed to copy link", 
+        description: "Please copy it manually", 
         variant: "destructive" 
       });
     }
@@ -295,20 +347,33 @@ const AdminSettings = () => {
                   />
                 </div>
 
-                <div className="flex items-center space-x-4 pt-2">
-                  <Button 
-                    type="button" 
-                    onClick={testWhatsAppLink}
-                    disabled={!formData.whatsapp_number}
-                    variant="outline"
-                    className="flex items-center"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Test WhatsApp Link
-                  </Button>
+                <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex items-center space-x-4">
+                    <Button 
+                      type="button" 
+                      onClick={testWhatsAppLink}
+                      disabled={!formData.whatsapp_number}
+                      className="flex items-center"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Test WhatsApp Link
+                    </Button>
+                    
+                    <Button 
+                      type="button" 
+                      onClick={copyWhatsAppLink}
+                      disabled={!formData.whatsapp_number}
+                      variant="outline"
+                      className="flex items-center"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Copy Link
+                    </Button>
+                  </div>
+                  
                   <div className="text-sm text-muted-foreground">
                     {formData.whatsapp_number ? (
-                      <>Link will open WhatsApp with your number</>
+                      <>The link will try to open WhatsApp app first, then fall back to web version</>
                     ) : (
                       <>Enter a number to test the link</>
                     )}
@@ -370,28 +435,28 @@ const AdminSettings = () => {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>WhatsApp Setup Guide</CardTitle>
+            <CardTitle>WhatsApp Deep Linking Guide</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div>
-              <h4 className="font-semibold">Proper WhatsApp Number Format:</h4>
+              <h4 className="font-semibold">How Deep Linking Works:</h4>
               <p className="text-muted-foreground">
-                Use the international format: +[country code][number without leading zero].<br />
-                Examples: +2348012345678 (Nigeria), +254712345678 (Kenya), +27612345678 (South Africa)
+                The app now uses <code>whatsapp://</code> protocol which directly opens the WhatsApp app
+                on mobile devices. If the app isn't installed, it will fall back to the web version.
               </p>
             </div>
             <div>
               <h4 className="font-semibold">Testing Your Link:</h4>
               <p className="text-muted-foreground">
                 Use the "Test WhatsApp Link" button to verify your setup works correctly.
-                This will open WhatsApp with your pre-configured message.
+                On mobile, this will open WhatsApp directly. On desktop, it will open web.whatsapp.com.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold">Why WhatsApp may be blocked:</h4>
+              <h4 className="font-semibold">Troubleshooting:</h4>
               <p className="text-muted-foreground">
-                Some browsers block redirects to external apps. If the test doesn't work,
-                try copying the link and pasting it directly into your browser's address bar.
+                If the deep link doesn't work, use the "Copy Link" button to manually test it
+                in different browsers or environments. Some browsers may restrict automatic deep linking.
               </p>
             </div>
           </CardContent>
