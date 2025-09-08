@@ -14,7 +14,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { StoreConfig } from '@/types';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
-import { generateWhatsAppLink } from '@/utils/socialLinks';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
@@ -43,6 +42,48 @@ const Checkout = () => {
     },
   });
 
+  // Function to open WhatsApp with the pre-configured message
+  const openWhatsApp = () => {
+    if (!storeConfig?.whatsapp_number) {
+      toast({
+        title: "WhatsApp not configured",
+        description: "Please contact the store owner for payment instructions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Clean the phone number
+    const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
+    const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+
+    // Use the pre-configured message from admin settings
+    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about my order');
+
+    // Create both deep link and web link
+    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${encodedMessage}`;
+    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+
+    // Try to open the deep link with fallback
+    const fallbackTimer = setTimeout(() => {
+      window.open(webLink, '_blank');
+    }, 1000);
+
+    const link = document.createElement('a');
+    link.href = deepLink;
+    link.target = '_blank';
+    
+    link.addEventListener('click', () => {
+      clearTimeout(fallbackTimer);
+    });
+    
+    setTimeout(() => {
+      clearTimeout(fallbackTimer);
+    }, 500);
+    
+    link.click();
+  };
+
   const createOrderMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
@@ -63,29 +104,14 @@ const Checkout = () => {
       // Update inventory
       updateInventory(cartItems);
 
-      // Get store config for WhatsApp
-      const { data: storeConfig } = await supabase
-        .from('store_config')
-        .select('whatsapp_link')
-        .single();
-
       toast({
         title: "Order placed successfully!",
         description: "Please make payment and contact us with proof of payment.",
       });
 
-      // Generate WhatsApp link if available
-      if (storeConfig?.whatsapp_link) {
-        const whatsappLink = generateWhatsAppLink(storeConfig.whatsapp_link, cartItems, {
-          name: formData.customerName,
-          email: formData.customerEmail,
-          phone: formData.customerPhone,
-          address: formData.shippingAddress
-        });
-        
-        if (whatsappLink) {
-          window.open(whatsappLink, '_blank');
-        }
+      // Open WhatsApp with the pre-configured message
+      if (storeConfig?.whatsapp_number) {
+        openWhatsApp();
       }
 
       clearCart();
@@ -257,16 +283,17 @@ const Checkout = () => {
                       After placing your order and making payment:
                     </p>
                     <div className="space-y-2">
-                      {storeConfig?.whatsapp_link && (
-                        <Button variant="outline" className="w-full" asChild>
-                          <a href={storeConfig.whatsapp_link} target="_blank" rel="noopener noreferrer">
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            Send Payment Proof via WhatsApp
-                          </a>
-                        </Button>
-                      )}
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={openWhatsApp}
+                        disabled={!storeConfig?.whatsapp_number}
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Contact via WhatsApp
+                      </Button>
                       <p className="text-xs text-muted-foreground">
-                        Please contact us with your payment confirmation and order details.
+                        Click to open WhatsApp with the store's pre-configured message
                       </p>
                     </div>
                   </div>
