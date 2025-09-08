@@ -108,7 +108,8 @@ I have made the payment as instructed. Please confirm my order.`;
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      // First create the order
+      const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           customer_name: formData.customerName,
@@ -117,13 +118,29 @@ I have made the payment as instructed. Please confirm my order.`;
           shipping_address: formData.shippingAddress,
           order_items: cartItems as any,
           total_amount: getTotalPrice(),
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
-      return null;
+      if (orderError) throw orderError;
+      
+      // Then update inventory for each product in the cart
+      for (const item of cartItems) {
+        const { error: inventoryError } = await supabase
+          .from('products')
+          .update({ quantity: item.product.quantity - item.quantity })
+          .eq('product_id', item.product.id);
+          
+        if (inventoryError) {
+          console.error(`Error updating inventory for product ${item.product.id}:`, inventoryError);
+          // Continue with other products even if one fails
+        }
+      }
+      
+      return orderData;
     },
     onSuccess: async () => {
-      // Update inventory
+      // Update local inventory state
       updateInventory(cartItems);
 
       toast({
@@ -161,7 +178,7 @@ I have made the payment as instructed. Please confirm my order.`;
     createOrderMutation.mutate();
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement >) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value,
