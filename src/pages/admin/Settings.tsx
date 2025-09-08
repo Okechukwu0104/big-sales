@@ -148,66 +148,68 @@ const AdminSettings = () => {
     }
   };
 
-  // Function to generate WhatsApp deep link
+  // Function to generate WhatsApp deep link with proper fallback
   const generateWhatsAppLink = () => {
-    if (!formData.whatsapp_number) return '';
-    
-    // Clean the phone number - remove any non-digit characters
-    const cleaned = formData.whatsapp_number.replace(/[^\d+]/g, '');
-    
-    // Remove the '+' sign for the deep link
-    const phoneNumber = cleaned.replace('+', '');
-    
-    // Encode the message
-    const encodedMessage = encodeURIComponent(formData.whatsapp_message);
-    
-    // Return the WhatsApp deep link
-    return `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
-  };
-
-  // Function to generate web fallback link
-  const generateWebWhatsAppLink = () => {
-    if (!formData.whatsapp_number) return '';
+    if (!formData.whatsapp_number) return null;
     
     // Clean the phone number - remove any non-digit characters except '+'
     const cleaned = formData.whatsapp_number.replace(/[^\d+]/g, '');
     
+    // Ensure the number has country code (add + if missing)
+    const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+    
     // Encode the message
     const encodedMessage = encodeURIComponent(formData.whatsapp_message);
     
-    // Return the web WhatsApp link
-    return `https://web.whatsapp.com/send?phone=${cleaned}&text=${encodedMessage}`;
+    // Return both deep link and web link
+    return {
+      deepLink: `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${encodedMessage}`,
+      webLink: `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`,
+      phoneNumber
+    };
   };
 
-  // Test the WhatsApp link with fallback
+  // Test the WhatsApp link with improved fallback
   const testWhatsAppLink = () => {
-    const deepLink = generateWhatsAppLink();
-    const webLink = generateWebWhatsAppLink();
+    const links = generateWhatsAppLink();
     
-    if (!deepLink) {
+    if (!links || !links.phoneNumber) {
       toast({ 
         title: "Please enter a valid WhatsApp number first", 
         variant: "destructive" 
       });
       return;
     }
-    
+
+    // Create a timeout for fallback
+    const fallbackTimer = setTimeout(() => {
+      window.open(links.webLink, '_blank');
+    }, 1000);
+
     // Try to open the deep link
-    window.location.href = deepLink;
+    const link = document.createElement('a');
+    link.href = links.deepLink;
+    link.target = '_blank';
     
-    // Fallback to web version if deep linking fails
+    // Add event listener to clear timeout if deep link works
+    link.addEventListener('click', () => {
+      clearTimeout(fallbackTimer);
+    });
+    
+    // Also clear timeout after a short delay
     setTimeout(() => {
-      // If we're still on the same page after a short delay, open web version
-      if (!document.hidden) {
-        window.open(webLink, '_blank');
-      }
+      clearTimeout(fallbackTimer);
     }, 500);
+    
+    // Trigger the click
+    link.click();
   };
 
-  // Copy WhatsApp link to clipboard
+  // Copy WhatsApp link to clipboard (use web link as it's more reliable)
   const copyWhatsAppLink = async () => {
-    const deepLink = generateWhatsAppLink();
-    if (!deepLink) {
+    const links = generateWhatsAppLink();
+    
+    if (!links || !links.phoneNumber) {
       toast({ 
         title: "Please enter a valid WhatsApp number first", 
         variant: "destructive" 
@@ -216,8 +218,8 @@ const AdminSettings = () => {
     }
     
     try {
-      await navigator.clipboard.writeText(deepLink);
-      toast({ title: "WhatsApp link copied to clipboard!" });
+      await navigator.clipboard.writeText(links.webLink);
+      toast({ title: "WhatsApp web link copied to clipboard!" });
     } catch (err) {
       toast({ 
         title: "Failed to copy link", 
@@ -348,7 +350,7 @@ const AdminSettings = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 pt-2">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-wrap gap-2">
                     <Button 
                       type="button" 
                       onClick={testWhatsAppLink}
@@ -367,7 +369,7 @@ const AdminSettings = () => {
                       className="flex items-center"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Copy Link
+                      Copy Web Link
                     </Button>
                   </div>
                   
@@ -375,7 +377,7 @@ const AdminSettings = () => {
                     {formData.whatsapp_number ? (
                       <>The link will try to open WhatsApp app first, then fall back to web version</>
                     ) : (
-                      <>Enter a number to test the link</>
+                      <>Enter a WhatsApp number with country code to test the link</>
                     )}
                   </div>
                 </div>
@@ -435,28 +437,24 @@ const AdminSettings = () => {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>WhatsApp Deep Linking Guide</CardTitle>
+            <CardTitle>WhatsApp Linking Guide</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div>
-              <h4 className="font-semibold">How Deep Linking Works:</h4>
-              <p className="text-muted-foreground">
-                The app now uses <code>whatsapp://</code> protocol which directly opens the WhatsApp app
-                on mobile devices. If the app isn't installed, it will fall back to the web version.
-              </p>
+              <h4 className="font-semibold">Important Notes:</h4>
+              <ul className="list-disc list-inside text-muted-foreground space-y-1">
+                <li>WhatsApp may block direct deep linking from some browsers</li>
+                <li>Always include country code (e.g., +234 for Nigeria, +27 for South Africa)</li>
+                <li>On desktop, links will open web.whatsapp.com</li>
+                <li>On mobile, the app will try to open first, then fall back to web</li>
+              </ul>
             </div>
             <div>
-              <h4 className="font-semibold">Testing Your Link:</h4>
-              <p className="text-muted-foreground">
-                Use the "Test WhatsApp Link" button to verify your setup works correctly.
-                On mobile, this will open WhatsApp directly. On desktop, it will open web.whatsapp.com.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold">Troubleshooting:</h4>
-              <p className="text-muted-foreground">
-                If the deep link doesn't work, use the "Copy Link" button to manually test it
-                in different browsers or environments. Some browsers may restrict automatic deep linking.
+              <h4 className="font-semibold">Format Example:</h4>
+              <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
+                +2348012345678 (Nigeria)<br/>
+                +278012345678 (South Africa)<br/>
+                +254712345678 (Kenya)
               </p>
             </div>
           </CardContent>
