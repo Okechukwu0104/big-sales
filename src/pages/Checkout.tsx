@@ -21,6 +21,7 @@ const Checkout = () => {
   const { updateInventory } = useInventory();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [hasPaid, setHasPaid] = useState(false); // New state to track payment status
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -250,7 +251,7 @@ const Checkout = () => {
                   type="submit" 
                   className="w-full" 
                   size="lg"
-                  disabled={createOrderMutation.isPending}
+                  disabled={createOrderMutation.isPending || !hasPaid} // Disabled until payment is confirmed
                 >
                   {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
                 </Button>
@@ -293,7 +294,16 @@ const Checkout = () => {
                     <p className="text-muted-foreground">Payment details will be provided after order confirmation.</p>
                   )}
                   
+                  {/* I've Paid Button */}
                   <div className="border-t pt-4">
+                    <Button 
+                      className="w-full mb-4" 
+                      onClick={() => setHasPaid(true)}
+                      disabled={hasPaid}
+                    >
+                      {hasPaid ? 'Payment Confirmed' : 'I\'ve Paid'}
+                    </Button>
+                    
                     <p className="text-sm text-muted-foreground mb-2">
                       After placing your order and making payment:
                     </p>
@@ -302,7 +312,7 @@ const Checkout = () => {
                         variant="outline" 
                         className="w-full" 
                         onClick={openWhatsApp}
-                        disabled={!storeConfig?.whatsapp_number}
+                        disabled={!storeConfig?.whatsapp_number || !hasPaid} // Disabled until payment is confirmed
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
                         Contact via WhatsApp
