@@ -41,7 +41,7 @@ const OrderSuccess = () => {
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 
-    const message = `Hello! I've completed my order and made payment.%0A%0A` +
+    const message = 
       `*Additional Remarks:*%0A` +
       `${customerRemark || 'No additional remarks'}`;
 
