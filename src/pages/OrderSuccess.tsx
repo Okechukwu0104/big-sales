@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +7,19 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StoreConfig } from '@/types';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useToast } from '@/hooks/use-toast';
 
 const OrderSuccess = () => {
+  const { formatPrice } = useCurrency();
+  const { toast } = useToast();
+  const [orderDetails, setOrderDetails] = useState({
+    customerName: 'Customer Name', // This would typically come from your order data
+    customerPhone: 'Customer Phone', // This would typically come from your order data
+    orderItems: [], // This would typically come from your order data
+    totalAmount: 0, // This would typically come from your order data
+  });
+
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
     queryFn: async () => {
@@ -20,6 +32,63 @@ const OrderSuccess = () => {
       return data as StoreConfig;
     },
   });
+
+  // Function to open WhatsApp with the pre-configured message (same as in Checkout)
+  const openWhatsApp = () => {
+    if (!storeConfig?.whatsapp_number) {
+      toast({
+        title: "WhatsApp not configured",
+        description: "Please contact the store owner for payment instructions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Clean the phone number
+    const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
+    const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+
+    // Create order summary
+    const orderSummary = orderDetails.orderItems.map(item => 
+      `• ${item.product.name} x ${item.quantity} - ${formatPrice(item.product.price * item.quantity)}`
+    ).join('%0A');
+
+    const totalAmount = formatPrice(orderDetails.totalAmount);
+
+    // Combine pre-configured message with order summary
+    const baseMessage = storeConfig.whatsapp_message || 'Hello, I have completed my order and made payment. Here are my order details:';
+    
+    const fullMessage = `${baseMessage}%0A%0A` +
+      `*Order Summary:*%0A` +
+      `${orderSummary}%0A` +
+      `*Total: ${totalAmount}*%0A%0A` +
+      `*My Details:*%0A` +
+      `Name: ${orderDetails.customerName || 'Not provided'}%0A` +
+      `Phone: ${orderDetails.customerPhone || 'Not provided'}`;
+
+    // Create both deep link and web link
+    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${fullMessage}`;
+    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
+
+    // Try to open the deep link with fallback
+    const fallbackTimer = setTimeout(() => {
+      window.open(webLink, '_blank');
+    }, 1000);
+
+    const link = document.createElement('a');
+    link.href = deepLink;
+    link.target = '_blank';
+    
+    link.addEventListener('click', () => {
+      clearTimeout(fallbackTimer);
+    });
+    
+    setTimeout(() => {
+      clearTimeout(fallbackTimer);
+    }, 500);
+    
+    link.click();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,14 +126,10 @@ const OrderSuccess = () => {
               )}
 
               <div className="space-y-3">
-                {storeConfig?.whatsapp_link && (
-                  <Button className="w-full" asChild>
-                    <a href={storeConfig.whatsapp_link} target="_blank" rel="noopener noreferrer">
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      Contact us on WhatsApp
-                    </a>
-                  </Button>
-                )}
+                <Button className="w-full" onClick={openWhatsApp}>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Contact us on WhatsApp
+                </Button>
                 
                 <Button variant="outline" className="w-full" asChild>
                   <Link to="/">
