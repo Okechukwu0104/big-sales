@@ -33,7 +33,29 @@ const AdminSettings = () => {
         .select('*')
         .single();
       
-      if (error) throw error;
+      if (error) {
+        // If no config exists, create a default one
+        if (error.code === 'PGRST116') {
+          const { data: newData, error: insertError } = await supabase
+            .from('store_config')
+            .insert([{
+              payment_details: '',
+              whatsapp_link: '',
+              instagram_link: '',
+              facebook_link: '',
+              selected_country: 'Nigeria',
+              currency_code: 'NGN',
+              currency_symbol: '₦',
+            }])
+            .select()
+            .single();
+          
+          if (insertError) throw insertError;
+          return newData;
+        }
+        
+        throw error;
+      }
       return data as StoreConfig;
     },
   });
@@ -75,10 +97,24 @@ const AdminSettings = () => {
 
   const updateConfigMutation = useMutation({
     mutationFn: async (configData: typeof formData) => {
+      // First check if we have a storeConfig with an ID
+      if (!storeConfig || !storeConfig.id) {
+        // If no config exists, create a new one
+        const { data, error } = await supabase
+          .from('store_config')
+          .insert([configData])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data;
+      }
+      
+      // Otherwise update the existing config
       const { data, error } = await supabase
         .from('store_config')
         .update(configData)
-        .eq('id', storeConfig!.id)
+        .eq('id', storeConfig.id)
         .select()
         .single();
       
@@ -115,7 +151,14 @@ const AdminSettings = () => {
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p>Loading store configuration...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
