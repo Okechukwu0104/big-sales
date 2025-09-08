@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { StoreConfig } from '@/types';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle } from 'lucide-react';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
@@ -28,8 +28,6 @@ const Checkout = () => {
     customerPhone: '',
     shippingAddress: '',
   });
-  
-  const [hasConfirmedPayment, setHasConfirmedPayment] = useState(false);
 
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
@@ -163,14 +161,6 @@ const Checkout = () => {
     }));
   };
 
-  const handlePaymentConfirmation = () => {
-    setHasConfirmedPayment(true);
-    toast({
-      title: "Payment confirmed",
-      description: "You can now place your order and contact us via WhatsApp.",
-    });
-  };
-
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
@@ -256,39 +246,14 @@ const Checkout = () => {
                   />
                 </div>
 
-                <div className="border-t pt-4">
-                  <div className="flex items-center mb-4">
-                    <Button
-                      type="button"
-                      onClick={handlePaymentConfirmation}
-                      className="mr-3"
-                      variant={hasConfirmedPayment ? "default" : "outline"}
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      I've Paid
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      {hasConfirmedPayment 
-                        ? "Payment confirmed ✓" 
-                        : "Please confirm payment first"}
-                    </span>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    size="lg"
-                    disabled={createOrderMutation.isPending || !hasConfirmedPayment}
-                  >
-                    {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
-                  </Button>
-                  
-                  {!hasConfirmedPayment && (
-                    <p className="text-sm text-destructive mt-2">
-                      Please confirm your payment before placing the order.
-                    </p>
-                  )}
-                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  size="lg"
+                  disabled={createOrderMutation.isPending}
+                >
+                  {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -337,16 +302,11 @@ const Checkout = () => {
                         variant="outline" 
                         className="w-full" 
                         onClick={openWhatsApp}
-                        disabled={!storeConfig?.whatsapp_number || !hasConfirmedPayment}
+                        disabled={!storeConfig?.whatsapp_number}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
                         Contact via WhatsApp
                       </Button>
-                      {!hasConfirmedPayment && (
-                        <p className="text-sm text-destructive">
-                          Please confirm payment before contacting via WhatsApp.
-                        </p>
-                      )}
                       <p className="text-xs text-muted-foreground">
                         Click to open WhatsApp with the store's pre-configured message
                       </p>
