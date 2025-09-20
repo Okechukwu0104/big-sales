@@ -92,7 +92,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           className="w-full relative overflow-hidden" 
           size="lg"
           disabled={!product.in_stock}
-          variant={product.in_stock ? "accent" : "outline"}
+          variant={product.in_stock ? "default" : "outline"}
         >
           <div className="shimmer absolute inset-0"></div>
           <ShoppingCart className="h-4 w-4 mr-2 relative z-10" />
