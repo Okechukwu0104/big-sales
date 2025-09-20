@@ -92,7 +92,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           className="w-full shimmer" 
           size="lg"
           disabled={!product.in_stock}
-          variant={product.in_stock ? "accent" : "outline"}
+          variant={product.in_stock ? "default" : "outline"}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
           {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
