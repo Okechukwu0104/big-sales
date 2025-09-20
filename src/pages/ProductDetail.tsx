@@ -194,7 +194,7 @@ const ProductDetail = () => {
                 disabled={product.quantity === 0}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
+                Add to C
               </Button>
             </div>
           </div>
