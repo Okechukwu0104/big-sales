@@ -89,13 +89,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       <CardFooter className="p-6 pt-0">
         <Button 
           onClick={handleAddToCart} 
-          className="w-full shimmer" 
+          className="w-full relative overflow-hidden" 
           size="lg"
           disabled={!product.in_stock}
           variant={product.in_stock ? "default" : "outline"}
         >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
+          <div className="shimmer absolute inset-0"></div>
+          <ShoppingCart className="h-4 w-4 mr-2 relative z-10" />
+          <span className="relative z-10">{product.in_stock ? 'Add to Cart' : 'Out of Stock'}</span>
         </Button>
       </CardFooter>
     </Card>
