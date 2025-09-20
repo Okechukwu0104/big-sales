@@ -41,9 +41,9 @@ All colors MUST be HSL.
     /* Bronze/Orange Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(24 100% 50%), hsl(30 80% 45%));
     --gradient-hero: linear-gradient(135deg, hsl(24 100% 50% / 0.1), hsl(30 80% 45% / 0.08), hsl(120 100% 25% / 0.05));
-    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(30 15% 95%));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(30, 84%, 60%));
     --gradient-button: linear-gradient(135deg, hsl(24 100% 50%), hsl(24, 93%, 68%));
-    --gradient-secondary-button: linear-gradient(135deg, hsl(30, 78%, 53%), hsl(30 45% 40%));
+    --gradient-secondary-button: linear-gradient(135deg, hsl(30, 80%, 50%), hsl(30 45% 40%));
     --gradient-accent-button: linear-gradient(135deg, hsl(120 100% 25%), hsl(120 100% 30%));
     --gradient-bronze: linear-gradient(135deg, hsl(30 80% 45%), hsl(30 60% 35%), hsl(30 45% 25%));
     --gradient-glass: linear-gradient(135deg, hsl(var(--background) / 0.8), hsla(30, 88%, 58%, 0.6));
