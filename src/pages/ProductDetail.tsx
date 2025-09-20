@@ -190,7 +190,7 @@ const ProductDetail = () => {
               <Button 
                 onClick={handleAddToCart} 
                 size="lg" 
-                className="w-full bg-blue-700 hover:bg-blue-700 text-white py-3 text-base"
+                className="w-full bg-blue-200 hover:bg-blue-700 text-white py-3 text-base"
                 disabled={product.quantity === 0}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
