@@ -65,8 +65,7 @@ const Checkout = () => {
 
     const totalAmount = formatPrice(getTotalPrice());
 
-    // Combine pre-configured message with order summary
-    // Combine pre-configured message with order summary
+
     const baseMessage = 'Hello, I have completed my order and made payment. Here are my order details:';
     
     const fullMessage = `${baseMessage}%0A%0A` +
