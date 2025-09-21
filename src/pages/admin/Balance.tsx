@@ -33,15 +33,20 @@ const AdminBalance = () => {
   });
 
   // Get income from completed orders
-  const { data: income } = useQuery({
+  const { data: income, error: incomeError } = useQuery({
     queryKey: ['admin-income'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select('total_amount, created_at, status')
+        .select('id, total_amount, created_at, status')
         .eq('status', 'delivered');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching income:', error);
+        throw error;
+      }
+      
+      console.log('Fetched orders:', data);
       
       const totalIncome = data.reduce((sum, order) => sum + Number(order.total_amount), 0);
       return { orders: data, totalIncome };
@@ -76,6 +81,13 @@ const AdminBalance = () => {
       toast({ title: "Expense added successfully" });
       resetForm();
       setIsDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error adding expense", 
+        description: error.message, 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -127,6 +139,13 @@ const AdminBalance = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Error display */}
+        {incomeError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            Error loading income: {incomeError.message}
+          </div>
+        )}
+
         {/* Summary Cards */}
         <div className="grid md:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -209,10 +228,10 @@ const AdminBalance = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {income?.orders.slice(0, 5).map((order: any, index: number) => (
-                  <div key={index} className="flex justify-between items-center p-3 border border-border rounded">
+                {income?.orders.slice(0, 5).map((order: any) => (
+                  <div key={order.id} className="flex justify-between items-center p-3 border border-border rounded">
                     <div>
-                      <p className="font-medium">Order #{order.id?.slice(0, 8)}</p>
+                      <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
                       <p className="text-sm text-muted-foreground">
                         {formatDate(order.created_at)}
                       </p>
@@ -221,7 +240,10 @@ const AdminBalance = () => {
                       +{formatCurrency(Number(order.total_amount))}
                     </span>
                   </div>
-                )) || <p className="text-muted-foreground">No income recorded yet</p>}
+                ))}
+                {(!income || income.orders.length === 0) && (
+                  <p className="text-muted-foreground">No income recorded yet</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -273,7 +295,7 @@ const AdminBalance = () => {
                         <Label htmlFor="category">Category</Label>
                         <Select 
                           value={expenseForm.category} 
-                          onValueChange={(value) => setExpenseForm({...expenseForm, category: value})}
+                          onValueChange={(value: any) => setExpenseForm({...expenseForm, category: value})}
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -301,10 +323,18 @@ const AdminBalance = () => {
                       </div>
                       
                       <div className="flex space-x-2">
-                        <Button type="submit" className="flex-1">
-                          Add Expense
+                        <Button 
+                          type="submit" 
+                          className="flex-1"
+                          disabled={addExpenseMutation.isPending}
+                        >
+                          {addExpenseMutation.isPending ? 'Adding...' : 'Add Expense'}
                         </Button>
-                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={() => setIsDialogOpen(false)}
+                        >
                           Cancel
                         </Button>
                       </div>
@@ -327,7 +357,10 @@ const AdminBalance = () => {
                       -{formatCurrency(expense.amount)}
                     </span>
                   </div>
-                )) || <p className="text-muted-foreground">No expenses recorded yet</p>}
+                ))}
+                {(!expenses || expenses.length === 0) && (
+                  <p className="text-muted-foreground">No expenses recorded yet</p>
+                )}
               </div>
             </CardContent>
           </Card>
