@@ -4,10 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Package, Phone, Mail, MapPin } from 'lucide-react';
+import { ArrowLeft, Package, Phone, Mail, MapPin, Trash2 } from 'lucide-react';
 import { Order } from '@/types';
+import { useState } from 'react';
 
 const statusColors = {
   new: 'bg-blue-100 text-blue-800',
@@ -19,6 +31,7 @@ const statusColors = {
 const AdminOrders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['admin-orders'],
@@ -51,6 +64,25 @@ const AdminOrders = () => {
     },
     onError: (error) => {
       toast({ title: "Error updating order", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      setOrderToDelete(null);
+      toast({ title: "Order deleted successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error deleting order", description: error.message, variant: "destructive" });
     },
   });
 
@@ -116,6 +148,37 @@ const AdminOrders = () => {
                         <SelectItem value="delivered">Delivered</SelectItem>
                       </SelectContent>
                     </Select>
+                    
+                    {/* Delete Order Button */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          size="icon"
+                          onClick={() => setOrderToDelete(order.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete order #{order.id.slice(0, 8)} 
+                            and remove it from our servers.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteOrderMutation.mutate(order.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardHeader>
