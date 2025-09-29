@@ -78,7 +78,7 @@ const Home = () => {
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 gradient-glass border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+                className="w-full pl-10 pr-4 py-3 gradient-glass border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 "
               />
             </div>
           </div>
