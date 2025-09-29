@@ -33,7 +33,7 @@ export const Header = () => {
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
     const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about your store');
     
-    return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
   };
 
   const generateInstagramLink = () => {
