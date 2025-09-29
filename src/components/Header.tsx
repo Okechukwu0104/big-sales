@@ -52,6 +52,43 @@ export const Header = () => {
   const instagramLink = generateInstagramLink();
   const facebookLink = generateFacebookLink();
 
+  // Social media button component for consistency
+  const SocialButton = ({ 
+    href, 
+    icon: Icon, 
+    label,
+    disabled = false 
+  }: { 
+    href: string | null; 
+    icon: React.ElementType; 
+    label: string;
+    disabled?: boolean;
+  }) => {
+    if (!href || disabled) {
+      return (
+        <button
+          disabled
+          aria-label={`${label} (unavailable)`}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground h-9 w-9"
+        >
+          <Icon className="h-5 w-5" />
+        </button>
+      );
+    }
+
+    return (
+      <a 
+        href={href} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        aria-label={label}
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-9 w-9 transition-all duration-200 active:scale-95 cursor-pointer"
+      >
+        <Icon className="h-5 w-5" />
+      </a>
+    );
+  };
+
   return ( 
     <header className="bg-background border-b border-border">
       <div className="container mx-auto px-4 py-4">
@@ -67,41 +104,23 @@ export const Header = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
-            {/* Social Media Links - Using direct anchor tags */}
+            {/* Social Media Links */}
             <div className="flex items-center space-x-2">
-              {whatsappLink && (
-                <a 
-                  href={whatsappLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  aria-label="Contact us on WhatsApp"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                </a>
-              )}
-              {instagramLink && (
-                <a 
-                  href={instagramLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  aria-label="Follow us on Instagram"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-              )}
-              {facebookLink && (
-                <a 
-                  href={facebookLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  aria-label="Follow us on Facebook"
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-              )}
+              <SocialButton 
+                href={whatsappLink}
+                icon={MessageCircle}
+                label="Contact us on WhatsApp"
+              />
+              <SocialButton 
+                href={instagramLink}
+                icon={Instagram}
+                label="Follow us on Instagram"
+              />
+              <SocialButton 
+                href={facebookLink}
+                icon={Facebook}
+                label="Follow us on Facebook"
+              />
             </div>
 
             {/* Cart Button */}
