@@ -124,3 +124,4 @@ export const Header = () => {
     </header>
   );
 };
+export default AdminSettings;
