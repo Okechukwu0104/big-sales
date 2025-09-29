@@ -25,51 +25,115 @@ export const Header = () => {
 
   const totalItems = getTotalItems();
 
-  // Generate social media links from stored data
+  // Generate social media links from stored data - FIXED VERSION
   const generateWhatsAppLink = () => {
-    if (!storeConfig?.whatsapp_number) return null;
+    // Check both possible field names for backward compatibility
+    const whatsappNumber = storeConfig?.whatsapp_number || extractPhoneFromLink(storeConfig?.whatsapp_link);
     
-    const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
+    if (!whatsappNumber) {
+      console.log('No WhatsApp number found');
+      return null;
+    }
+    
+    const cleaned = whatsappNumber.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
-    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about your store');
+    const encodedMessage = encodeURIComponent('Hello, I have a question about your store');
     
-    return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    const link = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    console.log('Generated WhatsApp link:', link);
+    return link;
   };
 
   const generateInstagramLink = () => {
-    if (!storeConfig?.instagram_username) return null;
-    const username = storeConfig.instagram_username.replace(/@/g, '').trim();
-    return `https://www.instagram.com/${username}/`;
+    // Check both possible field names
+    const instagramUsername = storeConfig?.instagram_username || extractUsernameFromLink(storeConfig?.instagram_link, 'instagram');
+    
+    if (!instagramUsername) {
+      console.log('No Instagram username found');
+      return null;
+    }
+    
+    const username = instagramUsername.replace(/@/g, '').trim();
+    const link = `https://www.instagram.com/${username}/`;
+    console.log('Generated Instagram link:', link);
+    return link;
   };
 
   const generateFacebookLink = () => {
-    if (!storeConfig?.facebook_username) return null;
-    const username = storeConfig.facebook_username.replace(/@/g, '').trim();
-    return `https://www.facebook.com/${username}/`;
+    // Check both possible field names
+    const facebookUsername = storeConfig?.facebook_username || extractUsernameFromLink(storeConfig?.facebook_link, 'facebook');
+    
+    if (!facebookUsername) {
+      console.log('No Facebook username found');
+      return null;
+    }
+    
+    const username = facebookUsername.replace(/@/g, '').trim();
+    const link = `https://www.facebook.com/${username}/`;
+    console.log('Generated Facebook link:', link);
+    return link;
+  };
+
+  // Helper function to extract phone number from WhatsApp link
+  const extractPhoneFromLink = (link: string | null) => {
+    if (!link) return null;
+    
+    // Extract phone from wa.me links
+    const waMeMatch = link.match(/wa\.me\/([0-9+]+)/);
+    if (waMeMatch) return waMeMatch[1];
+    
+    // Extract phone from api.whatsapp.com links
+    const apiMatch = link.match(/api\.whatsapp\.com\/send\?phone=([0-9+]+)/);
+    if (apiMatch) return apiMatch[1];
+    
+    return link; // Return as-is if no pattern matches
+  };
+
+  // Helper function to extract username from social media links
+  const extractUsernameFromLink = (link: string | null, platform: string) => {
+    if (!link) return null;
+    
+    if (platform === 'instagram') {
+      const instaMatch = link.match(/instagram\.com\/([^/?]+)/);
+      return instaMatch ? instaMatch[1] : link;
+    }
+    
+    if (platform === 'facebook') {
+      const fbMatch = link.match(/facebook\.com\/([^/?]+)/);
+      return fbMatch ? fbMatch[1] : link;
+    }
+    
+    return link;
   };
 
   const whatsappLink = generateWhatsAppLink();
   const instagramLink = generateInstagramLink();
   const facebookLink = generateFacebookLink();
 
-  // Social media button component for consistency
+  // Debug: Check what links are being generated
+  console.log('Social media links:', {
+    whatsappLink,
+    instagramLink,
+    facebookLink,
+    storeConfig
+  });
+
+  // Social media button component
   const SocialButton = ({ 
     href, 
     icon: Icon, 
     label,
-    disabled = false 
   }: { 
     href: string | null; 
     icon: React.ElementType; 
     label: string;
-    disabled?: boolean;
   }) => {
-    if (!href || disabled) {
+    if (!href) {
       return (
         <button
           disabled
           aria-label={`${label} (unavailable)`}
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-muted-foreground h-9 w-9"
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-30 text-muted-foreground h-9 w-9"
         >
           <Icon className="h-5 w-5" />
         </button>
@@ -83,6 +147,10 @@ export const Header = () => {
         rel="noopener noreferrer"
         aria-label={label}
         className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-9 w-9 transition-all duration-200 active:scale-95 cursor-pointer"
+        onClick={(e) => {
+          console.log(`Opening ${label}:`, href);
+          // Let the default anchor behavior handle the navigation
+        }}
       >
         <Icon className="h-5 w-5" />
       </a>
