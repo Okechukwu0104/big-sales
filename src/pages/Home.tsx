@@ -50,7 +50,7 @@ const Home = () => {
       <main className="container mx-auto px-4 py-8 relative z-10">
         <section className="mb-16">
           <div className="text-center mb-12">
-            <h1 className="text-7xl md:text-8xl font-bold mb-6 float">
+            <h1 className="text-5xl md:text-8xl font-bold mb-6 float">
               Welcome to <span className="glow-text">BIG SALES</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
