@@ -34,6 +34,8 @@ export const Header = () => {
     src="/images/big-sales-logo.png" 
     alt="BIG SALES"
     className="h-11 w-auto"
+    loading="eager" // Forces immediate loading
+    decoding="async" // Allows async decoding
   />
         </Link>
           
