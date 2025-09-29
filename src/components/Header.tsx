@@ -25,54 +25,27 @@ export const Header = () => {
 
   const totalItems = getTotalItems();
 
-  // Generate social media links from stored data
-  const generateWhatsAppLink = () => {
-    if (!storeConfig?.whatsapp_number) return null;
-    
-    const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
-    const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
-    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about your store');
-    
-    return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
-  };
-
-  const generateInstagramLink = () => {
-    if (!storeConfig?.instagram_username) return null;
-    const username = storeConfig.instagram_username.replace(/@/g, '').trim();
-    return `https://www.instagram.com/${username}/`;
-  };
-
-  const generateFacebookLink = () => {
-    if (!storeConfig?.facebook_username) return null;
-    const username = storeConfig.facebook_username.replace(/@/g, '').trim();
-    return `https://www.facebook.com/${username}/`;
-  };
-
-  const whatsappLink = generateWhatsAppLink();
-  const instagramLink = generateInstagramLink();
-  const facebookLink = generateFacebookLink();
-
   return ( 
     <header className="bg-background border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="/images/big-sales-logo.png" 
-              alt="BIG SALES"
-              className="h-11 w-auto"
-              loading="eager"
-              decoding="async"
-            />
-          </Link>
+        <Link to="/" className="flex items-center space-x-2">
+  <img 
+    src="/images/big-sales-logo.png" 
+    alt="BIG SALES"
+    className="h-11 w-auto"
+    loading="eager" // Forces immediate loading
+    decoding="async" // Allows async decoding
+  />
+        </Link>
           
           <div className="flex items-center space-x-4">
             {/* Social Media Links */}
             <div className="flex items-center space-x-2">
-              {whatsappLink && (
+              {storeConfig?.whatsapp_link && (
                 <Button variant="ghost" size="sm" asChild>
                   <a 
-                    href={whatsappLink} 
+                    href={storeConfig.whatsapp_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     aria-label="Contact us on WhatsApp"
@@ -81,10 +54,10 @@ export const Header = () => {
                   </a>
                 </Button>
               )}
-              {instagramLink && (
+              {storeConfig?.instagram_link && (
                 <Button variant="ghost" size="sm" asChild>
                   <a 
-                    href={instagramLink} 
+                    href={storeConfig.instagram_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     aria-label="Follow us on Instagram"
@@ -93,10 +66,10 @@ export const Header = () => {
                   </a>
                 </Button>
               )}
-              {facebookLink && (
+              {storeConfig?.facebook_link && (
                 <Button variant="ghost" size="sm" asChild>
                   <a 
-                    href={facebookLink} 
+                    href={storeConfig.facebook_link} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     aria-label="Follow us on Facebook"
