@@ -67,43 +67,40 @@ export const Header = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
-            {/* Social Media Links */}
+            {/* Social Media Links - Using direct anchor tags */}
             <div className="flex items-center space-x-2">
               {whatsappLink && (
-                <Button variant="ghost" size="sm" asChild>
-                  <a 
-                    href={whatsappLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    aria-label="Contact us on WhatsApp"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                  </a>
-                </Button>
+                <a 
+                  href={whatsappLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label="Contact us on WhatsApp"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </a>
               )}
               {instagramLink && (
-                <Button variant="ghost" size="sm" asChild>
-                  <a 
-                    href={instagramLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    aria-label="Follow us on Instagram"
-                  >
-                    <Instagram className="h-5 w-5" />
-                  </a>
-                </Button>
+                <a 
+                  href={instagramLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label="Follow us on Instagram"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                >
+                  <Instagram className="h-5 w-5" />
+                </a>
               )}
               {facebookLink && (
-                <Button variant="ghost" size="sm" asChild>
-                  <a 
-                    href={facebookLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    aria-label="Follow us on Facebook"
-                  >
-                    <Facebook className="h-5 w-5" />
-                  </a>
-                </Button>
+                <a 
+                  href={facebookLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label="Follow us on Facebook"
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 px-3"
+                >
+                  <Facebook className="h-5 w-5" />
+                </a>
               )}
             </div>
 
