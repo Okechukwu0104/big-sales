@@ -3,8 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
+import { useState, useMemo } from 'react';
+import { Search } from 'lucide-react';
 
 const Home = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
@@ -17,6 +21,20 @@ const Home = () => {
       return data as Product[];
     },
   });
+
+  // Filter products based on search term
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
+    if (!searchTerm.trim()) return products;
+    
+    const term = searchTerm.toLowerCase();
+    return products.filter(product => 
+      product.name?.toLowerCase().includes(term) ||
+      product.description?.toLowerCase().includes(term) ||
+      product.category?.toLowerCase().includes(term)
+    );
+  }, [products, searchTerm]);
 
   return (
     <div className="min-h-screen gradient-hero relative overflow-hidden">
@@ -47,7 +65,35 @@ const Home = () => {
         </section>
 
         <section>
-          <h2 className="text-4xl font-bold mb-12 text-center hero-text">Our Amazing Products</h2>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+            <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
+            
+            {/* Search Bar */}
+            <div className="relative w-full md:w-80">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 gradient-glass border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all duration-200 backdrop-blur-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Search results info */}
+          {searchTerm && (
+            <div className="mb-6 text-center">
+              <p className="text-muted-foreground">
+                {filteredProducts.length > 0 
+                  ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'} matching "${searchTerm}"`
+                  : `No products found matching "${searchTerm}"`
+                }
+              </p>
+            </div>
+          )}
           
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -59,9 +105,9 @@ const Home = () => {
                 </div>
               ))}
             </div>
-          ) : products && products.length > 0 ? (
+          ) : filteredProducts && filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -70,7 +116,10 @@ const Home = () => {
               <div className="gradient-glass p-8 rounded-2xl max-w-md mx-auto">
                 <div className="text-6xl mb-4">🛍️</div>
                 <p className="text-muted-foreground text-xl font-medium">
-                  No products available at the moment. Check back soon!
+                  {searchTerm 
+                    ? "No products found matching your search. Try different keywords!"
+                    : "No products available at the moment. Check back soon!"
+                  }
                 </p>
               </div>
             </div>
