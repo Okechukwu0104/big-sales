@@ -33,10 +33,9 @@ export interface Order {
 export interface StoreConfig {
   id: string;
   payment_details: string | null;
-  // Change these field names:
-  whatsapp_number: string | null;  // instead of whatsapp_link
-  instagram_username: string | null; // instead of instagram_link  
-  facebook_username: string | null; // instead of facebook_link
+  whatsapp_link: string | null;
+  instagram_link: string | null;
+  facebook_link: string | null;
   selected_country: string | null;
   currency_code: string | null;
   currency_symbol: string | null;
