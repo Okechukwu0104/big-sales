@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, ShoppingCart, Heart } from 'lucide-react';
 import { useCartContext } from '@/components/ui/cart-provider';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { addToCart } = useCartContext();
   const { formatPrice } = useCurrency();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
 
   const { data: product, isLoading } = useQuery({
@@ -34,6 +37,73 @@ const ProductDetail = () => {
     },
     enabled: !!id,
   });
+
+  const { data: isLiked } = useQuery({
+    queryKey: ['product-like', id, user?.id],
+    queryFn: async () => {
+      if (!id || !user) return false;
+      
+      const { data, error } = await supabase
+        .from('product_likes')
+        .select('id')
+        .eq('product_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return !!data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      if (!id || !user) throw new Error('Must be logged in');
+      
+      if (isLiked) {
+        const { error } = await supabase
+          .from('product_likes')
+          .delete()
+          .eq('product_id', id)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('product_likes')
+          .insert({ product_id: id, user_id: user.id });
+        
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', id] });
+      queryClient.invalidateQueries({ queryKey: ['product-like', id, user?.id] });
+      toast({
+        title: isLiked ? "Removed from favorites" : "Added to favorites",
+        description: isLiked ? "Product unliked successfully" : "Product liked successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update like status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLike = () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to like products",
+        variant: "destructive",
+      });
+      return;
+    }
+    likeMutation.mutate();
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -136,13 +206,32 @@ const ProductDetail = () => {
 
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-3xl font-bold text-slate-900">{product.name}</h1>
-                {product.featured && (
-                  <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Featured</Badge>
-                )}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-bold text-slate-900">{product.name}</h1>
+                  {product.featured && (
+                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Featured</Badge>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLike}
+                  className="h-12 w-12"
+                  disabled={likeMutation.isPending}
+                >
+                  <Heart 
+                    className={`h-6 w-6 ${isLiked ? 'fill-red-500 text-red-500' : 'text-slate-400'}`}
+                  />
+                </Button>
               </div>
-              <p className="text-3xl font-bold text-blue-700">{formatPrice(product.price)}</p>
+              <div className="flex items-center gap-4 mb-2">
+                <p className="text-3xl font-bold text-blue-700">{formatPrice(product.price)}</p>
+                <div className="flex items-center gap-1 text-slate-600">
+                  <Heart className="h-4 w-4" />
+                  <span className="text-sm">{product.likes_count} likes</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

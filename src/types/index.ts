@@ -7,6 +7,7 @@ export interface Product {
   featured: boolean;
   quantity: number;
   in_stock: boolean;
+  likes_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -33,8 +34,12 @@ export interface Order {
 export interface StoreConfig {
   id: string;
   payment_details: string | null;
+  whatsapp_number: string | null;
   whatsapp_link: string | null;
+  whatsapp_message: string | null;
+  instagram_username: string | null;
   instagram_link: string | null;
+  facebook_username: string | null;
   facebook_link: string | null;
   selected_country: string | null;
   currency_code: string | null;

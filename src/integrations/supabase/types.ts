@@ -77,6 +77,35 @@ export type Database = {
         }
         Relationships: []
       }
+      product_likes: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_likes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string
@@ -85,6 +114,7 @@ export type Database = {
           id: string
           image_url: string | null
           in_stock: boolean | null
+          likes_count: number
           name: string
           price: number
           quantity: number | null
@@ -97,6 +127,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
+          likes_count?: number
           name: string
           price: number
           quantity?: number | null
@@ -109,6 +140,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
+          likes_count?: number
           name?: string
           price?: number
           quantity?: number | null
@@ -122,36 +154,48 @@ export type Database = {
           currency_code: string | null
           currency_symbol: string | null
           facebook_link: string | null
+          facebook_username: string | null
           id: string
           instagram_link: string | null
+          instagram_username: string | null
           payment_details: string | null
           selected_country: string | null
           updated_at: string
           whatsapp_link: string | null
+          whatsapp_message: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           created_at?: string
           currency_code?: string | null
           currency_symbol?: string | null
           facebook_link?: string | null
+          facebook_username?: string | null
           id?: string
           instagram_link?: string | null
+          instagram_username?: string | null
           payment_details?: string | null
           selected_country?: string | null
           updated_at?: string
           whatsapp_link?: string | null
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           created_at?: string
           currency_code?: string | null
           currency_symbol?: string | null
           facebook_link?: string | null
+          facebook_username?: string | null
           id?: string
           instagram_link?: string | null
+          instagram_username?: string | null
           payment_details?: string | null
           selected_country?: string | null
           updated_at?: string
           whatsapp_link?: string | null
+          whatsapp_message?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

@@ -31,8 +31,7 @@ const Home = () => {
     const term = searchTerm.toLowerCase();
     return products.filter(product => 
       product.name?.toLowerCase().includes(term) ||
-      product.description?.toLowerCase().includes(term) ||
-      product.category?.toLowerCase().includes(term)
+      product.description?.toLowerCase().includes(term)
     );
   }, [products, searchTerm]);
 
