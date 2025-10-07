@@ -108,8 +108,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       
       const currentlyLiked = user ? isLiked : guestLiked;
       toast({
-        title: currentlyLiked ? "Removed from favorites" : "Added to favorites",
-        description: currentlyLiked ? "Product unliked successfully" : "Product liked successfully",
+        title: currentlyLiked ? "Added to favorites" : "Removed from favorites",
+        description: currentlyLiked ? "Product liked successfully" : "Product unliked successfully",
       });
     },
     onError: () => {
