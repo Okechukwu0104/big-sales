@@ -159,14 +159,19 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          {product.featured && (
-            <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {product.featured && (
               <Badge className="gradient-accent-button border-0 text-accent-foreground">
                 <Star className="w-3 h-3 mr-1" />
                 Featured
               </Badge>
-            </div>
-          )}
+            )}
+            {product.category && (
+              <Badge variant="secondary" className="shadow-lg">
+                {product.category}
+              </Badge>
+            )}
+          </div>
           <div className="absolute top-4 right-4">
             <Button
               variant="ghost"
