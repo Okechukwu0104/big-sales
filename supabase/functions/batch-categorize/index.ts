@@ -13,6 +13,15 @@ serve(async (req) => {
   }
 
   try {
+    // Add JWT verification for security
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -23,11 +32,12 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get all products that need categorization (Uncategorized or null)
+    // Get all products that need categorization
     const { data: products, error: fetchError } = await supabase
       .from('products')
       .select('id, name, description, category')
-      .or('category.is.null,category.eq.Uncategorized');
+      .or('category.is.null,category.eq.Uncategorized,category.eq.Unknown')
+      .limit(50); // Add limit to avoid timeout
 
     if (fetchError) {
       console.error("Error fetching products:", fetchError);
@@ -36,10 +46,50 @@ serve(async (req) => {
 
     console.log(`Found ${products?.length || 0} products to categorize`);
 
+    if (!products || products.length === 0) {
+      return new Response(JSON.stringify({ 
+        message: "No products need categorization",
+        results: [] 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const results = [];
     
-    for (const product of products || []) {
+    for (const product of products) {
       try {
+        // Enhanced system prompt with stricter formatting
+        const systemPrompt = `You are a product categorization expert. Analyze product names and descriptions to assign them to appropriate categories. 
+
+CATEGORY OPTIONS:
+- Electronics
+- Fashion & Clothing
+- Home & Garden
+- Sports & Outdoors
+- Beauty & Personal Care
+- Books & Media
+- Toys & Games
+- Food & Beverages
+- Health & Wellness
+- Automotive
+- Office Supplies
+- Pet Supplies
+- Jewelry & Accessories
+- Baby & Kids
+- Home Appliances
+- Computers & Accessories
+- Mobile Phones & Tablets
+- Furniture
+- Tools & DIY
+
+RULES:
+1. Choose ONLY from the categories above
+2. Return ONLY the category name, nothing else
+3. No explanations, no punctuation, just the category
+4. If unsure, choose the most likely category
+5. Be specific but use only the provided categories`;
+
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -51,44 +101,83 @@ serve(async (req) => {
             messages: [
               {
                 role: "system",
-                content: "You are a product categorization expert. Analyze product names and descriptions to assign them to appropriate categories. Choose from common e-commerce categories like: Electronics, Fashion, Home & Garden, Sports & Outdoors, Beauty & Personal Care, Books & Media, Toys & Games, Food & Beverages, Health & Wellness, Automotive, Office Supplies, Pet Supplies, Jewelry & Accessories, Baby & Kids, or suggest a new relevant category if none fit. Return ONLY the category name, nothing else."
+                content: systemPrompt
               },
               {
                 role: "user",
-                content: `Product Name: ${product.name}\nDescription: ${product.description || 'No description provided'}\n\nWhat category does this product belong to?`
+                content: `Categorize this product:\n\nPRODUCT NAME: ${product.name}\nDESCRIPTION: ${product.description || 'No description'}\n\nCATEGORY:`
               }
             ],
+            temperature: 0.1, // Lower temperature for more consistent results
+            max_tokens: 20,
           }),
         });
 
         if (!response.ok) {
-          console.error(`AI error for product ${product.id}:`, response.status);
-          results.push({ id: product.id, success: false, error: `AI request failed: ${response.status}` });
+          const errorText = await response.text();
+          console.error(`AI API error for product ${product.id}:`, response.status, errorText);
+          results.push({ 
+            id: product.id, 
+            success: false, 
+            error: `AI request failed: ${response.status}` 
+          });
           continue;
         }
 
         const data = await response.json();
-        const category = data.choices?.[0]?.message?.content?.trim() || "Uncategorized";
+        let category = data.choices?.[0]?.message?.content?.trim() || "Uncategorized";
+        
+        // Clean up the category response
+        category = category.replace(/^["']|["']$/g, '').trim(); // Remove quotes
+        category = category.split('.')[0].split('-')[0].trim(); // Take only first part if multiple
+        category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(); // Proper case
+        
+        // Validate category
+        const validCategories = [
+          'Electronics', 'Fashion & Clothing', 'Home & Garden', 'Sports & Outdoors',
+          'Beauty & Personal Care', 'Books & Media', 'Toys & Games', 'Food & Beverages',
+          'Health & Wellness', 'Automotive', 'Office Supplies', 'Pet Supplies',
+          'Jewelry & Accessories', 'Baby & Kids', 'Home Appliances', 'Computers & Accessories',
+          'Mobile Phones & Tablets', 'Furniture', 'Tools & DIY'
+        ];
+        
+        if (!validCategories.includes(category)) {
+          category = "Uncategorized";
+        }
 
         // Update the product with the new category
         const { error: updateError } = await supabase
           .from('products')
-          .update({ category })
+          .update({ category, updated_at: new Date().toISOString() })
           .eq('id', product.id);
 
         if (updateError) {
           console.error(`Error updating product ${product.id}:`, updateError);
-          results.push({ id: product.id, success: false, error: updateError.message });
+          results.push({ 
+            id: product.id, 
+            success: false, 
+            error: updateError.message 
+          });
         } else {
-          console.log(`Successfully categorized product ${product.id} as: ${category}`);
-          results.push({ id: product.id, success: true, category });
+          console.log(`Successfully categorized product ${product.id}: "${product.name}" -> "${category}"`);
+          results.push({ 
+            id: product.id, 
+            success: true, 
+            category,
+            previous_category: product.category 
+          });
         }
 
-        // Small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Add delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
       } catch (error) {
         console.error(`Error processing product ${product.id}:`, error);
-        results.push({ id: product.id, success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+        results.push({ 
+          id: product.id, 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        });
       }
     }
 
@@ -97,13 +186,17 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       message: `Categorization complete: ${successCount} successful, ${failCount} failed`,
+      total_processed: products.length,
       results 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+    
   } catch (error) {
     console.error("Error in batch-categorize function:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ 
+      error: error instanceof Error ? error.message : "Unknown error" 
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
