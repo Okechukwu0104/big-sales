@@ -13,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Add JWT verification for security
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -59,48 +58,65 @@ serve(async (req) => {
     
     for (const product of products) {
       try {
-        // Enhanced system prompt with better examples
+        // Enhanced system prompt with better examples for your specific products
         const systemPrompt = `You are a product categorization expert. Analyze product names and descriptions to assign them to the most appropriate category.
 
 CATEGORY OPTIONS (choose ONLY one):
-- Electronics (phones, laptops, headphones, cameras, gadgets)
-- Fashion & Clothing (shoes, shirts, dresses, accessories, watches, jewelry)
-- Home & Garden (furniture, decor, gardening tools, kitchenware)
-- Sports & Outdoors (sports equipment, outdoor gear, fitness)
-- Beauty & Personal Care (cosmetics, skincare, hair clippers, grooming)
-- Books & Media (books, magazines, music, movies)
-- Toys & Games (toys, video games, board games)
-- Food & Beverages (food items, drinks, snacks)
-- Health & Wellness (medicines, supplements, fitness trackers)
-- Automotive (car parts, accessories, tools)
-- Office Supplies (stationery, paper, pens, office equipment)
-- Pet Supplies (pet food, toys, accessories)
-- Jewelry & Accessories (watches, necklaces, rings, bracelets)
-- Baby & Kids (baby clothes, toys, childcare products)
-- Home Appliances (refrigerators, washing machines, blenders)
-- Computers & Accessories (laptops, desktops, monitors, keyboards)
-- Mobile Phones & Tablets (smartphones, tablets, accessories)
-- Furniture (chairs, tables, beds, sofas)
-- Tools & DIY (power tools, hand tools, building materials)
+- Fashion & Clothing (shoes, sneakers, loafers, boots, handbags, purses, watches, jewelry, accessories)
+- Electronics (smartphones, phones, tablets, gadgets, electronics)
+- Home Appliances (air fryers, washing machines, humidifiers, home appliances)
+- Beauty & Personal Care (hair clippers, shavers, grooming tools, beauty products)
+- Home & Garden (spray mops, toilet brushes, home cleaning supplies)
+- Health & Wellness (health products, wellness items)
+- Automotive (car accessories)
+- Sports & Outdoors (sports equipment)
+- Books & Media (books, media)
+- Toys & Games (toys, games)
+- Food & Beverages (food items)
+- Office Supplies (office items)
+- Pet Supplies (pet products)
+- Baby & Kids (baby products)
+- Tools & DIY (tools)
 
 IMPORTANT RULES:
 1. Return ONLY the exact category name from the list above
 2. No explanations, no punctuation, just the single category name
 3. Be specific - choose the most precise category
-4. For electronics: use "Electronics" for general, "Computers & Accessories" for computers, "Mobile Phones & Tablets" for phones
-5. For clothing items: use "Fashion & Clothing"
-6. For beauty items: use "Beauty & Personal Care"
-7. For home items: use "Home & Garden" or "Home Appliances" as appropriate
+
+SPECIFIC GUIDELINES FOR COMMON PRODUCTS:
+- Shoes, sneakers, loafers, boots → "Fashion & Clothing"
+- Handbags, purses, totes → "Fashion & Clothing" 
+- Watches, bracelets → "Fashion & Clothing"
+- Smartphones, phones, tablets → "Electronics"
+- Hair clippers, shavers → "Beauty & Personal Care"
+- Air fryers, washing machines → "Home Appliances"
+- Humidifiers → "Home Appliances"
+- Cleaning supplies (mops, brushes) → "Home & Garden"
 
 EXAMPLES:
-- "Wireless headphones" → "Electronics"
-- "Running shoes" → "Fashion & Clothing" 
-- "iPhone 15" → "Mobile Phones & Tablets"
-- "Gaming laptop" → "Computers & Accessories"
-- "Hair clipper" → "Beauty & Personal Care"
-- "Wrist watch" → "Jewelry & Accessories"
-- "Sofa" → "Furniture"
-- "Protein powder" → "Health & Wellness"`;
+- "Casual Shoe for Men" → "Fashion & Clothing"
+- "Samsung Galaxy S10e" → "Electronics"
+- "Rechargeable Hair Clipper" → "Beauty & Personal Care"
+- "Tinmo Airfryer" → "Home Appliances"
+- "Handbag" → "Fashion & Clothing"
+- "Spray Mop" → "Home & Garden"`;
+
+        // Clean the product description to remove repetitive text
+        const cleanDescription = (product.description || '')
+          .replace(/This is a complete barbering kit consisting of a professional clipper and eight \(8\) accessories\./g, '')
+          .replace(/This set contains all the items you will need to have a nice, clean and comfortable hair whether in your home or in a barbershop\./g, '')
+          .replace(/Thanks \. Welcome to Confam Best Stores\./g, '')
+          .replace(/We offer best deals at affordable cost\./g, '')
+          .replace(/You will get value for your money\./g, '')
+          .replace(/Nothing beats the timeless appeal of our shoes, offering a distinct look that gets your attention\./g, '')
+          .trim();
+
+        const userContent = `Categorize this product:
+
+PRODUCT NAME: ${product.name}
+DESCRIPTION: ${cleanDescription || 'No description provided'}
+
+CATEGORY:`;
 
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -117,7 +133,7 @@ EXAMPLES:
               },
               {
                 role: "user",
-                content: `Categorize this product:\n\nPRODUCT NAME: ${product.name}\nDESCRIPTION: ${product.description || 'No description'}\n\nCATEGORY:`
+                content: userContent
               }
             ],
             temperature: 0.1,
@@ -145,57 +161,92 @@ EXAMPLES:
         category = category
           .replace(/^["'`]|["'`]$/g, '') // Remove quotes
           .replace(/\.$/, '') // Remove trailing period
+          .replace(/^Category:\s*/i, '') // Remove "Category:" prefix
           .split('\n')[0] // Take only first line
           .split('-')[0] // Take only before hyphen
           .trim();
         
-        // Normalize common variations
+        // Enhanced category mapping for your specific products
         const categoryMap: { [key: string]: string } = {
+          // Fashion items
           'fashion': 'Fashion & Clothing',
           'clothing': 'Fashion & Clothing',
           'apparel': 'Fashion & Clothing',
+          'shoes': 'Fashion & Clothing',
+          'footwear': 'Fashion & Clothing',
+          'sneakers': 'Fashion & Clothing',
+          'loafers': 'Fashion & Clothing',
+          'boots': 'Fashion & Clothing',
+          'handbag': 'Fashion & Clothing',
+          'purse': 'Fashion & Clothing',
+          'tote': 'Fashion & Clothing',
+          'bag': 'Fashion & Clothing',
+          'watch': 'Fashion & Clothing',
+          'wristwatch': 'Fashion & Clothing',
+          'bracelet': 'Fashion & Clothing',
+          'jewelry': 'Fashion & Clothing',
+          'accessories': 'Fashion & Clothing',
+          
+          // Electronics
           'electronics': 'Electronics',
           'tech': 'Electronics',
           'technology': 'Electronics',
-          'beauty': 'Beauty & Personal Care',
-          'cosmetics': 'Beauty & Personal Care',
-          'home': 'Home & Garden',
-          'sports': 'Sports & Outdoors',
-          'health': 'Health & Wellness',
-          'wellness': 'Health & Wellness',
-          'automotive': 'Automotive',
-          'office': 'Office Supplies',
-          'pet': 'Pet Supplies',
-          'jewelry': 'Jewelry & Accessories',
-          'accessories': 'Jewelry & Accessories',
-          'baby': 'Baby & Kids',
-          'kids': 'Baby & Kids',
-          'children': 'Baby & Kids',
+          'phone': 'Electronics',
+          'smartphone': 'Electronics',
+          'mobile': 'Electronics',
+          'tablet': 'Electronics',
+          'gadget': 'Electronics',
+          
+          // Home Appliances
           'appliances': 'Home Appliances',
-          'computers': 'Computers & Accessories',
-          'computer': 'Computers & Accessories',
-          'mobile': 'Mobile Phones & Tablets',
-          'phones': 'Mobile Phones & Tablets',
-          'phone': 'Mobile Phones & Tablets',
-          'furniture': 'Furniture',
-          'tools': 'Tools & DIY',
-          'diy': 'Tools & DIY',
+          'appliance': 'Home Appliances',
+          'air fryer': 'Home Appliances',
+          'airfryer': 'Home Appliances',
+          'washing machine': 'Home Appliances',
+          'washer': 'Home Appliances',
+          'humidifier': 'Home Appliances',
+          
+          // Beauty & Personal Care
+          'beauty': 'Beauty & Personal Care',
+          'personal care': 'Beauty & Personal Care',
+          'grooming': 'Beauty & Personal Care',
+          'clipper': 'Beauty & Personal Care',
+          'shaver': 'Beauty & Personal Care',
+          'trimmer': 'Beauty & Personal Care',
+          'hair': 'Beauty & Personal Care',
+          
+          // Home & Garden
+          'home': 'Home & Garden',
+          'garden': 'Home & Garden',
+          'cleaning': 'Home & Garden',
+          'mop': 'Home & Garden',
+          'brush': 'Home & Garden',
+          'toilet': 'Home & Garden',
         };
         
-        // Check for partial matches and normalize
-        const normalizedCategory = categoryMap[category.toLowerCase()] || category;
+        // Check for partial matches in the mapping
+        let normalizedCategory = category;
+        const lowerCategory = category.toLowerCase();
+        
+        for (const [key, value] of Object.entries(categoryMap)) {
+          if (lowerCategory.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerCategory)) {
+            normalizedCategory = value;
+            break;
+          }
+        }
         
         // Final validation with broader matching
         const validCategories = [
-          'Electronics', 'Fashion & Clothing', 'Home & Garden', 'Sports & Outdoors',
-          'Beauty & Personal Care', 'Books & Media', 'Toys & Games', 'Food & Beverages',
-          'Health & Wellness', 'Automotive', 'Office Supplies', 'Pet Supplies',
-          'Jewelry & Accessories', 'Baby & Kids', 'Home Appliances', 'Computers & Accessories',
-          'Mobile Phones & Tablets', 'Furniture', 'Tools & DIY'
+          'Fashion & Clothing', 'Electronics', 'Home Appliances', 
+          'Beauty & Personal Care', 'Home & Garden', 'Health & Wellness',
+          'Automotive', 'Sports & Outdoors', 'Books & Media', 'Toys & Games',
+          'Food & Beverages', 'Office Supplies', 'Pet Supplies', 'Baby & Kids',
+          'Tools & DIY'
         ];
         
-        // Check if category matches any valid category (case insensitive, partial match)
+        // Check if category matches any valid category
         const finalCategory = validCategories.find(valid => 
+          normalizedCategory.toLowerCase() === valid.toLowerCase() ||
           normalizedCategory.toLowerCase().includes(valid.toLowerCase()) ||
           valid.toLowerCase().includes(normalizedCategory.toLowerCase())
         ) || "Uncategorized";
