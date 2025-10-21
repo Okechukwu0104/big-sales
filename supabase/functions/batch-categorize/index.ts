@@ -37,7 +37,7 @@ serve(async (req) => {
       .from('products')
       .select('id, name, description, category')
       .or('category.is.null,category.eq.Uncategorized,category.eq.Unknown')
-      .limit(50); // Add limit to avoid timeout
+      .limit(50);
 
     if (fetchError) {
       console.error("Error fetching products:", fetchError);
@@ -59,36 +59,48 @@ serve(async (req) => {
     
     for (const product of products) {
       try {
-        // Enhanced system prompt with stricter formatting
-        const systemPrompt = `You are a product categorization expert. Analyze product names and descriptions to assign them to appropriate categories. 
+        // Enhanced system prompt with better examples
+        const systemPrompt = `You are a product categorization expert. Analyze product names and descriptions to assign them to the most appropriate category.
 
-CATEGORY OPTIONS:
-- Electronics
-- Fashion & Clothing
-- Home & Garden
-- Sports & Outdoors
-- Beauty & Personal Care
-- Books & Media
-- Toys & Games
-- Food & Beverages
-- Health & Wellness
-- Automotive
-- Office Supplies
-- Pet Supplies
-- Jewelry & Accessories
-- Baby & Kids
-- Home Appliances
-- Computers & Accessories
-- Mobile Phones & Tablets
-- Furniture
-- Tools & DIY
+CATEGORY OPTIONS (choose ONLY one):
+- Electronics (phones, laptops, headphones, cameras, gadgets)
+- Fashion & Clothing (shoes, shirts, dresses, accessories, watches, jewelry)
+- Home & Garden (furniture, decor, gardening tools, kitchenware)
+- Sports & Outdoors (sports equipment, outdoor gear, fitness)
+- Beauty & Personal Care (cosmetics, skincare, hair clippers, grooming)
+- Books & Media (books, magazines, music, movies)
+- Toys & Games (toys, video games, board games)
+- Food & Beverages (food items, drinks, snacks)
+- Health & Wellness (medicines, supplements, fitness trackers)
+- Automotive (car parts, accessories, tools)
+- Office Supplies (stationery, paper, pens, office equipment)
+- Pet Supplies (pet food, toys, accessories)
+- Jewelry & Accessories (watches, necklaces, rings, bracelets)
+- Baby & Kids (baby clothes, toys, childcare products)
+- Home Appliances (refrigerators, washing machines, blenders)
+- Computers & Accessories (laptops, desktops, monitors, keyboards)
+- Mobile Phones & Tablets (smartphones, tablets, accessories)
+- Furniture (chairs, tables, beds, sofas)
+- Tools & DIY (power tools, hand tools, building materials)
 
-RULES:
-1. Choose ONLY from the categories above
-2. Return ONLY the category name, nothing else
-3. No explanations, no punctuation, just the category
-4. If unsure, choose the most likely category
-5. Be specific but use only the provided categories`;
+IMPORTANT RULES:
+1. Return ONLY the exact category name from the list above
+2. No explanations, no punctuation, just the single category name
+3. Be specific - choose the most precise category
+4. For electronics: use "Electronics" for general, "Computers & Accessories" for computers, "Mobile Phones & Tablets" for phones
+5. For clothing items: use "Fashion & Clothing"
+6. For beauty items: use "Beauty & Personal Care"
+7. For home items: use "Home & Garden" or "Home Appliances" as appropriate
+
+EXAMPLES:
+- "Wireless headphones" → "Electronics"
+- "Running shoes" → "Fashion & Clothing" 
+- "iPhone 15" → "Mobile Phones & Tablets"
+- "Gaming laptop" → "Computers & Accessories"
+- "Hair clipper" → "Beauty & Personal Care"
+- "Wrist watch" → "Jewelry & Accessories"
+- "Sofa" → "Furniture"
+- "Protein powder" → "Health & Wellness"`;
 
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -108,7 +120,7 @@ RULES:
                 content: `Categorize this product:\n\nPRODUCT NAME: ${product.name}\nDESCRIPTION: ${product.description || 'No description'}\n\nCATEGORY:`
               }
             ],
-            temperature: 0.1, // Lower temperature for more consistent results
+            temperature: 0.1,
             max_tokens: 20,
           }),
         });
@@ -127,12 +139,53 @@ RULES:
         const data = await response.json();
         let category = data.choices?.[0]?.message?.content?.trim() || "Uncategorized";
         
-        // Clean up the category response
-        category = category.replace(/^["']|["']$/g, '').trim(); // Remove quotes
-        category = category.split('.')[0].split('-')[0].trim(); // Take only first part if multiple
-        category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase(); // Proper case
+        console.log(`Raw AI response for "${product.name}": "${category}"`);
         
-        // Validate category
+        // Enhanced cleaning and normalization
+        category = category
+          .replace(/^["'`]|["'`]$/g, '') // Remove quotes
+          .replace(/\.$/, '') // Remove trailing period
+          .split('\n')[0] // Take only first line
+          .split('-')[0] // Take only before hyphen
+          .trim();
+        
+        // Normalize common variations
+        const categoryMap: { [key: string]: string } = {
+          'fashion': 'Fashion & Clothing',
+          'clothing': 'Fashion & Clothing',
+          'apparel': 'Fashion & Clothing',
+          'electronics': 'Electronics',
+          'tech': 'Electronics',
+          'technology': 'Electronics',
+          'beauty': 'Beauty & Personal Care',
+          'cosmetics': 'Beauty & Personal Care',
+          'home': 'Home & Garden',
+          'sports': 'Sports & Outdoors',
+          'health': 'Health & Wellness',
+          'wellness': 'Health & Wellness',
+          'automotive': 'Automotive',
+          'office': 'Office Supplies',
+          'pet': 'Pet Supplies',
+          'jewelry': 'Jewelry & Accessories',
+          'accessories': 'Jewelry & Accessories',
+          'baby': 'Baby & Kids',
+          'kids': 'Baby & Kids',
+          'children': 'Baby & Kids',
+          'appliances': 'Home Appliances',
+          'computers': 'Computers & Accessories',
+          'computer': 'Computers & Accessories',
+          'mobile': 'Mobile Phones & Tablets',
+          'phones': 'Mobile Phones & Tablets',
+          'phone': 'Mobile Phones & Tablets',
+          'furniture': 'Furniture',
+          'tools': 'Tools & DIY',
+          'diy': 'Tools & DIY',
+        };
+        
+        // Check for partial matches and normalize
+        const normalizedCategory = categoryMap[category.toLowerCase()] || category;
+        
+        // Final validation with broader matching
         const validCategories = [
           'Electronics', 'Fashion & Clothing', 'Home & Garden', 'Sports & Outdoors',
           'Beauty & Personal Care', 'Books & Media', 'Toys & Games', 'Food & Beverages',
@@ -141,14 +194,18 @@ RULES:
           'Mobile Phones & Tablets', 'Furniture', 'Tools & DIY'
         ];
         
-        if (!validCategories.includes(category)) {
-          category = "Uncategorized";
-        }
+        // Check if category matches any valid category (case insensitive, partial match)
+        const finalCategory = validCategories.find(valid => 
+          normalizedCategory.toLowerCase().includes(valid.toLowerCase()) ||
+          valid.toLowerCase().includes(normalizedCategory.toLowerCase())
+        ) || "Uncategorized";
+        
+        console.log(`Final category for "${product.name}": "${finalCategory}"`);
 
         // Update the product with the new category
         const { error: updateError } = await supabase
           .from('products')
-          .update({ category, updated_at: new Date().toISOString() })
+          .update({ category: finalCategory, updated_at: new Date().toISOString() })
           .eq('id', product.id);
 
         if (updateError) {
@@ -159,11 +216,11 @@ RULES:
             error: updateError.message 
           });
         } else {
-          console.log(`Successfully categorized product ${product.id}: "${product.name}" -> "${category}"`);
+          console.log(`Successfully categorized product ${product.id}: "${product.name}" -> "${finalCategory}"`);
           results.push({ 
             id: product.id, 
             success: true, 
-            category,
+            category: finalCategory,
             previous_category: product.category 
           });
         }
