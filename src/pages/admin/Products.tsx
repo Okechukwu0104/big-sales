@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Upload, Sparkles } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Product } from '@/types';
 
@@ -36,7 +36,7 @@ const AdminProducts = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as Product[];
     },
   });
 
@@ -61,9 +61,19 @@ const AdminProducts = () => {
         image_url = data.publicUrl;
       }
 
+      // Get AI-generated category
+      const { data: categoryData } = await supabase.functions.invoke('categorize-product', {
+        body: { 
+          productName: productData.name, 
+          productDescription: productData.description 
+        }
+      });
+
+      const category = categoryData?.category || 'Uncategorized';
+
       const { data, error } = await supabase
         .from('products')
-        .insert([{ ...productData, image_url, quantity: parseInt(productData.quantity) || 0 }])
+        .insert([{ ...productData, image_url, category, quantity: parseInt(productData.quantity) || 0 }])
         .select()
         .single();
       
@@ -141,6 +151,28 @@ const AdminProducts = () => {
     },
   });
 
+  const batchCategorizeMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('batch-categorize');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ 
+        title: "Batch categorization complete", 
+        description: data?.message || "Products have been categorized"
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error categorizing products", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({ name: '', description: '', price: '', quantity: '', featured: false, image: null });
     setEditingProduct(null);
@@ -201,13 +233,22 @@ const AdminProducts = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Products ({products?.length || 0})</h2>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => batchCategorizeMutation.mutate()}
+              disabled={batchCategorizeMutation.isPending}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {batchCategorizeMutation.isPending ? 'Categorizing...' : 'AI Categorize All'}
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openCreateDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Product
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>
@@ -297,6 +338,7 @@ const AdminProducts = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="grid gap-4">
@@ -314,13 +356,18 @@ const AdminProducts = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold">{product.name}</h3>
                     <p className="text-muted-foreground text-sm">{product.description}</p>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
                       <p className="font-bold text-primary">${product.price}</p>
                       <span className={`text-sm px-2 py-1 rounded ${
                         product.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
                         {product.in_stock ? `${product.quantity} in stock` : 'Out of stock'}
                       </span>
+                      {product.category && (
+                        <span className="text-xs px-2 py-1 bg-accent/20 text-accent-foreground rounded">
+                          {product.category}
+                        </span>
+                      )}
                     </div>
                     {product.featured && (
                       <span className="inline-block bg-primary text-primary-foreground text-xs px-2 py-1 rounded mt-1">

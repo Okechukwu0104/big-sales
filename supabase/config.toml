@@ -1,1 +1,7 @@
 project_id = "zbgwqticmneytinkijjd"
+
+[functions.categorize-product]
+verify_jwt = false
+
+[functions.batch-categorize]
+verify_jwt = true

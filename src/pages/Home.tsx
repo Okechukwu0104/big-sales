@@ -8,6 +8,7 @@ import { Search } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -22,18 +23,35 @@ const Home = () => {
     },
   });
 
-  // Filter products based on search term
+  // Extract unique categories
+  const categories = useMemo(() => {
+    if (!products) return ['All'];
+    const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
+    return ['All', ...Array.from(uniqueCategories).sort()];
+  }, [products]);
+
+  // Filter products based on search term and category
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     
-    if (!searchTerm.trim()) return products;
+    let filtered = products;
     
-    const term = searchTerm.toLowerCase();
-    return products.filter(product => 
-      product.name?.toLowerCase().includes(term) ||
-      product.description?.toLowerCase().includes(term)
-    );
-  }, [products, searchTerm]);
+    // Filter by category
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+    
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name?.toLowerCase().includes(term) ||
+        product.description?.toLowerCase().includes(term)
+      );
+    }
+    
+    return filtered;
+  }, [products, searchTerm, selectedCategory]);
 
   return (
     <div className="min-h-screen gradient-hero relative overflow-hidden">
@@ -82,13 +100,38 @@ const Home = () => {
             </div>
           </div>
           
+          {/* Category Filter */}
+          {categories.length > 1 && (
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-3 justify-center">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
+                      selectedCategory === category
+                        ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                        : 'gradient-glass hover:scale-105'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* Search results info */}
-          {searchTerm && (
+          {(searchTerm || selectedCategory !== 'All') && (
             <div className="mb-6 text-center">
               <p className="text-muted-foreground">
                 {filteredProducts.length > 0 
-                  ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'} matching "${searchTerm}"`
-                  : `No products found matching "${searchTerm}"`
+                  ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'}${
+                      searchTerm ? ` matching "${searchTerm}"` : ''
+                    }${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`
+                  : `No products found${searchTerm ? ` matching "${searchTerm}"` : ''}${
+                      selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''
+                    }`
                 }
               </p>
             </div>
@@ -115,8 +158,8 @@ const Home = () => {
               <div className="gradient-glass p-8 rounded-2xl max-w-md mx-auto">
                 <div className="text-6xl mb-4">🛍️</div>
                 <p className="text-muted-foreground text-xl font-medium">
-                  {searchTerm 
-                    ? "No products found matching your search. Try different keywords!"
+                  {searchTerm || selectedCategory !== 'All'
+                    ? "No products found. Try different keywords or select another category!"
                     : "No products available at the moment. Check back soon!"
                   }
                 </p>
