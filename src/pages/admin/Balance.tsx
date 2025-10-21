@@ -114,7 +114,7 @@ const AdminBalance = () => {
   const totalIncome = income?.totalIncome || 0;
   const netProfit = totalIncome - totalExpenses;
 
-  const formatCurrency = (amount: number) => `$#{amount.toFixed(2)}`;
+  const formatCurrency = (amount: number) => `#${amount.toFixed(2)}`;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
