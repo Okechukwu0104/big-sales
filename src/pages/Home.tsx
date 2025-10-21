@@ -3,12 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
-import { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { useState, useMemo, useRef } from 'react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -52,6 +53,19 @@ const Home = () => {
     
     return filtered;
   }, [products, searchTerm, selectedCategory]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 200;
+      const newScrollLeft = scrollContainerRef.current.scrollLeft + 
+        (direction === 'left' ? -scrollAmount : scrollAmount);
+      
+      scrollContainerRef.current.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen gradient-hero relative overflow-hidden">
@@ -100,22 +114,80 @@ const Home = () => {
             </div>
           </div>
           
-          {/* Category Filter */}
-          {/* Simple horizontal scroll without buttons */}
-{categories.length > 1 && (
-  <div className="mb-8">
-    <div className="flex space-x-3 overflow-x-auto pb-4 scrollbar-thin ...">
-      {categories.map((category) => (
-        <button
-          key={category}
-          className="flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap min-w-max"
-        >
-          {category}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
+          {/* Category Filter with Horizontal Scroll */}
+          {categories.length > 1 && (
+            <div className="mb-8 relative">
+              <div className="flex items-center gap-2">
+                {/* Left scroll button - only show if there are many categories */}
+                {categories.length > 6 && (
+                  <button
+                    onClick={() => scroll('left')}
+                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )}
+                
+                {/* Scrollable container */}
+                <div 
+                  ref={scrollContainerRef}
+                  className="flex-1 flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth py-2"
+                  style={{ 
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none'
+                  }}
+                >
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                        selectedCategory === category
+                          ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                          : 'gradient-glass hover:scale-105 hover:bg-accent/50'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right scroll button - only show if there are many categories */}
+                {categories.length > 6 && (
+                  <button
+                    onClick={() => scroll('right')}
+                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Alternative: Simple horizontal scroll without buttons */}
+          {categories.length > 1 && (
+            <div className="mb-8">
+              <div 
+                className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-primary/20 scrollbar-track-transparent"
+                style={{ scrollbarWidth: 'thin' }}
+              >
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap min-w-max ${
+                      selectedCategory === category
+                        ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                        : 'gradient-glass hover:scale-105 hover:bg-accent/50'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Search results info */}
           {(searchTerm || selectedCategory !== 'All') && (
@@ -164,6 +236,17 @@ const Home = () => {
           )}
         </section>
       </main>
+
+      {/* Add custom scrollbar hiding styles */}
+      <style jsx>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
