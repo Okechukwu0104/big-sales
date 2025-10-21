@@ -8,7 +8,6 @@ import { Search } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -23,35 +22,18 @@ const Home = () => {
     },
   });
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    if (!products) return ['All'];
-    const uniqueCategories = Array.from(new Set(products.map(p => p.category || 'Uncategorized')));
-    return ['All', ...uniqueCategories.sort()];
-  }, [products]);
-
-  // Filter products based on search term and category
+  // Filter products based on search term
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     
-    let filtered = products;
+    if (!searchTerm.trim()) return products;
     
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
-    }
-    
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(product => 
-        product.name?.toLowerCase().includes(term) ||
-        product.description?.toLowerCase().includes(term)
-      );
-    }
-    
-    return filtered;
-  }, [products, searchTerm, selectedCategory]);
+    const term = searchTerm.toLowerCase();
+    return products.filter(product => 
+      product.name?.toLowerCase().includes(term) ||
+      product.description?.toLowerCase().includes(term)
+    );
+  }, [products, searchTerm]);
 
   return (
     <div className="min-h-screen gradient-hero relative overflow-hidden">
@@ -82,7 +64,7 @@ const Home = () => {
         </section>
 
         <section>
-          <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
             <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
             
             {/* Search Bar */}
@@ -98,23 +80,6 @@ const Home = () => {
                 className="w-full pl-10 pr-4 py-3 border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary "
               />
             </div>
-          </div>
-          
-          {/* Category Filters */}
-          <div className="mb-8 flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full font-medium transition-all ${
-                  selectedCategory === category
-                    ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                    : 'bg-secondary/50 text-secondary-foreground hover:bg-secondary'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
           </div>
           
           {/* Search results info */}

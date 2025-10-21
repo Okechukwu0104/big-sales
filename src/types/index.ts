@@ -8,7 +8,6 @@ export interface Product {
   quantity: number;
   in_stock: boolean;
   likes_count: number;
-  category: string;
   created_at: string;
   updated_at: string;
 }

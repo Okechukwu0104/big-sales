@@ -23,7 +23,6 @@ const AdminProducts = () => {
     description: '',
     price: '',
     quantity: '',
-    category: 'Uncategorized',
     featured: false,
     image: null as File | null
   });
@@ -143,7 +142,7 @@ const AdminProducts = () => {
   });
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', price: '', quantity: '', category: 'Uncategorized', featured: false, image: null });
+    setFormData({ name: '', description: '', price: '', quantity: '', featured: false, image: null });
     setEditingProduct(null);
   };
 
@@ -159,7 +158,6 @@ const AdminProducts = () => {
       description: product.description || '',
       price: product.price.toString(),
       quantity: product.quantity?.toString() || '0',
-      category: product.category || 'Uncategorized',
       featured: product.featured,
       image: null
     });
@@ -174,7 +172,6 @@ const AdminProducts = () => {
       description: formData.description || null,
       price: parseFloat(formData.price),
       quantity: formData.quantity,
-      category: formData.category,
       featured: formData.featured,
     };
 
@@ -263,17 +260,6 @@ const AdminProducts = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="e.g. Electronics, Clothing, etc."
-                    required
-                  />
-                </div>
-                
-                <div>
                   <Label htmlFor="image">Product Image</Label>
                   <Input
                     id="image"
@@ -328,11 +314,6 @@ const AdminProducts = () => {
                   <div className="flex-1">
                     <h3 className="font-semibold">{product.name}</h3>
                     <p className="text-muted-foreground text-sm">{product.description}</p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground">
-                        {product.category}
-                      </span>
-                    </div>
                     <div className="flex items-center gap-4">
                       <p className="font-bold text-primary">${product.price}</p>
                       <span className={`text-sm px-2 py-1 rounded ${
