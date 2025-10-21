@@ -357,7 +357,7 @@ const AdminProducts = () => {
                     <h3 className="font-semibold">{product.name}</h3>
                     <p className="text-muted-foreground text-sm">{product.description}</p>
                     <div className="flex items-center gap-4 flex-wrap">
-                      <p className="font-bold text-primary">${product.price}</p>
+                      <p className="font-bold text-primary">#{product.price}</p>
                       <span className={`text-sm px-2 py-1 rounded ${
                         product.in_stock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
