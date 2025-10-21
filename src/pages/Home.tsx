@@ -101,25 +101,21 @@ const Home = () => {
           </div>
           
           {/* Category Filter */}
-          {categories.length > 1 && (
-            <div className="mb-8">
-              <div className="flex flex-wrap gap-3 justify-center">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedCategory === category
-                        ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                        : 'gradient-glass hover:scale-105'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Simple horizontal scroll without buttons */}
+{categories.length > 1 && (
+  <div className="mb-8">
+    <div className="flex space-x-3 overflow-x-auto pb-4 scrollbar-thin ...">
+      {categories.map((category) => (
+        <button
+          key={category}
+          className="flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap min-w-max"
+        >
+          {category}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
           
           {/* Search results info */}
           {(searchTerm || selectedCategory !== 'All') && (
