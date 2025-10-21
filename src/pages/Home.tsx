@@ -114,9 +114,9 @@ const Home = () => {
             </div>
           </div>
           
-          {/* Category Filter with Horizontal Scroll */}
+          {/* Category Filter with Horizontal Scroll - ONLY ONE SECTION */}
           {categories.length > 1 && (
-            <div className="mb-8 relative">
+            <div className="mb-8">
               <div className="flex items-center gap-2">
                 {/* Left scroll button - only show if there are many categories */}
                 {categories.length > 6 && (
@@ -132,10 +132,6 @@ const Home = () => {
                 <div 
                   ref={scrollContainerRef}
                   className="flex-1 flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth py-2"
-                  style={{ 
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none'
-                  }}
                 >
                   {categories.map((category) => (
                     <button
@@ -161,30 +157,6 @@ const Home = () => {
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 )}
-              </div>
-            </div>
-          )}
-          
-          {/* Alternative: Simple horizontal scroll without buttons */}
-          {categories.length > 1 && (
-            <div className="mb-8">
-              <div 
-                className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-primary/20 scrollbar-track-transparent"
-                style={{ scrollbarWidth: 'thin' }}
-              >
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap min-w-max ${
-                      selectedCategory === category
-                        ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                        : 'gradient-glass hover:scale-105 hover:bg-accent/50'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
               </div>
             </div>
           )}
@@ -225,12 +197,12 @@ const Home = () => {
             <div className="text-center py-16">
               <div className="gradient-glass p-8 rounded-2xl max-w-md mx-auto">
                 <div className="text-6xl mb-4">🛍️</div>
-                <p className="text-muted-foreground text-xl font-medium">
+                <div className="text-muted-foreground text-xl font-medium">
                   {searchTerm || selectedCategory !== 'All'
                     ? "No products found. Try different keywords or select another category!"
                     : "No products available at the moment. Check back soon!"
                   }
-                </p>
+                </div>
               </div>
             </div>
           )}
