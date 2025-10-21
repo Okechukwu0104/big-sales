@@ -58,33 +58,67 @@ serve(async (req) => {
     
     for (const product of products) {
       try {
-        // Simple system prompt focused on title analysis
-        const systemPrompt = `You are a product categorization expert. Analyze ONLY the product title to assign it to the most appropriate category.
+        // Enhanced system prompt with better examples for your specific products
+        const systemPrompt = `You are a product categorization expert. Analyze product names and descriptions to assign them to the most appropriate category.
 
 CATEGORY OPTIONS (choose ONLY one):
-- Fashion & Clothing (shoes, sneakers, loafers, boots, handbags, watches, jewelry, accessories, clothing)
-- Electronics (phones, smartphones, tablets, gadgets, electronics, devices)
+- Fashion & Clothing (shoes, sneakers, loafers, boots, handbags, purses, watches, jewelry, accessories)
+- Electronics (smartphones, phones, tablets, gadgets, electronics)
 - Home Appliances (air fryers, washing machines, humidifiers, home appliances)
-- Beauty & Personal Care (hair clippers, shavers, trimmers, grooming tools, beauty products)
-- Home & Garden (mops, brushes, cleaning supplies, home items)
-- Health & Wellness (health products, supplements)
-- Sports & Outdoors (sports equipment, outdoor gear)
-- Other (anything that doesn't fit above categories)
+- Beauty & Personal Care (hair clippers, shavers, grooming tools, beauty products)
+- Home & Garden (spray mops, toilet brushes, home cleaning supplies)
+- Health & Wellness (health products, wellness items)
+- Automotive (car accessories)
+- Sports & Outdoors (sports equipment)
+- Books & Media (books, media)
+- Toys & Games (toys, games)
+- Food & Beverages (food items)
+- Office Supplies (office items)
+- Pet Supplies (pet products)
+- Baby & Kids (baby products)
+- Tools & DIY (tools)
 
-RULES:
+IMPORTANT RULES:
 1. Return ONLY the exact category name from the list above
 2. No explanations, no punctuation, just the single category name
-3. Base your decision SOLELY on the product title
-4. Be specific but use only the provided categories
+3. Be specific - choose the most precise category
+
+SPECIFIC GUIDELINES FOR COMMON PRODUCTS:
+- Shoes, sneakers, loafers, boots → "Fashion & Clothing"
+- Handbags, purses, totes → "Fashion & Clothing" 
+- Watches, bracelets → "Fashion & Clothing"
+- Smartphones, phones, tablets → "Electronics"
+- Hair clippers, shavers → "Beauty & Personal Care"
+- Air fryers, washing machines → "Home Appliances"
+- Humidifiers → "Home Appliances"
+- Cleaning supplies (mops, brushes) → "Home & Garden"
 
 EXAMPLES:
 - "Casual Shoe for Men" → "Fashion & Clothing"
-- "Samsung Galaxy S10e" → "Electronics" 
+- "Samsung Galaxy S10e" → "Electronics"
 - "Rechargeable Hair Clipper" → "Beauty & Personal Care"
 - "Tinmo Airfryer" → "Home Appliances"
-- "3Set Large Capacity Handbag" → "Fashion & Clothing"
-- "Spray Mop" → "Home & Garden"
-- "Top Luxury Mechanic Watch" → "Fashion & Clothing"`;
+- "Handbag" → "Fashion & Clothing"
+- "Spray Mop" → "Home & Garden"`;
+
+        anyone that isnt here automatically figure out what category it should be. 
+
+        // Clean the product description to remove repetitive text
+        const cleanDescription = (product.description || '')
+          .replace(/This is a complete barbering kit consisting of a professional clipper and eight \(8\) accessories\./g, '')
+          .replace(/This set contains all the items you will need to have a nice, clean and comfortable hair whether in your home or in a barbershop\./g, '')
+          .replace(/Thanks \. Welcome to Confam Best Stores\./g, '')
+          .replace(/We offer best deals at affordable cost\./g, '')
+          .replace(/You will get value for your money\./g, '')
+          .replace(/Nothing beats the timeless appeal of our shoes, offering a distinct look that gets your attention\./g, '')
+          .trim();
+
+        const userContent = `Categorize this product:
+
+PRODUCT NAME: ${product.name}
+DESCRIPTION: ${cleanDescription || 'No description provided'}
+
+CATEGORY:`;
 
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -101,11 +135,11 @@ EXAMPLES:
               },
               {
                 role: "user",
-                content: `Product Title: "${product.name}"\n\nCATEGORY:`
+                content: userContent
               }
             ],
             temperature: 0.1,
-            max_tokens: 15,
+            max_tokens: 20,
           }),
         });
 
@@ -125,28 +159,103 @@ EXAMPLES:
         
         console.log(`Raw AI response for "${product.name}": "${category}"`);
         
-        // Simple cleaning
+        // Enhanced cleaning and normalization
         category = category
-          .replace(/^["'`]|["'`]$/g, '')
-          .replace(/\.$/, '')
-          .replace(/^Category:\s*/i, '')
-          .split('\n')[0]
+          .replace(/^["'`]|["'`]$/g, '') // Remove quotes
+          .replace(/\.$/, '') // Remove trailing period
+          .replace(/^Category:\s*/i, '') // Remove "Category:" prefix
+          .split('\n')[0] // Take only first line
+          .split('-')[0] // Take only before hyphen
           .trim();
-
-        // Simple category validation
+        
+        // Enhanced category mapping for your specific products
+        const categoryMap: { [key: string]: string } = {
+          // Fashion items
+          'fashion': 'Fashion & Clothing',
+          'clothing': 'Fashion & Clothing',
+          'apparel': 'Fashion & Clothing',
+          'shoes': 'Fashion & Clothing',
+          'footwear': 'Fashion & Clothing',
+          'sneakers': 'Fashion & Clothing',
+          'loafers': 'Fashion & Clothing',
+          'boots': 'Fashion & Clothing',
+          'handbag': 'Fashion & Clothing',
+          'purse': 'Fashion & Clothing',
+          'tote': 'Fashion & Clothing',
+          'bag': 'Fashion & Clothing',
+          'watch': 'Fashion & Clothing',
+          'wristwatch': 'Fashion & Clothing',
+          'bracelet': 'Fashion & Clothing',
+          'jewelry': 'Fashion & Clothing',
+          'accessories': 'Fashion & Clothing',
+          
+          // Electronics
+          'electronics': 'Electronics',
+          'tech': 'Electronics',
+          'technology': 'Electronics',
+          'phone': 'Electronics',
+          'smartphone': 'Electronics',
+          'mobile': 'Electronics',
+          'tablet': 'Electronics',
+          'gadget': 'Electronics',
+          
+          // Home Appliances
+          'appliances': 'Home Appliances',
+          'appliance': 'Home Appliances',
+          'air fryer': 'Home Appliances',
+          'airfryer': 'Home Appliances',
+          'washing machine': 'Home Appliances',
+          'washer': 'Home Appliances',
+          'humidifier': 'Home Appliances',
+          
+          // Beauty & Personal Care
+          'beauty': 'Beauty & Personal Care',
+          'personal care': 'Beauty & Personal Care',
+          'grooming': 'Beauty & Personal Care',
+          'clipper': 'Beauty & Personal Care',
+          'shaver': 'Beauty & Personal Care',
+          'trimmer': 'Beauty & Personal Care',
+          'hair': 'Beauty & Personal Care',
+          
+          // Home & Garden
+          'home': 'Home & Garden',
+          'garden': 'Home & Garden',
+          'cleaning': 'Home & Garden',
+          'mop': 'Home & Garden',
+          'brush': 'Home & Garden',
+          'toilet': 'Home & Garden',
+        };
+        
+        // Check for partial matches in the mapping
+        let normalizedCategory = category;
+        const lowerCategory = category.toLowerCase();
+        
+        for (const [key, value] of Object.entries(categoryMap)) {
+          if (lowerCategory.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerCategory)) {
+            normalizedCategory = value;
+            break;
+          }
+        }
+        
+        // Final validation with broader matching
         const validCategories = [
           'Fashion & Clothing', 'Electronics', 'Home Appliances', 
           'Beauty & Personal Care', 'Home & Garden', 'Health & Wellness',
-          'Sports & Outdoors', 'Other'
+          'Automotive', 'Sports & Outdoors', 'Books & Media', 'Toys & Games',
+          'Food & Beverages', 'Office Supplies', 'Pet Supplies', 'Baby & Kids',
+          'Tools & DIY'
         ];
         
+        // Check if category matches any valid category
         const finalCategory = validCategories.find(valid => 
-          category.toLowerCase() === valid.toLowerCase()
+          normalizedCategory.toLowerCase() === valid.toLowerCase() ||
+          normalizedCategory.toLowerCase().includes(valid.toLowerCase()) ||
+          valid.toLowerCase().includes(normalizedCategory.toLowerCase())
         ) || "Uncategorized";
         
         console.log(`Final category for "${product.name}": "${finalCategory}"`);
 
-        // Update the product
+        // Update the product with the new category
         const { error: updateError } = await supabase
           .from('products')
           .update({ category: finalCategory, updated_at: new Date().toISOString() })
@@ -169,8 +278,8 @@ EXAMPLES:
           });
         }
 
-        // Small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Add delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
         
       } catch (error) {
         console.error(`Error processing product ${product.id}:`, error);
