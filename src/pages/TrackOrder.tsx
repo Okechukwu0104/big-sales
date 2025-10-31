@@ -37,7 +37,7 @@ const TrackOrder = () => {
       const { data, error } = await supabase
         .from('orders')
         .select('*')
-        .or(`id.eq.${searchValue},customer_email.ilike.%${searchValue}%`)
+        .or(`id.eq.${searchValue},customer_email.ilike.*${searchValue}*`)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
