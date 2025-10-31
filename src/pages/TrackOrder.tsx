@@ -33,11 +33,23 @@ const TrackOrder = () => {
     queryFn: async () => {
       if (!searchValue.trim()) return null;
 
-      // Try to find order by ID or email
-      const { data, error } = await supabase
+      // Check if search value looks like a UUID (8-4-4-4-12 format)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isUUID = uuidRegex.test(searchValue.trim());
+
+      let query = supabase
         .from('orders')
-        .select('*')
-        .or(`id.eq.${searchValue},customer_email.ilike.*${searchValue}*`)
+        .select('*');
+
+      if (isUUID) {
+        // Search by ID if it looks like a UUID
+        query = query.eq('id', searchValue.trim());
+      } else {
+        // Search by email if it's not a UUID
+        query = query.ilike('customer_email', `%${searchValue.trim()}%`);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
