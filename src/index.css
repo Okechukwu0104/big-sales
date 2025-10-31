@@ -222,4 +222,13 @@ All colors MUST be HSL.
     background-size: 200% 100%;
     animation: shimmer 2s ease-in-out infinite;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

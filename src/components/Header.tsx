@@ -1,4 +1,4 @@
-import { ShoppingCart, MessageCircle, Instagram, Facebook } from 'lucide-react';
+import { ShoppingCart, MessageCircle, Instagram, Facebook, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCartContext } from '@/components/ui/cart-provider';
@@ -116,6 +116,13 @@ export const Header = () => {
                 label="Follow us on Facebook"
               />
             </div>
+
+            {/* Track Order Button */}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/track-order">
+                <Search className="h-4 w-4" />
+              </Link>
+            </Button>
 
             {/* Cart Button */}
             <Button variant="outline" size="sm" asChild>
