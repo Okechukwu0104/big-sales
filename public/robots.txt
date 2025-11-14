@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+Sitemap: https://big-sales.lovable.app/sitemap.xml
+
