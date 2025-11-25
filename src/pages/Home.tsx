@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
@@ -70,16 +69,18 @@ const Home = () => {
 
   return (
     <div className="min-h-screen gradient-hero relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse delay-500"></div>
-      </div>
-      
+      {/* Header - now fixed */}
       <Header />
       
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      {/* Add top padding to account for fixed header */}
+      <main className="container mx-auto px-4 py-8 relative z-10 mt-20">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+        </div>
+        
         <section className="mb-16">
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-8xl font-bold mb-6 float">
@@ -97,87 +98,91 @@ const Home = () => {
         </section>
 
         <section>
-          <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-            <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
-            
-            {/* Search Bar */}
-            <div className="relative w-full md:w-80">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-muted-foreground" />
+          {/* Sticky Search Section */}
+          <div className="sticky top-20 bg-background/80 backdrop-blur-md rounded-xl p-6 mb-8 z-30 border border-border/50 shadow-lg">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
+              
+              {/* Search Bar */}
+              <div className="relative w-full md:w-80">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background/50 backdrop-blur-sm"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary "
-              />
             </div>
+            
+            {/* Category Filter with Horizontal Scroll */}
+            {categories.length > 1 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2">
+                  {/* Left scroll button - only show if there are many categories */}
+                  {categories.length > 6 && (
+                    <button
+                      onClick={() => scroll('left')}
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                  )}
+                  
+                  {/* Scrollable container */}
+                  <div 
+                    ref={scrollContainerRef}
+                    className="flex-1 flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth py-2"
+                  >
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                          selectedCategory === category
+                            ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                            : 'gradient-glass hover:scale-105 hover:bg-accent/50'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Right scroll button - only show if there are many categories */}
+                  {categories.length > 6 && (
+                    <button
+                      onClick={() => scroll('right')}
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Search results info */}
+            {(searchTerm || selectedCategory !== 'All') && (
+              <div className="mt-4 text-center">
+                <p className="text-muted-foreground">
+                  {filteredProducts.length > 0 
+                    ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'}${
+                        searchTerm ? ` matching "${searchTerm}"` : ''
+                      }${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`
+                    : `No products found${searchTerm ? ` matching "${searchTerm}"` : ''}${
+                        selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''
+                      }`
+                  }
+                </p>
+              </div>
+            )}
           </div>
           
-          {/* Category Filter with Horizontal Scroll - ONLY ONE SECTION */}
-          {categories.length > 1 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2">
-                {/* Left scroll button - only show if there are many categories */}
-                {categories.length > 6 && (
-                  <button
-                    onClick={() => scroll('left')}
-                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                )}
-                
-                {/* Scrollable container */}
-                <div 
-                  ref={scrollContainerRef}
-                  className="flex-1 flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth py-2"
-                >
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                        selectedCategory === category
-                          ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                          : 'gradient-glass hover:scale-105 hover:bg-accent/50'
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Right scroll button - only show if there are many categories */}
-                {categories.length > 6 && (
-                  <button
-                    onClick={() => scroll('right')}
-                    className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Search results info */}
-          {(searchTerm || selectedCategory !== 'All') && (
-            <div className="mb-6 text-center">
-              <p className="text-muted-foreground">
-                {filteredProducts.length > 0 
-                  ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'}${
-                      searchTerm ? ` matching "${searchTerm}"` : ''
-                    }${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`
-                  : `No products found${searchTerm ? ` matching "${searchTerm}"` : ''}${
-                      selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''
-                    }`
-                }
-              </p>
-            </div>
-          )}
-          
+          {/* Products Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -209,7 +214,6 @@ const Home = () => {
           )}
         </section>
       </main>
-
     </div>
   );
 };
