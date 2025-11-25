@@ -68,20 +68,21 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-hero relative overflow-hidden">
-      {/* Header - now fixed */}
+    <div className="min-h-screen gradient-hero relative">
+      {/* Header - fixed */}
       <Header />
       
-      {/* Add top padding to account for fixed header */}
-      <main className="container mx-auto px-4 py-8 relative z-10 mt-20">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse delay-500"></div>
-        </div>
-        
-        <section className="mb-16">
+      {/* Main content with proper spacing for fixed header */}
+      <main className="relative z-10 pt-20">
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-8 mb-16">
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden -z-10">
+            <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse delay-500"></div>
+          </div>
+          
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-8xl font-bold mb-6 float">
               Welcome to <span className="glow-text">BIG SALES</span>
@@ -97,30 +98,31 @@ const Home = () => {
           </div>
         </section>
 
-        <section>
-          {/* Sticky Search Section */}
-          <div className="sticky top-20 bg-background/80 backdrop-blur-md rounded-xl p-6 mb-8 z-30 border border-border/50 shadow-lg">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
-              
-              {/* Search Bar */}
-              <div className="relative w-full md:w-80">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-muted-foreground" />
+        {/* Products Section */}
+        <section className="relative">
+          {/* Sticky Search Section - Moved outside the container */}
+          <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50 shadow-lg py-6">
+            <div className="container mx-auto px-4">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-4">
+                <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
+                
+                {/* Search Bar */}
+                <div className="relative w-full md:w-80">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background/80"
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background/50 backdrop-blur-sm"
-                />
               </div>
-            </div>
-            
-            {/* Category Filter with Horizontal Scroll */}
-            {categories.length > 1 && (
-              <div className="mt-6">
+              
+              {/* Category Filter with Horizontal Scroll */}
+              {categories.length > 1 && (
                 <div className="flex items-center gap-2">
                   {/* Left scroll button - only show if there are many categories */}
                   {categories.length > 6 && (
@@ -162,56 +164,58 @@ const Home = () => {
                     </button>
                   )}
                 </div>
+              )}
+              
+              {/* Search results info */}
+              {(searchTerm || selectedCategory !== 'All') && (
+                <div className="mt-4 text-center">
+                  <p className="text-muted-foreground">
+                    {filteredProducts.length > 0 
+                      ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'}${
+                          searchTerm ? ` matching "${searchTerm}"` : ''
+                        }${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`
+                      : `No products found${searchTerm ? ` matching "${searchTerm}"` : ''}${
+                          selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''
+                        }`
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="container mx-auto px-4 py-8">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="animate-pulse card-modern p-6">
+                    <div className="bg-muted aspect-square rounded-lg mb-4 shimmer"></div>
+                    <div className="bg-muted h-4 rounded mb-2 shimmer"></div>
+                    <div className="bg-muted h-4 rounded w-3/4 shimmer"></div>
+                  </div>
+                ))}
               </div>
-            )}
-            
-            {/* Search results info */}
-            {(searchTerm || selectedCategory !== 'All') && (
-              <div className="mt-4 text-center">
-                <p className="text-muted-foreground">
-                  {filteredProducts.length > 0 
-                    ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'}${
-                        searchTerm ? ` matching "${searchTerm}"` : ''
-                      }${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`
-                    : `No products found${searchTerm ? ` matching "${searchTerm}"` : ''}${
-                        selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''
-                      }`
-                  }
-                </p>
+            ) : filteredProducts && filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="gradient-glass p-8 rounded-2xl max-w-md mx-auto">
+                  <div className="text-6xl mb-4">🛍️</div>
+                  <div className="text-muted-foreground text-xl font-medium">
+                    {searchTerm || selectedCategory !== 'All'
+                      ? "No products found. Try different keywords or select another category!"
+                      : "No products available at the moment. Check back soon!"
+                    }
+                  </div>
+                </div>
               </div>
             )}
           </div>
-          
-          {/* Products Grid */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="animate-pulse card-modern p-6">
-                  <div className="bg-muted aspect-square rounded-lg mb-4 shimmer"></div>
-                  <div className="bg-muted h-4 rounded mb-2 shimmer"></div>
-                  <div className="bg-muted h-4 rounded w-3/4 shimmer"></div>
-                </div>
-              ))}
-            </div>
-          ) : filteredProducts && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="gradient-glass p-8 rounded-2xl max-w-md mx-auto">
-                <div className="text-6xl mb-4">🛍️</div>
-                <div className="text-muted-foreground text-xl font-medium">
-                  {searchTerm || selectedCategory !== 'All'
-                    ? "No products found. Try different keywords or select another category!"
-                    : "No products available at the moment. Check back soon!"
-                  }
-                </div>
-              </div>
-            </div>
-          )}
         </section>
       </main>
     </div>
