@@ -25,15 +25,24 @@ export const Header = () => {
 
   const totalItems = getTotalItems();
 
-  // Generate social media links from stored data
-  const generateWhatsAppLink = () => {
+  // Generate WhatsApp links - both deep link and web link
+  const generateWhatsAppLinks = () => {
     if (!storeConfig?.whatsapp_number) return null;
     
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
     const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about your store');
     
-    return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    // Deep link for mobile apps
+    const deepLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
+    
+    // Web link for desktop
+    const webLink = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    
+    // API link as fallback
+    const apiLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    
+    return { deepLink, webLink, apiLink };
   };
 
   const generateInstagramLink = () => {
@@ -48,11 +57,55 @@ export const Header = () => {
     return `https://www.facebook.com/${username}/`;
   };
 
-  const whatsappLink = generateWhatsAppLink();
+  const whatsappLinks = generateWhatsAppLinks();
   const instagramLink = generateInstagramLink();
   const facebookLink = generateFacebookLink();
 
-  // Social media button component that matches cart button styling
+  // WhatsApp button with dual linking
+  const WhatsAppButton = () => {
+    if (!whatsappLinks) return null;
+
+    const handleWhatsAppClick = () => {
+      // Check if user is on mobile
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Try deep link first for mobile
+        window.location.href = whatsappLinks.deepLink;
+        
+        // Fallback to API link if deep link fails
+        setTimeout(() => {
+          if (!document.hidden) {
+            window.open(whatsappLinks.apiLink, '_blank');
+          }
+        }, 2000);
+      } else {
+        // For desktop, try web WhatsApp first
+        window.open(whatsappLinks.webLink, '_blank');
+        
+        // Fallback to API link if web version fails
+        setTimeout(() => {
+          if (window.closed === false) {
+            window.open(whatsappLinks.apiLink, '_blank');
+          }
+        }, 1000);
+      }
+    };
+
+    return (
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={handleWhatsAppClick}
+        className="h-9 w-9 p-0"
+        aria-label="Contact us on WhatsApp"
+      >
+        <MessageCircle className="h-4 w-4" />
+      </Button>
+    );
+  };
+
+  // Social media button component for other platforms
   const SocialButton = ({ 
     href, 
     icon: Icon, 
@@ -69,7 +122,7 @@ export const Header = () => {
         variant="outline" 
         size="sm" 
         asChild
-        className="h-9 w-9 p-0" // Match cart button dimensions
+        className="h-9 w-9 p-0"
       >
         <a 
           href={href}
@@ -84,7 +137,7 @@ export const Header = () => {
   };
 
   return ( 
-    <header className="bg-background border-b border-border">
+    <header className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
@@ -97,14 +150,10 @@ export const Header = () => {
             />
           </Link>
           
-          <div className="flex items-center space-x-2"> {/* Reduced spacing */}
+          <div className="flex items-center space-x-2">
             {/* Social Media Links */}
             <div className="flex items-center space-x-2">
-              <SocialButton 
-                href={whatsappLink}
-                icon={MessageCircle}
-                label="Contact us on WhatsApp"
-              />
+              <WhatsAppButton />
               <SocialButton 
                 href={instagramLink}
                 icon={Instagram}
