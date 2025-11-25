@@ -76,8 +76,7 @@ const Home = () => {
       if (
         showMobileFilters && 
         mobileFiltersRef.current && 
-        !mobileFiltersRef.current.contains(event.target as Node) &&
-        !(event.target as Element).closest('button[class*="lg:hidden"]')
+        !mobileFiltersRef.current.contains(event.target as Node)
       ) {
         setShowMobileFilters(false);
       }
@@ -238,16 +237,19 @@ const Home = () => {
 
           {/* Mobile Filters Overlay */}
           {showMobileFilters && (
-            <div className="lg:hidden fixed inset-0 z-40 mt-4">
-              <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
-              <div ref={mobileFiltersRef} className="absolute top-0 left-0 right-0 bg-white rounded-b-2xl shadow-xl p-6">
+            <>
+              <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowMobileFilters(false)} />
+              <div 
+                ref={mobileFiltersRef}
+                className="lg:hidden fixed top-20 left-4 right-4 bg-white rounded-2xl shadow-xl p-6 z-50 animate-in slide-in-from-top-5 duration-300"
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Filters</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
                   <button
                     onClick={() => setShowMobileFilters(false)}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-5 w-5 text-gray-600" />
                   </button>
                 </div>
                 
@@ -277,17 +279,14 @@ const Home = () => {
                 
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <button
-                    onClick={() => {
-                      setSelectedCategory('All');
-                      setShowMobileFilters(false);
-                    }}
+                    onClick={() => setShowMobileFilters(false)}
                     className="w-full py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-colors"
                   >
                     Apply Filters
                   </button>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 
