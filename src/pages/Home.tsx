@@ -94,8 +94,9 @@ const Home = () => {
       {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-amber-500/10 transform skew-y-3 scale-125"></div>
+<section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
+  <div className="absolute inset-0 bg-black/5 backdrop-blur-xs"></div>
+
           <div className="container mx-auto px-4 py-16 relative">
             <div className="max-w-4xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-orange-200">
