@@ -3,12 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
-import { useState, useMemo, useRef } from 'react';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const { data: products, isLoading } = useQuery({
@@ -67,86 +69,147 @@ const Home = () => {
     }
   };
 
+  // Close mobile filters when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMobileFilters) {
+        setShowMobileFilters(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileFilters]);
+
   return (
-    <div className="min-h-screen gradient-hero relative">
-      {/* Header - fixed */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Header */}
       <Header />
       
-      {/* Main content with proper spacing for fixed header */}
-      <main className="relative z-10 pt-20">
+      {/* Main Content */}
+      <main className="pt-20">
         {/* Hero Section */}
-        <section className="container mx-auto px-4 py-8 mb-16">
-          {/* Animated background elements */}
-          <div className="absolute inset-0 overflow-hidden -z-10">
-            <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-            <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse delay-500"></div>
-          </div>
-          
-          <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-8xl font-bold mb-6 float">
-              Welcome to <span className="glow-text">BIG SALES</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Discover amazing products at unbeatable prices. Quality guaranteed, fast shipping, excellent customer service.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-4">
-              <div className="px-4 py-2 gradient-glass rounded-full text-sm font-medium">✨ Premium Quality</div>
-              <div className="px-4 py-2 gradient-glass rounded-full text-sm font-medium">🚚 Fast Shipping</div>
-              <div className="px-4 py-2 gradient-glass rounded-full text-sm font-medium">💝 Great Prices</div>
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 transform skew-y-3 scale-125"></div>
+          <div className="container mx-auto px-4 py-16 relative">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-blue-200">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">Discover Amazing Deals</span>
+              </div>
+              
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                BIG SALES
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+                Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
+              </p>
+              
+              <div className="flex flex-wrap justify-center gap-4 mb-12">
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-gray-700">Premium Quality</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-gray-700">Fast Shipping</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-gray-700">Best Prices</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Products Section */}
-        <section className="relative">
-          {/* Sticky Search Section - Moved outside the container */}
-          <div className="sticky top-20 z-40 bg-background/95 backdrop-blur-lg border-b border-border/50 shadow-lg py-6">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-4">
-                <h2 className="text-4xl font-bold hero-text">Our Amazing Products</h2>
-                
+        {/* Floating Search Bar */}
+        <div className="sticky top-20 z-30 px-4 py-4 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+          <div className="container mx-auto">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+              {/* Left Section - Title and Results */}
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold text-gray-900 hidden sm:block">
+                  Our Products
+                </h2>
+                {(searchTerm || selectedCategory !== 'All') && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+                    </span>
+                    {(searchTerm || selectedCategory !== 'All') && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedCategory('All');
+                        }}
+                        className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                      >
+                        <X className="h-3 w-3" />
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Section - Search and Filters */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 {/* Search Bar */}
-                <div className="relative w-full md:w-80">
+                <div className={`relative transition-all duration-200 ${
+                  isSearchFocused ? 'flex-1' : 'w-full lg:w-80'
+                }`}>
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-muted-foreground" />
+                    <Search className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
                     placeholder="Search products..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background/80"
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                   />
                 </div>
+
+                {/* Mobile Filter Button */}
+                <button
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  className="lg:hidden flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors"
+                >
+                  <Filter className="h-5 w-5" />
+                  <span>Filters</span>
+                </button>
               </div>
-              
-              {/* Category Filter with Horizontal Scroll */}
-              {categories.length > 1 && (
+            </div>
+
+            {/* Category Filters - Desktop */}
+            {categories.length > 1 && (
+              <div className="hidden lg:block mt-4">
                 <div className="flex items-center gap-2">
-                  {/* Left scroll button - only show if there are many categories */}
                   {categories.length > 6 && (
                     <button
                       onClick={() => scroll('left')}
-                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
                   )}
                   
-                  {/* Scrollable container */}
                   <div 
                     ref={scrollContainerRef}
-                    className="flex-1 flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth py-2"
+                    className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth py-2"
                   >
                     {categories.map((category) => (
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`flex-shrink-0 px-6 py-3 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
                           selectedCategory === category
-                            ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                            : 'gradient-glass hover:scale-105 hover:bg-accent/50'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                         }`}
                       >
                         {category}
@@ -154,68 +217,109 @@ const Home = () => {
                     ))}
                   </div>
 
-                  {/* Right scroll button - only show if there are many categories */}
                   {categories.length > 6 && (
                     <button
                       onClick={() => scroll('right')}
-                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-background/80 border border-border rounded-full hover:bg-accent transition-colors z-10"
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   )}
                 </div>
-              )}
-              
-              {/* Search results info */}
-              {(searchTerm || selectedCategory !== 'All') && (
-                <div className="mt-4 text-center">
-                  <p className="text-muted-foreground">
-                    {filteredProducts.length > 0 
-                      ? `Found ${filteredProducts.length} product${filteredProducts.length === 1 ? '' : 's'}${
-                          searchTerm ? ` matching "${searchTerm}"` : ''
-                        }${selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}`
-                      : `No products found${searchTerm ? ` matching "${searchTerm}"` : ''}${
-                          selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''
-                        }`
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Products Grid */}
-          <div className="container mx-auto px-4 py-8">
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="animate-pulse card-modern p-6">
-                    <div className="bg-muted aspect-square rounded-lg mb-4 shimmer"></div>
-                    <div className="bg-muted h-4 rounded mb-2 shimmer"></div>
-                    <div className="bg-muted h-4 rounded w-3/4 shimmer"></div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="gradient-glass p-8 rounded-2xl max-w-md mx-auto">
-                  <div className="text-6xl mb-4">🛍️</div>
-                  <div className="text-muted-foreground text-xl font-medium">
-                    {searchTerm || selectedCategory !== 'All'
-                      ? "No products found. Try different keywords or select another category!"
-                      : "No products available at the moment. Check back soon!"
-                    }
-                  </div>
-                </div>
               </div>
             )}
           </div>
+
+          {/* Mobile Filters Overlay */}
+          {showMobileFilters && (
+            <div className="lg:hidden fixed inset-0 bg-black/50 z-40 mt-4">
+              <div className="absolute top-0 left-0 right-0 bg-white rounded-b-2xl shadow-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Filters</h3>
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-3">Categories</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => {
+                            setSelectedCategory(category);
+                            setShowMobileFilters(false);
+                          }}
+                          className={`p-3 rounded-xl text-sm font-medium transition-all border ${
+                            selectedCategory === category
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Products Grid */}
+        <section className="container mx-auto px-4 py-8">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                  <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
+                  <div className="bg-gray-200 h-4 rounded mb-2"></div>
+                  <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts && filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {searchTerm || selectedCategory !== 'All' 
+                    ? "No products found" 
+                    : "No products available"
+                  }
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {searchTerm || selectedCategory !== 'All'
+                    ? "Try adjusting your search terms or browse different categories."
+                    : "Check back soon for new arrivals!"
+                  }
+                </p>
+                {(searchTerm || selectedCategory !== 'All') && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedCategory('All');
+                    }}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    View All Products
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>
