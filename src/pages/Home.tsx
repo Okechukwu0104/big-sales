@@ -94,8 +94,11 @@ const Home = () => {
       {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section */}
-<section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
-  <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
+        <section className="relative overflow-hidden bg-white">
+          {/* CSS Pattern - Loads Instantly */}
+          <div className="absolute inset-0 bg-[linear-gradient(45deg,#fed7aa_25%,transparent_25%),linear-gradient(-45deg,#fed7aa_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#fed7aa_75%),linear-gradient(-45deg,transparent_75%,#fed7aa_75%)] bg-[size:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] opacity-10"></div>
+          
+          <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
 
           <div className="container mx-auto px-4 py-16 relative">
             <div className="max-w-4xl mx-auto text-center">
@@ -108,7 +111,7 @@ const Home = () => {
                 BIG SALES
               </h1>
               
-              <p className="text-xl md:text-2xl text-orange-200 mb-8 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-700 mb-8 leading-relaxed">
                 Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
               </p>
               
