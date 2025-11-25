@@ -82,7 +82,7 @@ const Home = () => {
   }, [showMobileFilters]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
       {/* Header */}
       <Header />
       
@@ -90,15 +90,15 @@ const Home = () => {
       <main className="pt-20">
         {/* Hero Section */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 transform skew-y-3 scale-125"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-amber-500/10 transform skew-y-3 scale-125"></div>
           <div className="container mx-auto px-4 py-16 relative">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-blue-200">
-                <Sparkles className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Discover Amazing Deals</span>
+              <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-orange-200">
+                <Sparkles className="h-4 w-4 text-orange-600" />
+                <span className="text-sm font-medium text-orange-700">Discover Amazing Deals</span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                 BIG SALES
               </h1>
               
@@ -112,11 +112,11 @@ const Home = () => {
                   <span className="text-sm font-medium text-gray-700">Premium Quality</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-gray-700">Fast Shipping</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                  <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-gray-700">Best Prices</span>
                 </div>
               </div>
@@ -170,7 +170,7 @@ const Home = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                   />
                 </div>
 
@@ -208,7 +208,7 @@ const Home = () => {
                         onClick={() => setSelectedCategory(category)}
                         className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
                           selectedCategory === category
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
                             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                         }`}
                       >
@@ -257,7 +257,7 @@ const Home = () => {
                           }}
                           className={`p-3 rounded-xl text-sm font-medium transition-all border ${
                             selectedCategory === category
-                              ? 'bg-blue-600 text-white border-blue-600'
+                              ? 'bg-orange-600 text-white border-orange-600'
                               : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                           }`}
                         >
@@ -312,7 +312,7 @@ const Home = () => {
                       setSearchTerm('');
                       setSelectedCategory('All');
                     }}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                   >
                     View All Products
                   </button>
