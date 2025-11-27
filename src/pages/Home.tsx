@@ -94,8 +94,8 @@ const Home = () => {
       {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section */}
-<section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
-  <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
+        <section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
+          <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
 
           <div className="container mx-auto px-4 py-16 relative">
             <div className="max-w-4xl mx-auto text-center">
@@ -133,7 +133,7 @@ const Home = () => {
         {/* Floating Search Bar */}
         <div className="sticky top-20 z-30 px-4 py-4 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
           <div className="container mx-auto">
-            <div className="flex flex-row lg:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
               {/* Left Section - Title and Results */}
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-bold text-gray-900 hidden sm:block">
@@ -162,32 +162,54 @@ const Home = () => {
 
               {/* Right Section - Search and Filters */}
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                {/* Search Bar */}
-                <div className={`relative transition-all duration-200 ${
-                  isSearchFocused ? 'flex-1' : 'w-full lg:w-80'
-                }`}>
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                {/* Mobile: Search and Filter in one line */}
+                <div className="lg:hidden flex gap-3 w-full">
+                  {/* Search Bar */}
+                  <div className={`relative transition-all duration-200 flex-1`}>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setIsSearchFocused(false)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                  />
+
+                  {/* Mobile Filter Button */}
+                  <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors flex-shrink-0"
+                  >
+                    <Filter className="h-5 w-5" />
+                    <span className="sr-only">Filters</span>
+                  </button>
                 </div>
 
-                {/* Mobile Filter Button */}
-                <button
-                  onClick={() => setShowMobileFilters(!showMobileFilters)}
-                  className="lg:hidden flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors"
-                >
-                  <Filter className="h-5 w-5" />
-                  <span>Filters</span>
-                </button>
+                {/* Desktop: Original layout */}
+                <div className="hidden lg:flex flex-row gap-3 w-full lg:w-auto">
+                  {/* Search Bar */}
+                  <div className={`relative transition-all duration-200 ${
+                    isSearchFocused ? 'flex-1' : 'w-80'
+                  }`}>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setIsSearchFocused(false)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
