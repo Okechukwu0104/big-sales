@@ -133,7 +133,7 @@ const Home = () => {
         {/* Floating Search Bar */}
         <div className="sticky top-20 z-30 px-4 py-4 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
           <div className="container mx-auto">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-row lg:flex-row gap-4 items-center justify-between">
               {/* Left Section - Title and Results */}
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-bold text-gray-900 hidden sm:block">
