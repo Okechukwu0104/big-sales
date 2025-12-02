@@ -11,6 +11,8 @@ import { useCartContext } from '@/components/ui/cart-provider';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { ReviewsList } from '@/components/ReviewsList';
+import { ReviewForm } from '@/components/ReviewForm';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -285,6 +287,20 @@ const ProductDetail = () => {
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Add to Cart
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16 space-y-8">
+          <h2 className="text-2xl font-bold text-slate-900">Customer Reviews</h2>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <ReviewsList productId={id!} />
+            </div>
+            <div>
+              <ReviewForm productId={id!} />
             </div>
           </div>
         </div>

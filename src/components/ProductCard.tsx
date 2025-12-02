@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Product } from '@/types';
+import { Product, Review } from '@/types';
 import { useCartContext } from '@/components/ui/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -136,6 +136,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   const currentlyLiked = user ? isLiked : guestLiked;
 
+  // Fetch reviews to calculate average rating
+  const { data: reviews } = useQuery({
+    queryKey: ['reviews', product.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('product_id', product.id);
+
+      if (error) throw error;
+      return data as Pick<Review, 'rating'>[];
+    },
+  });
+
+  const averageRating = reviews?.length
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+    : 0;
+
   return (
     <Card className="group overflow-hidden card-modern hover-glow">
       <Link to={`/product/${product.id}`}>
@@ -191,6 +209,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </h3>
           </Link>
         </div>
+        
+        {reviews && reviews.length > 0 && (
+          <div className="flex items-center gap-1 mb-3">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`w-4 h-4 ${
+                  star <= Math.round(averageRating)
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-gray-300'
+                }`}
+              />
+            ))}
+            <span className="text-sm text-muted-foreground ml-1">
+              ({reviews.length})
+            </span>
+          </div>
+        )}
         
         {product.description && (
           <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
