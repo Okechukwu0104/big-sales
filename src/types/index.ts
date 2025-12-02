@@ -56,3 +56,15 @@ export interface AfricanCountry {
   currency_symbol: string;
   created_at: string;
 }
+
+export interface Review {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  rating: number;
+  review_text: string | null;
+  reviewer_name: string;
+  reviewer_email: string | null;
+  created_at: string;
+  updated_at: string;
+}
