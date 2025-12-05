@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Review } from '@/types';
 import { Star } from 'lucide-react';
 import { format } from 'date-fns';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface ReviewsListProps {
   productId: string;
 }
 
 export const ReviewsList = ({ productId }: ReviewsListProps) => {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
   const { data: reviews, isLoading } = useQuery({
     queryKey: ['reviews', productId],
     queryFn: async () => {
@@ -83,6 +87,19 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
               {review.review_text && (
                 <p className="text-foreground">{review.review_text}</p>
               )}
+              {review.images && review.images.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {review.images.map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`Review photo ${index + 1}`}
+                      className="w-20 h-20 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setSelectedImage(image)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ))
         ) : (
@@ -91,6 +108,18 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
           </p>
         )}
       </div>
+
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-3xl p-2">
+          {selectedImage && (
+            <img
+              src={selectedImage}
+              alt="Review photo"
+              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

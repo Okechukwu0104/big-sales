@@ -65,6 +65,7 @@ export interface Review {
   review_text: string | null;
   reviewer_name: string;
   reviewer_email: string | null;
+  images: string[] | null;
   created_at: string;
   updated_at: string;
 }
