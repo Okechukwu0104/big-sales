@@ -155,6 +155,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          images: string[] | null
           product_id: string
           rating: number
           review_text: string | null
@@ -166,6 +167,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          images?: string[] | null
           product_id: string
           rating: number
           review_text?: string | null
@@ -177,6 +179,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          images?: string[] | null
           product_id?: string
           rating?: number
           review_text?: string | null
