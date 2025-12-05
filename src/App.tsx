@@ -37,27 +37,27 @@ const App = () => (
           <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={
-            <ProtectedRoute requireAdmin>
+            <ProtectedRoute>
               <AdminDashboard />
             </ProtectedRoute>
           } />
           <Route path="/admin/products" element={
-            <ProtectedRoute requireAdmin>
+            <ProtectedRoute>
               <AdminProducts />
             </ProtectedRoute>
           } />
           <Route path="/admin/orders" element={
-            <ProtectedRoute requireAdmin>
+            <ProtectedRoute>
               <AdminOrders />
             </ProtectedRoute>
           } />
           <Route path="/admin/settings" element={
-            <ProtectedRoute requireAdmin>
+            <ProtectedRoute>
               <AdminSettings />
             </ProtectedRoute>
           } />
           <Route path="/admin/balance" element={
-            <ProtectedRoute requireAdmin>
+            <ProtectedRoute>
               <AdminBalance />
             </ProtectedRoute>
           } />
