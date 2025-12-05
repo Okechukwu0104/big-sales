@@ -2,12 +2,21 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Review } from '@/types';
-import { Star } from 'lucide-react';
+import { Star, BadgeCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 
 interface ReviewsListProps {
   productId: string;
+}
+
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url?: string;
 }
 
 export const ReviewsList = ({ productId }: ReviewsListProps) => {
@@ -26,6 +35,33 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
       return data as Review[];
     },
   });
+
+  // Fetch orders to check for verified purchases
+  const { data: verifiedEmails } = useQuery({
+    queryKey: ['verified-purchases', productId],
+    queryFn: async () => {
+      const { data: orders, error } = await supabase
+        .from('orders')
+        .select('customer_email, order_items');
+
+      if (error) throw error;
+      
+      // Find emails of customers who purchased this product
+      const emails = new Set<string>();
+      orders?.forEach(order => {
+        const items = order.order_items as unknown as OrderItem[];
+        if (Array.isArray(items) && items.some(item => item.id === productId)) {
+          emails.add(order.customer_email.toLowerCase());
+        }
+      });
+      return emails;
+    },
+  });
+
+  const isVerifiedPurchase = (email: string | null) => {
+    if (!email || !verifiedEmails) return false;
+    return verifiedEmails.has(email.toLowerCase());
+  };
 
   const averageRating = reviews?.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
@@ -79,6 +115,12 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
                     ))}
                   </div>
                   <span className="font-semibold">{review.reviewer_name}</span>
+                  {isVerifiedPurchase(review.reviewer_email) && (
+                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                      <BadgeCheck className="w-3 h-3" />
+                      Verified Purchase
+                    </Badge>
+                  )}
                 </div>
                 <span className="text-sm text-muted-foreground">
                   {format(new Date(review.created_at), 'MMM d, yyyy')}
