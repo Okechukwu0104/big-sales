@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { Package, ShoppingBag, Settings, LogOut } from 'lucide-react';
+import { Package, ShoppingBag, Settings, LogOut, MessageSquare, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Package className="mr-2 h-5 w-5" />
+                <DollarSign className="mr-2 h-5 w-5" />
                 Balance Sheet
               </CardTitle>
             </CardHeader>
@@ -143,6 +143,23 @@ const AdminDashboard = () => {
               </p>
               <Button asChild className="w-full">
                 <Link to="/admin/balance">View Balance</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <MessageSquare className="mr-2 h-5 w-5" />
+                Reviews Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                View and moderate all product reviews.
+              </p>
+              <Button asChild className="w-full">
+                <Link to="/admin/reviews">Manage Reviews</Link>
               </Button>
             </CardContent>
           </Card>

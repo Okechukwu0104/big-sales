@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, MessageCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { CheckCircle, MessageCircle, Star } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StoreConfig } from '@/types';
@@ -11,9 +11,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
+interface OrderItem {
+  product: {
+    id: string;
+    name: string;
+  };
+}
+
 const OrderSuccess = () => {
   const { toast } = useToast();
+  const location = useLocation();
   const [customerRemark, setCustomerRemark] = useState('');
+  
+  // Get order items from navigation state
+  const orderItems = (location.state?.orderItems || []) as OrderItem[];
 
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
@@ -125,6 +136,32 @@ const OrderSuccess = () => {
                     Continue Shopping
                   </Link>
                 </Button>
+
+                {orderItems.length > 0 && (
+                  <div className="pt-4 border-t">
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Leave a Review
+                    </h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Help others by sharing your experience with these products:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {orderItems.map((item: OrderItem) => (
+                        <Button
+                          key={item.product.id}
+                          variant="secondary"
+                          size="sm"
+                          asChild
+                        >
+                          <Link to={`/product/${item.product.id}#reviews`}>
+                            Review {item.product.name}
+                          </Link>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Package, Truck, CheckCircle, Clock } from 'lucide-react';
+import { Search, Package, Truck, CheckCircle, Clock, Star } from 'lucide-react';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 const statusColors = {
   new: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -234,9 +235,17 @@ const TrackOrder = () => {
                           <p className="font-medium">{item.product.name}</p>
                           <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
                         </div>
-                        <p className="font-semibold">
-                          ₦{(item.product.price * item.quantity).toLocaleString()}
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <p className="font-semibold">
+                            ₦{(item.product.price * item.quantity).toLocaleString()}
+                          </p>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/product/${item.product.id}#reviews`}>
+                              <Star className="h-4 w-4 mr-1" />
+                              Review
+                            </Link>
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     <div className="flex justify-between items-center pt-4 border-t">
