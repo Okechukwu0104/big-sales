@@ -63,6 +63,15 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
     return verifiedEmails.has(email.toLowerCase());
   };
 
+  // Sort reviews: verified purchases first, then by date
+  const sortedReviews = reviews?.slice().sort((a, b) => {
+    const aVerified = isVerifiedPurchase(a.reviewer_email);
+    const bVerified = isVerifiedPurchase(b.reviewer_email);
+    if (aVerified && !bVerified) return -1;
+    if (!aVerified && bVerified) return 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   const averageRating = reviews?.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 0;
@@ -97,8 +106,8 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
       )}
 
       <div className="space-y-4">
-        {reviews && reviews.length > 0 ? (
-          reviews.map((review) => (
+        {sortedReviews && sortedReviews.length > 0 ? (
+          sortedReviews.map((review) => (
             <div key={review.id} className="border border-border rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
