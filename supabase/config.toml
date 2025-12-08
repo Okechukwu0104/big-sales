@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.batch-categorize]
 verify_jwt = true
+
+[functions.track-order]
+verify_jwt = false
