@@ -101,8 +101,6 @@ EXAMPLES:
 - "Handbag" → "Fashion & Clothing"
 - "Spray Mop" → "Home & Garden"`;
 
-        anyone that isnt here automatically figure out what category it should be. 
-
         // Clean the product description to remove repetitive text
         const cleanDescription = (product.description || '')
           .replace(/This is a complete barbering kit consisting of a professional clipper and eight \(8\) accessories\./g, '')
