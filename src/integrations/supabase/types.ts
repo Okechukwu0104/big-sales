@@ -272,7 +272,53 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      reviews_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          images: string[] | null
+          is_verified_purchase: boolean | null
+          product_id: string | null
+          rating: number | null
+          review_text: string | null
+          reviewer_name: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          images?: string[] | null
+          is_verified_purchase?: never
+          product_id?: string | null
+          rating?: number | null
+          review_text?: string | null
+          reviewer_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          images?: string[] | null
+          is_verified_purchase?: never
+          product_id?: string | null
+          rating?: number | null
+          review_text?: string | null
+          reviewer_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
@@ -280,6 +326,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_verified_purchase: {
+        Args: { p_product_id: string; p_reviewer_email: string }
         Returns: boolean
       }
     }
