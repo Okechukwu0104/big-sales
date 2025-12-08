@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Review } from '@/types';
 import { Star, BadgeCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -11,64 +10,42 @@ interface ReviewsListProps {
   productId: string;
 }
 
-interface OrderItem {
+// Public review type from the reviews_public view (no email exposed)
+interface PublicReview {
   id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image_url?: string;
+  product_id: string;
+  reviewer_name: string;
+  rating: number;
+  review_text: string | null;
+  images: string[] | null;
+  created_at: string;
+  updated_at: string;
+  user_id: string | null;
+  is_verified_purchase: boolean;
 }
 
 export const ReviewsList = ({ productId }: ReviewsListProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
+  // Use the reviews_public view which excludes email and includes verified status server-side
   const { data: reviews, isLoading } = useQuery({
     queryKey: ['reviews', productId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('reviews')
+        .from('reviews_public')
         .select('*')
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Review[];
+      return data as PublicReview[];
     },
   });
-
-  // Fetch orders to check for verified purchases
-  const { data: verifiedEmails } = useQuery({
-    queryKey: ['verified-purchases', productId],
-    queryFn: async () => {
-      const { data: orders, error } = await supabase
-        .from('orders')
-        .select('customer_email, order_items');
-
-      if (error) throw error;
-      
-      // Find emails of customers who purchased this product
-      const emails = new Set<string>();
-      orders?.forEach(order => {
-        const items = order.order_items as unknown as OrderItem[];
-        if (Array.isArray(items) && items.some(item => item.id === productId)) {
-          emails.add(order.customer_email.toLowerCase());
-        }
-      });
-      return emails;
-    },
-  });
-
-  const isVerifiedPurchase = (email: string | null) => {
-    if (!email || !verifiedEmails) return false;
-    return verifiedEmails.has(email.toLowerCase());
-  };
 
   // Sort reviews: verified purchases first, then by date
   const sortedReviews = reviews?.slice().sort((a, b) => {
-    const aVerified = isVerifiedPurchase(a.reviewer_email);
-    const bVerified = isVerifiedPurchase(b.reviewer_email);
-    if (aVerified && !bVerified) return -1;
-    if (!aVerified && bVerified) return 1;
+    if (a.is_verified_purchase && !b.is_verified_purchase) return -1;
+    if (!a.is_verified_purchase && b.is_verified_purchase) return 1;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
@@ -124,7 +101,7 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
                     ))}
                   </div>
                   <span className="font-semibold">{review.reviewer_name}</span>
-                  {isVerifiedPurchase(review.reviewer_email) && (
+                  {review.is_verified_purchase && (
                     <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                       <BadgeCheck className="w-3 h-3" />
                       Verified Purchase
