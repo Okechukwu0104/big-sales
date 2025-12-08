@@ -34,29 +34,14 @@ const TrackOrder = () => {
     queryFn: async () => {
       if (!searchValue.trim()) return null;
 
-      // Check if search value looks like a UUID (8-4-4-4-12 format)
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const isUUID = uuidRegex.test(searchValue.trim());
-
-      let query = supabase
-        .from('orders')
-        .select('*');
-
-      if (isUUID) {
-        // Search by ID if it looks like a UUID
-        query = query.eq('id', searchValue.trim());
-      } else {
-        // Search by email if it's not a UUID
-        query = query.ilike('customer_email', `%${searchValue.trim()}%`);
-      }
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke('track-order', {
+        body: { searchValue: searchValue.trim() }
+      });
 
       if (error) throw error;
-      return data ? { ...data, order_items: data.order_items as any } as Order : null;
+      if (data?.error) throw new Error(data.error);
+      
+      return data?.order ? { ...data.order, order_items: data.order.order_items as any } as Order : null;
     },
     enabled: searchSubmitted && !!searchValue.trim(),
   });
@@ -81,7 +66,7 @@ const TrackOrder = () => {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-3">Track Your Order</h1>
             <p className="text-muted-foreground text-lg">
-              Enter your order ID or email address to check your order status
+              Enter your order ID or exact email address to check your order status
             </p>
           </div>
 
@@ -92,7 +77,7 @@ const TrackOrder = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     type="text"
-                    placeholder="Order ID or Email Address"
+                    placeholder="Order ID or exact email address"
                     value={searchValue}
                     onChange={(e) => {
                       setSearchValue(e.target.value);
