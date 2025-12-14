@@ -15,7 +15,16 @@ interface OrderItem {
   product: {
     id: string;
     name: string;
+    price: number;
   };
+  quantity: number;
+}
+
+interface OrderData {
+  orderItems: OrderItem[];
+  totalAmount: number;
+  customerName: string;
+  customerPhone: string;
 }
 
 const OrderSuccess = () => {
@@ -23,8 +32,9 @@ const OrderSuccess = () => {
   const location = useLocation();
   const [customerRemark, setCustomerRemark] = useState('');
   
-  // Get order items from navigation state
-  const orderItems = (location.state?.orderItems || []) as OrderItem[];
+  // Get order data from navigation state
+  const orderData = location.state as OrderData | null;
+  const orderItems = orderData?.orderItems || [];
 
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
@@ -52,9 +62,17 @@ const OrderSuccess = () => {
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 
+    // Build order summary for WhatsApp message
+    const orderSummary = orderItems.map(item => 
+      `• ${item.product.name} x ${item.quantity}`
+    ).join('%0A');
+
     const message = 
-      `*Additional Remarks:*%0A` +
-      `${customerRemark || 'type something...'}`;
+      `Hello, I have placed an order and made payment.%0A%0A` +
+      `*Order Summary:*%0A${orderSummary}%0A%0A` +
+      `*Customer:* ${orderData?.customerName || 'N/A'}%0A` +
+      `*Phone:* ${orderData?.customerPhone || 'N/A'}%0A%0A` +
+      `${customerRemark ? `*Additional Remarks:*%0A${customerRemark}` : ''}`;
 
     const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${message}`;
     const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;

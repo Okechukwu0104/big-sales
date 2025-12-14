@@ -10,10 +10,9 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useInventory } from '@/hooks/useInventory';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { StoreConfig } from '@/types';
+import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MessageCircle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
@@ -21,7 +20,6 @@ const Checkout = () => {
   const { updateInventory } = useInventory();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [hasPaid, setHasPaid] = useState(false); // New state to track payment status
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -29,76 +27,6 @@ const Checkout = () => {
     customerPhone: '',
     shippingAddress: '',
   });
-
-  const { data: storeConfig } = useQuery({
-    queryKey: ['store-config'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('store_config')
-        .select('*')
-        .single();
-      
-      if (error) throw error;
-      return data as StoreConfig;
-    },
-  });
-
-  // Function to open WhatsApp with the pre-configured message
-  const openWhatsApp = () => {
-    if (!storeConfig?.whatsapp_number) {
-      toast({
-        title: "WhatsApp not configured",
-        description: "Please contact the store owner for payment instructions.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Clean the phone number
-    const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
-    const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
-
-    // Create order summary
-    const orderSummary = cartItems.map(item => 
-      `• ${item.product.name} x ${item.quantity} - ${formatPrice(item.product.price * item.quantity)}`
-    ).join('%0A');
-
-    const totalAmount = formatPrice(getTotalPrice());
-
-
-    const baseMessage = 'Hello, I have completed my order and made payment. Here are my order details:';
-    
-    const fullMessage = `${baseMessage}%0A%0A` +
-      `*Order Summary:*%0A` +
-      `${orderSummary}%0A` +
-      `*Total: ${totalAmount}*%0A%0A` +
-      `*My Details:*%0A` +
-      `Name: ${formData.customerName || 'Not provided'}%0A` +
-      `Phone: ${formData.customerPhone || 'Not provided'}`;
-
-    // Create both deep link and web link
-    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${fullMessage}`;
-    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${fullMessage}`;
-
-    // Try to open the deep link with fallback
-    const fallbackTimer = setTimeout(() => {
-      window.open(webLink, '_blank');
-    }, 1000);
-
-    const link = document.createElement('a');
-    link.href = deepLink;
-    link.target = '_blank';
-    
-    link.addEventListener('click', () => {
-      clearTimeout(fallbackTimer);
-    });
-    
-    setTimeout(() => {
-      clearTimeout(fallbackTimer);
-    }, 500);
-    
-    link.click();
-  };
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -125,13 +53,16 @@ const Checkout = () => {
         description: "Please make payment and contact us with proof of payment.",
       });
 
-      // Open WhatsApp with the pre-configured message
-      if (storeConfig?.whatsapp_number) {
-        openWhatsApp();
-      }
+      // Save order items and total before clearing cart
+      const orderData = {
+        orderItems: cartItems,
+        totalAmount: getTotalPrice(),
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone,
+      };
 
       clearCart();
-      navigate('/order-success');
+      navigate('/order-success', { state: orderData });
     },
     onError: (error) => {
       toast({
@@ -251,7 +182,7 @@ const Checkout = () => {
                   type="submit" 
                   className="w-full" 
                   size="lg"
-                  disabled={createOrderMutation.isPending || !hasPaid} // Disabled until payment is confirmed
+                  disabled={createOrderMutation.isPending}
                 >
                   {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
                 </Button>
@@ -259,73 +190,25 @@ const Checkout = () => {
             </CardContent>
           </Card>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex justify-between">
-                      <span>{item.product.name} x {item.quantity}</span>
-                      <span>{formatPrice(item.product.price * item.quantity)}</span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                    <span>Total</span>
-                    <span>{formatPrice(getTotalPrice())}</span>
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex justify-between">
+                    <span>{item.product.name} x {item.quantity}</span>
+                    <span>{formatPrice(item.product.price * item.quantity)}</span>
                   </div>
+                ))}
+                <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                  <span>Total</span>
+                  <span>{formatPrice(getTotalPrice())}</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Instructions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {storeConfig?.payment_details ? (
-                    <div className="bg-muted p-4 rounded-md">
-                      <pre className="whitespace-pre-wrap text-sm">{storeConfig.payment_details}</pre>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">Payment details will be provided after order confirmation.</p>
-                  )}
-                  
-                  {/* I've Paid Button */}
-                  <div className="border-t pt-4">
-                    <Button 
-                      className="w-full mb-4" 
-                      onClick={() => setHasPaid(true)}
-                      disabled={hasPaid}
-                    >
-                      {hasPaid ? 'Payment Confirmed' : 'I\'ve Paid'}
-                    </Button>
-                    
-                    <p className="text-sm text-muted-foreground mb-2">
-                      After placing your order and making payment:
-                    </p>
-                    <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
-                        className="w-full" 
-                        onClick={openWhatsApp}
-                        disabled={!storeConfig?.whatsapp_number || !hasPaid} // Disabled until payment is confirmed
-                      >
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        Contact via WhatsApp
-                      </Button>
-                      <p className="text-xs text-muted-foreground">
-                        Click to open WhatsApp with the store's pre-configured message
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
