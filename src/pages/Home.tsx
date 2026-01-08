@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
+import { TrustBadges } from '@/components/TrustBadges';
+import { TestimonialCarousel } from '@/components/TestimonialCarousel';
+import { FAQ } from '@/components/FAQ';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 
@@ -362,6 +365,15 @@ const Home = () => {
             </div>
           )}
         </section>
+
+        {/* Trust Badges Section */}
+        <TrustBadges />
+
+        {/* Customer Testimonials */}
+        <TestimonialCarousel />
+
+        {/* FAQ Section */}
+        <FAQ />
       </main>
     </div>
   );
