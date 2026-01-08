@@ -203,7 +203,7 @@ const OrderSuccess = () => {
                   </div>
                   
                   <Button variant="ghost" size="sm" onClick={openWhatsApp}>
-                    Contact Support
+                    Notify Support Of My Order
                   </Button>
                 </div>
               </div>

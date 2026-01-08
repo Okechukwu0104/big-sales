@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from 'sonner';
 
 export const Header = () => {
   const { getTotalItems } = useCartContext();
@@ -73,19 +74,43 @@ export const Header = () => {
     if (!whatsappLinks) return null;
 
     const handleWhatsAppClick = () => {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        window.location.href = whatsappLinks.deepLink;
-        setTimeout(() => {
-          if (!document.hidden) {
-            window.open(whatsappLinks.apiLink, '_blank');
-          }
-        }, 2000);
-      } else {
-        window.open(whatsappLinks.webLink, '_blank');
-      }
-    };
+    if (!storeConfig?.whatsapp_number) {
+      toast({
+        title: "WhatsApp not configured",
+        description: "Please contact the store owner directly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
+    const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
+
+
+    const message = 
+      `Hello, I need support with my order`
+
+    const deepLink = `whatsapp://send?phone=${phoneNumber.replace('+', '')}&text=${message}`;
+    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
+
+    const fallbackTimer = setTimeout(() => {
+      window.open(webLink, '_blank');
+    }, 1000);
+
+    const link = document.createElement('a');
+    link.href = deepLink;
+    link.target = '_blank';
+    
+    link.addEventListener('click', () => {
+      clearTimeout(fallbackTimer);
+    });
+    
+    setTimeout(() => {
+      clearTimeout(fallbackTimer);
+    }, 500);
+    
+    link.click();
+  };
 
     return (
       <TooltipProvider>
