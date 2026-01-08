@@ -6,73 +6,42 @@ import { Header } from '@/components/Header';
 import { TrustBadges } from '@/components/TrustBadges';
 import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles, HelpCircle } from 'lucide-react';
-
-const PRODUCTS_PER_PAGE = 16; // Number of products to load per page
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   
-  // Fetch products with pagination
-  const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', page],
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['products'],
     queryFn: async () => {
-      const from = page * PRODUCTS_PER_PAGE;
-      const to = from + PRODUCTS_PER_PAGE - 1;
-      
-      const { data, error, count } = await supabase
+      const { data, error } = await supabase
         .from('products')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      
-      // Check if there are more products to load
-      if (count !== null) {
-        setHasMore(to + 1 < count);
-      }
-      
       return data as Product[];
     },
   });
 
-  // Update allProducts when new data is fetched
-  useEffect(() => {
-    if (productsData) {
-      if (page === 0) {
-        setAllProducts(productsData);
-      } else {
-        setAllProducts(prev => [...prev, ...productsData]);
-      }
-    }
-  }, [productsData, page]);
-
   // Extract unique categories
   const categories = useMemo(() => {
-    if (!allProducts) return ['All'];
-    const uniqueCategories = new Set(allProducts.map(p => p.category).filter(Boolean));
+    if (!products) return ['All'];
+    const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
     return ['All', ...Array.from(uniqueCategories).sort()];
-  }, [allProducts]);
+  }, [products]);
 
   // Filter products based on search term and category
   const filteredProducts = useMemo(() => {
-    if (!allProducts) return [];
+    if (!products) return [];
     
-    let filtered = allProducts;
+    let filtered = products;
     
     // Filter by category
     if (selectedCategory !== 'All') {
@@ -89,37 +58,7 @@ const Home = () => {
     }
     
     return filtered;
-  }, [allProducts, searchTerm, selectedCategory]);
-
-  // Reset pagination when filters change
-  useEffect(() => {
-    setPage(0);
-    setAllProducts([]);
-  }, [searchTerm, selectedCategory]);
-
-  // Setup intersection observer for infinite scroll
-  useEffect(() => {
-    if (isLoading || !hasMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setPage(prev => prev + 1);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
-    return () => {
-      if (sentinelRef.current) {
-        observer.unobserve(sentinelRef.current);
-      }
-    };
-  }, [isLoading, hasMore]);
+  }, [products, searchTerm, selectedCategory]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -150,41 +89,10 @@ const Home = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileFilters]);
 
-  // Handle help button click
-  const handleHelpClick = () => {
-    // Using Deep for in-app help
-    if (window.Deep) {
-      // Initialize Deep conversation
-      window.Deep.initializeConversation({
-        welcomeMessage: "Hi! I'm here to help you find the perfect products. What are you looking for today?",
-        autoStart: true
-      });
-    } 
-    // Fallback to Weblink
-    else if (window.Weblink) {
-      window.Weblink.openHelpDesk({
-        category: 'shopping-assistance'
-      });
-    }
-    // Fallback to opening a help page
-    else {
-      window.open('/help', '_blank');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
       {/* Header */}
       <Header />
-      
-      {/* Floating Help Button */}
-      <button
-        onClick={handleHelpClick}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-      >
-        <HelpCircle className="h-5 w-5 group-hover:animate-pulse" />
-        <span className="font-medium">Need Help?</span>
-      </button>
       
       {/* Main Content */}
       <main className="pt-20">
@@ -244,8 +152,6 @@ const Home = () => {
                         onClick={() => {
                           setSearchTerm('');
                           setSelectedCategory('All');
-                          setPage(0);
-                          setAllProducts([]);
                         }}
                         className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
                       >
@@ -330,11 +236,7 @@ const Home = () => {
                     {categories.map((category) => (
                       <button
                         key={category}
-                        onClick={() => {
-                          setSelectedCategory(category);
-                          setPage(0);
-                          setAllProducts([]);
-                        }}
+                        onClick={() => setSelectedCategory(category)}
                         className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
                           selectedCategory === category
                             ? 'bg-orange-600 text-white border-orange-600 shadow-md'
@@ -386,8 +288,6 @@ const Home = () => {
                           key={category}
                           onClick={() => {
                             setSelectedCategory(category);
-                            setPage(0);
-                            setAllProducts([]);
                             setShowMobileFilters(false);
                           }}
                           className={`p-3 rounded-xl text-sm font-medium transition-all border ${
@@ -418,7 +318,7 @@ const Home = () => {
 
         {/* Products Grid */}
         <section className="container mx-auto px-4 py-8">
-          {isLoading && page === 0 ? (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="animate-pulse bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
@@ -429,47 +329,11 @@ const Home = () => {
               ))}
             </div>
           ) : filteredProducts && filteredProducts.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-              
-              {/* Loading indicator for additional pages */}
-              {isLoading && page > 0 && (
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={`loading-${i}`} className="animate-pulse bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                      <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
-                      <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                      <div className="bg-gray-200 h-4 rounded w-3/4"></div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {/* Sentinel element for infinite scroll */}
-              <div 
-                ref={sentinelRef}
-                className="h-10 mt-8 flex items-center justify-center"
-              >
-                {hasMore && !isLoading && (
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Loading more products...</span>
-                  </div>
-                )}
-                {!hasMore && filteredProducts.length > 0 && (
-                  <div className="text-center py-8">
-                    <div className="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
-                      <span className="text-gray-600">🎉</span>
-                      <span className="text-gray-700 font-medium">You've seen all products!</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           ) : (
             <div className="text-center py-16">
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
@@ -491,8 +355,6 @@ const Home = () => {
                     onClick={() => {
                       setSearchTerm('');
                       setSelectedCategory('All');
-                      setPage(0);
-                      setAllProducts([]);
                     }}
                     className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                   >
@@ -516,20 +378,5 @@ const Home = () => {
     </div>
   );
 };
-
-// Add TypeScript declarations for Deep and Weblink
-declare global {
-  interface Window {
-    Deep?: {
-      initializeConversation: (options: {
-        welcomeMessage: string;
-        autoStart: boolean;
-      }) => void;
-    };
-    Weblink?: {
-      openHelpDesk: (options: { category: string }) => void;
-    };
-  }
-}
 
 export default Home;
