@@ -7,15 +7,17 @@ import { TrustBadges } from '@/components/TrustBadges';
 import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles, ArrowUp, HelpCircle } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
+  const faqSectionRef = useRef<HTMLDivElement>(null);
   
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
@@ -73,6 +75,34 @@ const Home = () => {
     }
   };
 
+  // Scroll to FAQ section
+  const scrollToFAQ = () => {
+    if (faqSectionRef.current) {
+      faqSectionRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // Scroll to top
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  // Show/hide scroll to top button based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Close mobile filters when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,12 +121,12 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
-      {/* Header */}
+      {/* Header - Add FAQ button */}
       <Header />
-      
+
       {/* Main Content */}
       <main className="pt-20">
-        {/* Hero Section */}
+        {/* Hero Section - Add FAQ button */}
         <section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
           <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
 
@@ -129,6 +159,15 @@ const Home = () => {
                   <span className="text-sm font-medium text-gray-700">Best Prices</span>
                 </div>
               </div>
+
+              {/* FAQ Button in Hero Section */}
+              <button
+                onClick={scrollToFAQ}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white/90 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all duration-200 border border-gray-300 hover:border-orange-400 hover:shadow-md group"
+              >
+                <HelpCircle className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Have questions? Check our FAQ</span>
+              </button>
             </div>
           </div>
         </section>
@@ -212,6 +251,16 @@ const Home = () => {
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                     />
                   </div>
+
+                  {/* FAQ Button in Search Bar Area */}
+                  <button
+                    onClick={scrollToFAQ}
+                    className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors text-gray-700 hover:text-orange-700 group"
+                    title="Frequently Asked Questions"
+                  >
+                    <HelpCircle className="h-5 w-5 text-gray-500 group-hover:text-orange-600 transition-colors" />
+                    <span className="font-medium hidden sm:inline">FAQ</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -361,6 +410,15 @@ const Home = () => {
                     View All Products
                   </button>
                 )}
+                
+                {/* FAQ button in empty state */}
+                <button
+                  onClick={scrollToFAQ}
+                  className="mt-4 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  Check FAQ for help
+                </button>
               </div>
             </div>
           )}
@@ -372,8 +430,36 @@ const Home = () => {
         {/* Customer Testimonials */}
         <TestimonialCarousel />
 
-        {/* FAQ Section */}
-        <FAQ />
+        {/* FAQ Section with ref */}
+        <div ref={faqSectionRef}>
+          <FAQ />
+        </div>
+
+        {/* Scroll to Top Button */}
+        <button
+          onClick={scrollToTop}
+          className={`fixed bottom-6 right-6 z-50 p-3 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 ${
+            showScrollTop 
+              ? 'opacity-100 translate-y-0' 
+              : 'opacity-0 translate-y-10 pointer-events-none'
+          }`}
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-6 w-6" />
+        </button>
+
+        {/* Floating FAQ Button (for mobile users) */}
+        <button
+          onClick={scrollToFAQ}
+          className={`fixed bottom-6 left-6 z-50 p-3 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-all duration-300 hover:scale-110 border border-gray-200 ${
+            showScrollTop 
+              ? 'opacity-100 translate-y-0' 
+              : 'opacity-0 translate-y-10 pointer-events-none'
+          }`}
+          aria-label="Go to FAQ section"
+        >
+          <HelpCircle className="h-6 w-6 text-orange-600" />
+        </button>
       </main>
     </div>
   );
