@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Star, Package, Search, ShoppingBag, HelpCircle } from 'lucide-react';
+import { CheckCircle, Star, Package, Search, ShoppingBag, HelpCircle, MessageCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -202,9 +202,19 @@ const OrderSuccess = () => {
                     />
                   </div>
                   
-                  <Button variant="ghost" size="sm" onClick={openWhatsApp}>
-                    Notify Support Of My Order
+                  {/* UPDATED: Changed from ghost button to bright primary button */}
+                  <Button 
+                    onClick={openWhatsApp}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0"
+                    size="lg"
+                  >
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Send My Order To BIG SALES
                   </Button>
+                  
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This will open WhatsApp to send your order details
+                  </p>
                 </div>
               </div>
 
