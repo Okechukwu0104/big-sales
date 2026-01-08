@@ -12,9 +12,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useState } from 'react';
 
 export const Header = () => {
   const { getTotalItems } = useCartContext();
+  const [whatsappClicked, setWhatsappClicked] = useState(false);
   
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
@@ -40,16 +42,19 @@ export const Header = () => {
     // Changed message to position WhatsApp as support, not sales
     const encodedMessage = encodeURIComponent('Hi, I need help with my order');
     
-    // Deep link for mobile apps
-    const deepLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
-    
-    // Web link for desktop
-    const webLink = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
-    
-    // API link as fallback
-    const apiLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
-    
-    return { deepLink, webLink, apiLink };
+    return {
+      // Deep link for mobile apps
+      deepLink: `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`,
+      
+      // Web link for desktop
+      webLink: `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`,
+      
+      // Universal link that works everywhere
+      universalLink: `https://wa.me/${phoneNumber.replace('+', '')}?text=${encodedMessage}`,
+      
+      // API link as fallback
+      apiLink: `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`,
+    };
   };
 
   const generateInstagramLink = () => {
@@ -68,23 +73,63 @@ export const Header = () => {
   const instagramLink = generateInstagramLink();
   const facebookLink = generateFacebookLink();
 
-  // WhatsApp button repositioned as support/help
+  // WhatsApp button with improved linking
   const HelpButton = () => {
     if (!whatsappLinks) return null;
 
     const handleWhatsAppClick = () => {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (whatsappClicked) return;
+      setWhatsappClicked(true);
       
-      if (isMobile) {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      // For iOS, we need to handle it differently
+      if (isIOS) {
+        // Try deep link first
         window.location.href = whatsappLinks.deepLink;
+        
+        // If deep link fails (WhatsApp not installed), open universal link
         setTimeout(() => {
           if (!document.hidden) {
-            window.open(whatsappLinks.apiLink, '_blank');
+            window.location.href = whatsappLinks.universalLink;
           }
-        }, 2000);
-      } else {
-        window.open(whatsappLinks.webLink, '_blank');
+        }, 1000);
+      } 
+      // For Android
+      else if (isMobile) {
+        // Try deep link first
+        window.location.href = whatsappLinks.deepLink;
+        
+        // If deep link fails, open in new tab with universal link
+        setTimeout(() => {
+          if (!document.hidden) {
+            window.open(whatsappLinks.universalLink, '_blank');
+          }
+        }, 1000);
+      } 
+      // For Desktop
+      else {
+        // Try web WhatsApp first
+        window.open(whatsappLinks.webLink, '_blank', 'noopener,noreferrer');
+        
+        // Fallback to API link if web version fails
+        setTimeout(() => {
+          // Check if window was blocked
+          try {
+            const newWindow = window.open();
+            if (newWindow) {
+              newWindow.location.href = whatsappLinks.apiLink;
+            }
+          } catch (e) {
+            // If all else fails, use the universal link
+            window.open(whatsappLinks.universalLink, '_blank', 'noopener,noreferrer');
+          }
+        }, 500);
       }
+      
+      // Reset clicked state after 2 seconds
+      setTimeout(() => setWhatsappClicked(false), 2000);
     };
 
     return (
@@ -97,12 +142,13 @@ export const Header = () => {
               onClick={handleWhatsAppClick}
               className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
               aria-label="Need help? Contact support"
+              disabled={whatsappClicked}
             >
               <HelpCircle className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Need help?</p>
+            <p>Need help? Contact us on WhatsApp</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
