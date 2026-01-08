@@ -4,7 +4,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { useCartContext } from '@/components/ui/cart-provider';
 import { useCurrency } from '@/hooks/useCurrency';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Minus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
+import { CartBenefits } from '@/components/TrustBadges';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, getTotalPrice } = useCartContext();
@@ -109,6 +110,8 @@ const Cart = () => {
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
               <CardContent>
+                <CartBenefits />
+                
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
@@ -124,6 +127,7 @@ const Cart = () => {
                 <Button asChild className="w-full" size="lg">
                   <Link to="/checkout">
                     Proceed to Checkout
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>

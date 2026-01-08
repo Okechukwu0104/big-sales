@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, MessageCircle, Star } from 'lucide-react';
+import { CheckCircle, Star, Package, Search, ShoppingBag, HelpCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +10,7 @@ import { StoreConfig } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface OrderItem {
   product: {
@@ -30,6 +31,7 @@ interface OrderData {
 const OrderSuccess = () => {
   const { toast } = useToast();
   const location = useLocation();
+  const { formatPrice } = useCurrency();
   const [customerRemark, setCustomerRemark] = useState('');
   
   // Get order data from navigation state
@@ -48,6 +50,9 @@ const OrderSuccess = () => {
       return data as StoreConfig;
     },
   });
+
+  // Generate a simple order reference
+  const orderRef = `ORD-${Date.now().toString(36).toUpperCase()}`;
 
   const openWhatsApp = () => {
     if (!storeConfig?.whatsapp_number) {
@@ -105,82 +110,127 @@ const OrderSuccess = () => {
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-500" />
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
+                </div>
               </div>
               <CardTitle className="text-2xl">Order Placed Successfully!</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-6">
-              <p className="text-muted-foreground">
-                Thank you for your order! Please complete these final steps.
-              </p>
-
-              <div className="bg-muted p-4 rounded-md">
-                <h3 className="font-semibold mb-2">Next Steps:</h3>
-                <ol className="text-left text-sm space-y-2">
-                  <li>1. Make your payment using the details below</li>
-                  <li>2. Add any special instructions if needed</li>
-                  <li>3. Contact us via WhatsApp with your payment proof</li>
-                </ol>
+              
+              {/* Order Reference */}
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">Order Reference</p>
+                <p className="text-xl font-mono font-bold text-foreground">{orderRef}</p>
               </div>
-
-              {storeConfig?.payment_details && (
-                <div className="bg-muted p-4 rounded-md">
-                  <h3 className="font-semibold mb-2">Payment Details:</h3>
-                  <pre className="whitespace-pre-wrap text-sm">{storeConfig.payment_details}</pre>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Order Summary */}
+              {orderItems.length > 0 && (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Package className="h-4 w-4" />
+                    Order Summary
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    {orderItems.map((item: OrderItem) => (
+                      <div key={item.product.id} className="flex justify-between">
+                        <span>{item.product.name} × {item.quantity}</span>
+                        <span>{formatPrice(item.product.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                    <div className="border-t pt-2 font-semibold flex justify-between">
+                      <span>Total</span>
+                      <span>{formatPrice(orderData?.totalAmount || 0)}</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-4">
-                <div className="text-left">
-                  <Label htmlFor="customerRemark" className="mb-2 block">
-                    Special Instructions (Optional)
-                  </Label>
-                  <Textarea
-                    id="customerRemark"
-                    placeholder="Delivery preferences, special requests, or other information..."
-                    value={customerRemark}
-                    onChange={(e) => setCustomerRemark(e.target.value)}
-                    rows={3}
-                  />
+              {/* Payment Instructions */}
+              {storeConfig?.payment_details && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2 text-amber-900">💳 Payment Details</h3>
+                  <pre className="whitespace-pre-wrap text-sm text-amber-800">{storeConfig.payment_details}</pre>
                 </div>
+              )}
 
-                <Button className="w-full" onClick={openWhatsApp}>
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Contact via WhatsApp
+              {/* What happens next */}
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2 text-blue-900">📦 What happens next?</h3>
+                <ol className="text-sm text-blue-800 space-y-2">
+                  <li>1. Make your payment using the details above</li>
+                  <li>2. We'll confirm your payment and process your order</li>
+                  <li>3. You'll receive delivery updates</li>
+                </ol>
+              </div>
+
+              {/* Primary Actions */}
+              <div className="space-y-3">
+                <Button className="w-full" size="lg" asChild>
+                  <Link to="/track-order">
+                    <Search className="mr-2 h-4 w-4" />
+                    Track Your Order
+                  </Link>
                 </Button>
                 
-                <Button variant="outline" className="w-full" asChild>
+                <Button variant="outline" className="w-full" size="lg" asChild>
                   <Link to="/">
+                    <ShoppingBag className="mr-2 h-4 w-4" />
                     Continue Shopping
                   </Link>
                 </Button>
-
-                {orderItems.length > 0 && (
-                  <div className="pt-4 border-t">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <Star className="h-4 w-4" />
-                      Leave a Review
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Help others by sharing your experience with these products:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {orderItems.map((item: OrderItem) => (
-                        <Button
-                          key={item.product.id}
-                          variant="secondary"
-                          size="sm"
-                          asChild
-                        >
-                          <Link to={`/product/${item.product.id}#reviews`}>
-                            Review {item.product.name}
-                          </Link>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
+
+              {/* Need Help - Secondary */}
+              <div className="pt-4 border-t">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    <HelpCircle className="h-4 w-4 inline mr-1" />
+                    Need help with your order?
+                  </p>
+                  
+                  <div className="text-left mb-4">
+                    <Label htmlFor="customerRemark" className="mb-2 block text-sm">
+                      Add a note for our team (optional)
+                    </Label>
+                    <Textarea
+                      id="customerRemark"
+                      placeholder="Special delivery instructions, questions, etc."
+                      value={customerRemark}
+                      onChange={(e) => setCustomerRemark(e.target.value)}
+                      rows={2}
+                      className="text-sm"
+                    />
+                  </div>
+                  
+                  <Button variant="ghost" size="sm" onClick={openWhatsApp}>
+                    Contact Support
+                  </Button>
+                </div>
+              </div>
+
+              {/* Leave Reviews - Tertiary */}
+              {orderItems.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h4 className="font-medium mb-3 flex items-center gap-2 text-sm">
+                    <Star className="h-4 w-4" />
+                    Enjoying your purchase? Leave a review!
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {orderItems.map((item: OrderItem) => (
+                      <Button
+                        key={item.product.id}
+                        variant="secondary"
+                        size="sm"
+                        asChild
+                      >
+                        <Link to={`/product/${item.product.id}#reviews`}>
+                          Review {item.product.name}
+                        </Link>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

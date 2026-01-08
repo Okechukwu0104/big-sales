@@ -7,8 +7,8 @@ import { useCartContext } from '@/components/ui/cart-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Star, Heart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Star, Heart, Zap, TrendingUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -21,6 +21,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [guestLiked, setGuestLiked] = useState(false);
 
@@ -134,6 +135,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     });
   };
 
+  // Quick buy - add to cart and go straight to checkout
+  const handleQuickBuy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+    navigate('/checkout');
+  };
+
   const currentlyLiked = user ? isLiked : guestLiked;
 
   // Fetch reviews to calculate average rating
@@ -153,6 +162,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const averageRating = reviews?.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 0;
+
+  // Urgency indicators
+  const isLowStock = product.quantity !== undefined && product.quantity > 0 && product.quantity <= 5;
+  const isPopular = product.likes_count >= 10;
 
   return (
     <Card className="group overflow-hidden card-modern hover-glow">
@@ -177,14 +190,29 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          {product.featured && (
-            <div className="absolute top-4 left-4">
+          
+          {/* Badges - top left */}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {product.featured && (
               <Badge className="gradient-accent-button border-0 text-accent-foreground">
                 <Star className="w-3 h-3 mr-1" />
                 Featured
               </Badge>
-            </div>
-          )}
+            )}
+            {isPopular && (
+              <Badge className="bg-amber-500 text-white border-0">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                Popular
+              </Badge>
+            )}
+            {isLowStock && product.in_stock && (
+              <Badge variant="destructive" className="animate-pulse">
+                <Eye className="w-3 h-3 mr-1" />
+                Only {product.quantity} left!
+              </Badge>
+            )}
+          </div>
+          
           <div className="absolute top-4 right-4">
             <Button
               variant="ghost"
@@ -252,18 +280,28 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </CardContent>
       
-      <CardFooter className="p-6 pt-0">
+      <CardFooter className="p-6 pt-0 flex gap-2">
         <Button 
           onClick={handleAddToCart} 
-          className="w-full relative overflow-hidden" 
+          className="flex-1 relative overflow-hidden" 
           size="lg"
           disabled={!product.in_stock}
-          variant={product.in_stock ? "default" : "outline"}
+          variant={product.in_stock ? "outline" : "outline"}
         >
-          <div className="shimmer absolute inset-0"></div>
-          <ShoppingCart className="h-4 w-4 mr-2 relative z-10" />
-          <span className="relative z-10">{product.in_stock ? 'Add to Cart' : 'Out of Stock'}</span>
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          <span>{product.in_stock ? 'Add to Cart' : 'Out of Stock'}</span>
         </Button>
+        {product.in_stock && (
+          <Button 
+            onClick={handleQuickBuy}
+            size="lg"
+            className="relative overflow-hidden"
+          >
+            <div className="shimmer absolute inset-0"></div>
+            <Zap className="h-4 w-4 mr-2 relative z-10" />
+            <span className="relative z-10">Buy Now</span>
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

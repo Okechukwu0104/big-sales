@@ -1,4 +1,4 @@
-import { ShoppingCart, MessageCircle, Instagram, Facebook, Search } from 'lucide-react';
+import { ShoppingCart, Instagram, Facebook, Search, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCartContext } from '@/components/ui/cart-provider';
@@ -6,6 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { StoreConfig } from '@/types';
 import { Link } from 'react-router-dom';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const Header = () => {
   const { getTotalItems } = useCartContext();
@@ -31,7 +37,8 @@ export const Header = () => {
     
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
-    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, I have a question about your store');
+    // Changed message to position WhatsApp as support, not sales
+    const encodedMessage = encodeURIComponent('Hi, I need help with my order');
     
     // Deep link for mobile apps
     const deepLink = `whatsapp://send?phone=${phoneNumber}&text=${encodedMessage}`;
@@ -61,40 +68,44 @@ export const Header = () => {
   const instagramLink = generateInstagramLink();
   const facebookLink = generateFacebookLink();
 
-  // WhatsApp button with dual linking
-  const WhatsAppButton = () => {
+  // WhatsApp button repositioned as support/help
+  const HelpButton = () => {
     if (!whatsappLinks) return null;
 
     const handleWhatsAppClick = () => {
-      // Check if user is on mobile
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
       if (isMobile) {
-        // Try deep link first for mobile
         window.location.href = whatsappLinks.deepLink;
-        
-        // Fallback to API link if deep link fails
         setTimeout(() => {
           if (!document.hidden) {
             window.open(whatsappLinks.apiLink, '_blank');
           }
         }, 2000);
       } else {
-        // For desktop, try web WhatsApp first
         window.open(whatsappLinks.webLink, '_blank');
       }
     };
 
     return (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleWhatsAppClick}
-        className="h-9 w-9 p-0"
-        aria-label="Contact us on WhatsApp"
-      >
-        <MessageCircle className="h-4 w-4" />
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleWhatsAppClick}
+              className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+              aria-label="Need help? Contact support"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Need help?</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
@@ -144,9 +155,8 @@ export const Header = () => {
           </Link>
           
           <div className="flex items-center space-x-2">
-            {/* Social Media Links */}
-            <div className="flex items-center space-x-2">
-              <WhatsAppButton />
+            {/* Social Media Links - subtle */}
+            <div className="hidden sm:flex items-center space-x-1">
               <SocialButton 
                 href={instagramLink}
                 icon={Instagram}
@@ -166,17 +176,20 @@ export const Header = () => {
               </Link>
             </Button>
 
-            {/* Cart Button */}
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/cart" className="relative">
+            {/* Cart Button - MOST PROMINENT */}
+            <Button variant="default" size="sm" asChild className="relative">
+              <Link to="/cart">
                 <ShoppingCart className="h-4 w-4" />
                 {totalItems > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
+                  <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs bg-white text-primary border border-primary">
                     {totalItems}
                   </Badge>
                 )}
               </Link>
             </Button>
+
+            {/* Help/Support - moved to end and subtle */}
+            <HelpButton />
           </div>
         </div>
       </div>

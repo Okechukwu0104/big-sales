@@ -12,7 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { CheckoutTrustBadges } from '@/components/TrustBadges';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
@@ -122,6 +123,26 @@ const Checkout = () => {
           Back to Cart
         </Link>
 
+        {/* Progress Indicator */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+              <CheckCircle className="h-5 w-5" />
+            </div>
+            <span className="text-sm font-medium">Cart</span>
+          </div>
+          <div className="w-12 h-0.5 bg-primary"></div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
+            <span className="text-sm font-medium">Checkout</span>
+          </div>
+          <div className="w-12 h-0.5 bg-muted"></div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-medium">3</div>
+            <span className="text-sm text-muted-foreground">Complete</span>
+          </div>
+        </div>
+
         <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -184,8 +205,10 @@ const Checkout = () => {
                   size="lg"
                   disabled={createOrderMutation.isPending}
                 >
-                  {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order'}
+                  {createOrderMutation.isPending ? 'Placing Order...' : 'Place Order Now'}
                 </Button>
+                
+                <CheckoutTrustBadges />
               </form>
             </CardContent>
           </Card>
@@ -206,6 +229,16 @@ const Checkout = () => {
                   <span>Total</span>
                   <span>{formatPrice(getTotalPrice())}</span>
                 </div>
+              </div>
+              
+              {/* Order benefits */}
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800 font-medium mb-2">✨ Your order includes:</p>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>✓ Order tracking</li>
+                  <li>✓ Fast processing</li>
+                  <li>✓ Delivery updates via WhatsApp</li>
+                </ul>
               </div>
             </CardContent>
           </Card>
