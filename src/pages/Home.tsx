@@ -8,6 +8,8 @@ import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles, ArrowUp, HelpCircle } from 'lucide-react';
+import bgPattern from '@/public/images/bg-pattern.avif';
+
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,7 +129,7 @@ const Home = () => {
       {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section - Add FAQ button */}
-        <section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
+        <section className="relative overflow-hidden" style={{ backgroundImage: `url(${bgPattern})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
           <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
 
           <div className="container mx-auto px-4 py-16 relative">
