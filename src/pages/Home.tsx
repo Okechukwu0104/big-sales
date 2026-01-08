@@ -5,8 +5,10 @@ import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
-
-const ITEMS_PER_PAGE = 8;
+import { TrustBadges } from '@/components/TrustBadges';
+import { TestimonialCarousel } from '@/components/TestimonialCarousel';
+import { FAQ } from '@/components/FAQ';
+const ITEMS_PER_PAGE = 12;
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -283,6 +285,15 @@ const Home = () => {
         )}
       </main>
     </div>
+
+        {/* Trust Badges Section */}
+        <TrustBadges />
+
+        {/* Customer Testimonials */}
+        <TestimonialCarousel />
+
+        {/* FAQ Section */}
+        <FAQ />
   );
 };
 

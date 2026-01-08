@@ -40,7 +40,7 @@ export const Header = () => {
     const cleaned = storeConfig.whatsapp_number.replace(/[^\d+]/g, '');
     const phoneNumber = cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
     // Changed message to position WhatsApp as support, not sales
-    const encodedMessage = encodeURIComponent('Hi, I need help with my order');
+    const encodedMessage = encodeURIComponent(storeConfig.whatsapp_message || 'Hello, Pls I need help with my order');
     
     return {
       // Deep link for mobile apps
