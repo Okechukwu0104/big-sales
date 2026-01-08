@@ -283,8 +283,6 @@ const Home = () => {
             <p>You've reached the end! {filteredProducts.length} products shown.</p>
           </div>
         )}
-      </main>
-    </div>
 
         {/* Trust Badges Section */}
         <TrustBadges />
@@ -293,7 +291,11 @@ const Home = () => {
         <TestimonialCarousel />
 
         {/* FAQ Section */}
-        <FAQ />
+        <FAQ />   
+      </main>
+    </div>
+
+
   );
 };
 
