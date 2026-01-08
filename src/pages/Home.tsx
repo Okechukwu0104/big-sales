@@ -8,8 +8,6 @@ import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles, ArrowUp, HelpCircle } from 'lucide-react';
-import bgPattern from '@/public/images/bg-pattern.avif';
-
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -123,13 +121,13 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
-      {/* Header - Add FAQ button */}
+      {/* Header */}
       <Header />
 
       {/* Main Content */}
       <main className="pt-20">
-        {/* Hero Section - Add FAQ button */}
-        <section className="relative overflow-hidden" style={{ backgroundImage: `url(${bgPattern})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+        {/* Hero Section with Background Pattern */}
+        <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
           <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
 
           <div className="container mx-auto px-4 py-16 relative">
@@ -143,7 +141,7 @@ const Home = () => {
                 BIG SALES
               </h1>
               
-              <p className="text-xl md:text-2xl text-orange-200 mb-8 leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-800 mb-8 leading-relaxed">
                 Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
               </p>
               
