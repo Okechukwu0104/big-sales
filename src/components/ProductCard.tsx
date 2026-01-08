@@ -289,7 +289,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           variant={product.in_stock ? "outline" : "outline"}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
-          <span>{product.in_stock ? 'Add to Cart' : 'Out of Stock'}</span>
+          <span>{product.in_stock ? 'Add' : 'Out of Stock'}</span>
         </Button>
         {product.in_stock && (
           <Button 
