@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
@@ -6,11 +6,8 @@ import { Header } from '@/components/Header';
 import { TrustBadges } from '@/components/TrustBadges';
 import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles, Loader2 } from 'lucide-react';
-
-// Constants for pagination
-const ITEMS_PER_PAGE = 12; // Optimal batch size for smooth scrolling
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,101 +16,49 @@ const Home = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
-  const observerTarget = useRef<HTMLDivElement>(null);
   
-  // Fetch categories separately to avoid re-fetching on scroll
-  const { data: categoriesData } = useQuery({
-    queryKey: ['product-categories'],
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('category')
-        .not('category', 'is', null);
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      const uniqueCategories = new Set(data.map(p => p.category).filter(Boolean));
-      return ['All', ...Array.from(uniqueCategories).sort()];
+      return data as Product[];
     },
   });
 
-  // Use infinite query for paginated products
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    error
-  } = useInfiniteQuery({
-    queryKey: ['products-infinite', searchTerm, selectedCategory],
-    queryFn: async ({ pageParam = 0 }) => {
-      let query = supabase
-        .from('products')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(pageParam * ITEMS_PER_PAGE, (pageParam + 1) * ITEMS_PER_PAGE - 1);
-      
-      // Apply filters if needed
-      if (searchTerm.trim()) {
-        const term = searchTerm.toLowerCase();
-        query = query.or(`name.ilike.%${term}%,description.ilike.%${term}%`);
-      }
-      
-      if (selectedCategory !== 'All') {
-        query = query.eq('category', selectedCategory);
-      }
-      
-      const { data, error, count } = await query;
-      
-      if (error) throw error;
-      
-      return {
-        products: data as Product[],
-        nextPage: (data.length === ITEMS_PER_PAGE) ? pageParam + 1 : null,
-        totalCount: count || 0
-      };
-    },
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialPageParam: 0,
-    staleTime: 60 * 1000, // 1 minute cache
-    refetchOnWindowFocus: false,
-  });
+  // Extract unique categories
+  const categories = useMemo(() => {
+    if (!products) return ['All'];
+    const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
+    return ['All', ...Array.from(uniqueCategories).sort()];
+  }, [products]);
 
-  // Extract all products from pages
-  const products = useMemo(() => {
-    return data?.pages.flatMap(page => page.products) || [];
-  }, [data]);
-
-  // Total count for display
-  const totalCount = data?.pages[0]?.totalCount || 0;
-
-  // Observer for infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      {
-        root: null,
-        rootMargin: '200px', // Load next batch 200px before reaching bottom
-        threshold: 0.1,
-      }
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
+  // Filter products based on search term and category
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    
+    let filtered = products;
+    
+    // Filter by category
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(product => product.category === selectedCategory);
     }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+    
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name?.toLowerCase().includes(term) ||
+        product.description?.toLowerCase().includes(term)
+      );
+    }
+    
+    return filtered;
+  }, [products, searchTerm, selectedCategory]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -143,16 +88,6 @@ const Home = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileFilters]);
-
-  // Reset scroll position when filters change
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchTerm, selectedCategory]);
-
-  // Memoize categories
-  const categories = useMemo(() => {
-    return categoriesData || ['All'];
-  }, [categoriesData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
@@ -210,7 +145,7 @@ const Home = () => {
                 {(searchTerm || selectedCategory !== 'All') && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                      {products.length} of {totalCount} items
+                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
                     </span>
                     {(searchTerm || selectedCategory !== 'All') && (
                       <button
@@ -381,7 +316,7 @@ const Home = () => {
           )}
         </div>
 
-        {/* Products Grid with Infinite Scroll */}
+        {/* Products Grid */}
         <section className="container mx-auto px-4 py-8">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -393,55 +328,12 @@ const Home = () => {
                 </div>
               ))}
             </div>
-          ) : isError ? (
-            <div className="text-center py-16">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
-                <div className="text-6xl mb-4">⚠️</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Something went wrong
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {error instanceof Error ? error.message : 'Failed to load products'}
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
+          ) : filteredProducts && filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
             </div>
-          ) : products.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-              
-              {/* Observer target for infinite scroll */}
-              <div ref={observerTarget} className="h-10 flex items-center justify-center py-4">
-                {isFetchingNextPage && (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin text-orange-600" />
-                    <span className="text-sm text-gray-600">Loading more products...</span>
-                  </div>
-                )}
-                
-                {!hasNextPage && products.length > 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 text-sm">
-                      You've seen all {totalCount} products
-                    </p>
-                    <div className="mt-2 flex items-center justify-center gap-2">
-                      <div className="w-16 h-px bg-gray-200"></div>
-                      <span className="text-xs text-gray-400">End of results</span>
-                      <div className="w-16 h-px bg-gray-200"></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
           ) : (
             <div className="text-center py-16">
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
