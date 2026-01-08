@@ -3,21 +3,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 import { TrustBadges } from '@/components/TrustBadges';
 import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
-const ITEMS_PER_PAGE = 12;
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 
 const Home = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [page, setPage] = useState(1);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const loaderRef = useRef<HTMLDivElement>(null);
+  const mobileFiltersRef = useRef<HTMLDivElement>(null);
   
-  const { data: allProducts, isLoading } = useQuery({
+  const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,16 +32,16 @@ const Home = () => {
 
   // Extract unique categories
   const categories = useMemo(() => {
-    if (!allProducts) return ['All'];
-    const uniqueCategories = new Set(allProducts.map(p => p.category).filter(Boolean));
+    if (!products) return ['All'];
+    const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
     return ['All', ...Array.from(uniqueCategories).sort()];
-  }, [allProducts]);
+  }, [products]);
 
   // Filter products based on search term and category
   const filteredProducts = useMemo(() => {
-    if (!allProducts) return [];
+    if (!products) return [];
     
-    let filtered = allProducts;
+    let filtered = products;
     
     // Filter by category
     if (selectedCategory !== 'All') {
@@ -58,12 +58,7 @@ const Home = () => {
     }
     
     return filtered;
-  }, [allProducts, searchTerm, selectedCategory]);
-
-  // Slice products for current page
-  const displayedProducts = useMemo(() => {
-    return filteredProducts.slice(0, page * ITEMS_PER_PAGE);
-  }, [filteredProducts, page]);
+  }, [products, searchTerm, selectedCategory]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -78,40 +73,31 @@ const Home = () => {
     }
   };
 
-  // Infinite scroll observer
+  // Close mobile filters when clicking outside
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && displayedProducts.length < filteredProducts.length) {
-          setPage(prev => prev + 1);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
-    return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showMobileFilters && 
+        mobileFiltersRef.current && 
+        !mobileFiltersRef.current.contains(event.target as Node)
+      ) {
+        setShowMobileFilters(false);
       }
     };
-  }, [displayedProducts.length, filteredProducts.length]);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, selectedCategory]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileFilters]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      {/* Header */}
       <Header />
       
+      {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section */}
-<section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
+        <section className="relative overflow-hidden bg-[url('/public/images/bg-pattern.png')] bg-cover bg-center bg-no-repeat">
           <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
 
           <div className="container mx-auto px-4 py-16 relative">
@@ -147,55 +133,97 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Search & Filter Section */}
-        <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm py-4">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        {/* Floating Search Bar */}
+        <div className="sticky top-20 z-30 px-4 py-4 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
+          <div className="container mx-auto">
+            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+              {/* Left Section - Title and Results */}
               <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold text-gray-900">Our Products</h2>
+                <h2 className="text-2xl font-bold text-gray-900 hidden sm:block">
+                  Our Products
+                </h2>
                 {(searchTerm || selectedCategory !== 'All') && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                      {filteredProducts.length} items
+                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
                     </span>
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setSelectedCategory('All');
-                      }}
-                      className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                    >
-                      <X className="h-3 w-3" />
-                      Clear
-                    </button>
+                    {(searchTerm || selectedCategory !== 'All') && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setSelectedCategory('All');
+                        }}
+                        className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                      >
+                        <X className="h-3 w-3" />
+                        Clear filters
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
 
-              <div className="w-full md:w-80">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+              {/* Right Section - Search and Filters */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                {/* Mobile: Search and Filter in one line */}
+                <div className="lg:hidden flex gap-3 w-full">
+                  {/* Search Bar */}
+                  <div className={`relative transition-all duration-200 flex-1`}>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setIsSearchFocused(false)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
+
+                  {/* Mobile Filter Button */}
+                  <button
+                    onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors flex-shrink-0"
+                  >
+                    <Filter className="h-5 w-5" />
+                    <span className="sr-only">Filters</span>
+                  </button>
+                </div>
+
+                {/* Desktop: Original layout */}
+                <div className="hidden lg:flex flex-row gap-3 w-full lg:w-auto">
+                  {/* Search Bar */}
+                  <div className={`relative transition-all duration-200 ${
+                    isSearchFocused ? 'flex-1' : 'w-80'
+                  }`}>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setIsSearchFocused(false)}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Categories */}
+            {/* Category Filters - Desktop */}
             {categories.length > 1 && (
-              <div className="mt-4">
+              <div className="hidden lg:block mt-4">
                 <div className="flex items-center gap-2">
                   {categories.length > 6 && (
                     <button
                       onClick={() => scroll('left')}
-                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -203,16 +231,16 @@ const Home = () => {
                   
                   <div 
                     ref={scrollContainerRef}
-                    className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide py-2"
+                    className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth py-2"
                   >
                     {categories.map((category) => (
                       <button
                         key={category}
                         onClick={() => setSelectedCategory(category)}
-                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap border ${
+                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
                           selectedCategory === category
-                            ? 'bg-orange-600 text-white border-orange-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
                         }`}
                       >
                         {category}
@@ -223,7 +251,7 @@ const Home = () => {
                   {categories.length > 6 && (
                     <button
                       onClick={() => scroll('right')}
-                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50"
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -232,57 +260,111 @@ const Home = () => {
               </div>
             )}
           </div>
+
+          {/* Mobile Filters Overlay */}
+          {showMobileFilters && (
+            <>
+              <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowMobileFilters(false)} />
+              <div 
+                ref={mobileFiltersRef}
+                className="lg:hidden fixed top-20 left-4 right-4 bg-white rounded-2xl shadow-xl p-6 z-50 animate-in slide-in-from-top-5 duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5 text-gray-600" />
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-3 text-gray-900">Categories</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => {
+                            setSelectedCategory(category);
+                            setShowMobileFilters(false);
+                          }}
+                          className={`p-3 rounded-xl text-sm font-medium transition-all border ${
+                            selectedCategory === category
+                              ? 'bg-orange-600 text-white border-orange-600 shadow-sm'
+                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="w-full py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-colors"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Products Grid */}
         <section className="container mx-auto px-4 py-8">
-          {isLoading && displayedProducts.length === 0 ? (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="animate-pulse bg-white rounded-lg p-4">
-                  <div className="bg-gray-200 aspect-square rounded-lg mb-4"></div>
+                <div key={i} className="animate-pulse bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                  <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
                   <div className="bg-gray-200 h-4 rounded mb-2"></div>
                   <div className="bg-gray-200 h-4 rounded w-3/4"></div>
                 </div>
               ))}
             </div>
-          ) : displayedProducts.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {displayedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-              
-              {/* Loader for infinite scroll */}
-              {displayedProducts.length < filteredProducts.length && (
-                <div ref={loaderRef} className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
-                  <p className="mt-2 text-gray-600">Loading more products...</p>
-                </div>
-              )}
-            </>
+          ) : filteredProducts && filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           ) : (
             <div className="text-center py-16">
-              <div className="bg-white p-8 rounded-2xl max-w-md mx-auto border border-gray-200">
+              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No products found
+                  {searchTerm || selectedCategory !== 'All' 
+                    ? "No products found" 
+                    : "No products available"
+                  }
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Try adjusting your search or select a different category
+                  {searchTerm || selectedCategory !== 'All'
+                    ? "Try adjusting your search terms or browse different categories."
+                    : "Check back soon for new arrivals!"
+                  }
                 </p>
+                {(searchTerm || selectedCategory !== 'All') && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedCategory('All');
+                    }}
+                    className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    View All Products
+                  </button>
+                )}
               </div>
             </div>
           )}
         </section>
-
-        {/* Show all loaded message */}
-        {displayedProducts.length === filteredProducts.length && filteredProducts.length > 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p>You've reached the end! {filteredProducts.length} products shown.</p>
-          </div>
-        )}
 
         {/* Trust Badges Section */}
         <TrustBadges />
@@ -291,11 +373,9 @@ const Home = () => {
         <TestimonialCarousel />
 
         {/* FAQ Section */}
-        <FAQ />   
+        <FAQ />
       </main>
     </div>
-
-
   );
 };
 
