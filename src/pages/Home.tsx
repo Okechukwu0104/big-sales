@@ -4,7 +4,7 @@ import { Product } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 8;
 
