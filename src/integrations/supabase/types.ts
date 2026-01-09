@@ -38,6 +38,63 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      collections: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          image_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -77,6 +134,45 @@ export type Database = {
         }
         Relationships: []
       }
+      product_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          display_order: number | null
+          id: string
+          product_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          product_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_categories_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_likes: {
         Row: {
           created_at: string
@@ -109,8 +205,10 @@ export type Database = {
       products: {
         Row: {
           category: string | null
+          collection_id: string | null
           created_at: string
           description: string | null
+          display_order: number | null
           featured: boolean | null
           id: string
           image_url: string | null
@@ -123,8 +221,10 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          collection_id?: string | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           featured?: boolean | null
           id?: string
           image_url?: string | null
@@ -137,8 +237,10 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          collection_id?: string | null
           created_at?: string
           description?: string | null
+          display_order?: number | null
           featured?: boolean | null
           id?: string
           image_url?: string | null
@@ -149,7 +251,15 @@ export type Database = {
           quantity?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
