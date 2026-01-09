@@ -75,11 +75,7 @@ export const Header = () => {
 
     const handleWhatsAppClick = () => {
     if (!storeConfig?.whatsapp_number) {
-      toast({
-        title: "WhatsApp not configured",
-        description: "Please contact the store owner directly.",
-        variant: "destructive",
-      });
+      toast.error("WhatsApp not configured. Please contact the store owner directly.");
       return;
     }
 
