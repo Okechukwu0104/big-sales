@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { Package, ShoppingBag, Settings, LogOut, MessageSquare, DollarSign, FolderOpen, Layers } from 'lucide-react';
+import { Package, ShoppingBag, Settings, LogOut, MessageSquare, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -78,12 +78,12 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Package className="mr-2 h-5 w-5" />
-                Products
+                Product Management
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -92,40 +92,6 @@ const AdminDashboard = () => {
               </p>
               <Button asChild className="w-full">
                 <Link to="/admin/products">Manage Products</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FolderOpen className="mr-2 h-5 w-5" />
-                Categories
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Organize products into categories.
-              </p>
-              <Button asChild className="w-full">
-                <Link to="/admin/categories">Manage Categories</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Layers className="mr-2 h-5 w-5" />
-                Collections
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Group products into collections.
-              </p>
-              <Button asChild className="w-full">
-                <Link to="/admin/collections">Manage Collections</Link>
               </Button>
             </CardContent>
           </Card>

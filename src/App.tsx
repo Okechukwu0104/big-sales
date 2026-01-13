@@ -17,8 +17,6 @@ import AdminOrders from "./pages/admin/Orders";
 import AdminSettings from "./pages/admin/Settings";
 import AdminBalance from "./pages/admin/Balance";
 import AdminReviews from "./pages/admin/Reviews";
-import AdminCategories from "./pages/admin/Categories";
-import AdminCollections from "./pages/admin/Collections";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -67,16 +65,6 @@ const App = () => (
           <Route path="/admin/reviews" element={
             <ProtectedRoute>
               <AdminReviews />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/categories" element={
-            <ProtectedRoute>
-              <AdminCategories />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/collections" element={
-            <ProtectedRoute>
-              <AdminCollections />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
