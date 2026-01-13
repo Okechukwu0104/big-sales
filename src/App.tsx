@@ -11,6 +11,7 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import TrackOrder from "./pages/TrackOrder";
 import Auth from "./pages/Auth";
+import Wishlist from "./pages/Wishlist";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
@@ -19,6 +20,8 @@ import AdminBalance from "./pages/admin/Balance";
 import AdminReviews from "./pages/admin/Reviews";
 import AdminCategories from "./pages/admin/Categories";
 import AdminCollections from "./pages/admin/Collections";
+import AdminBundles from "./pages/admin/Bundles";
+import AdminTags from "./pages/admin/Tags";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +42,7 @@ const App = () => (
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/admin" element={
             <ProtectedRoute>
               <AdminDashboard />
@@ -77,6 +81,16 @@ const App = () => (
           <Route path="/admin/collections" element={
             <ProtectedRoute>
               <AdminCollections />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/bundles" element={
+            <ProtectedRoute>
+              <AdminBundles />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/tags" element={
+            <ProtectedRoute>
+              <AdminTags />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -11,6 +11,8 @@ export interface Product {
   category: string | null;
   collection_id: string | null;
   display_order: number;
+  brand: string | null;
+  sku: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -77,6 +79,10 @@ export interface Category {
   name: string;
   description: string | null;
   display_order: number;
+  parent_id: string | null;
+  icon: string | null;
+  image_url: string | null;
+  slug: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -97,4 +103,54 @@ export interface ProductCategory {
   category_id: string;
   display_order: number;
   created_at: string;
+}
+
+export interface Bundle {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  original_price: number;
+  bundle_price: number;
+  is_active: boolean;
+  is_featured: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BundleProduct {
+  id: string;
+  bundle_id: string;
+  product_id: string;
+  quantity: number;
+  created_at: string;
+}
+
+export interface ProductTag {
+  id: string;
+  name: string;
+  color: string | null;
+  created_at: string;
+}
+
+export interface ProductTagAssignment {
+  id: string;
+  product_id: string;
+  tag_id: string;
+  created_at: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  created_at: string;
+}
+
+export interface RecentlyViewed {
+  id: string;
+  user_id: string;
+  product_id: string;
+  viewed_at: string;
 }
