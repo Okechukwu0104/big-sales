@@ -9,6 +9,10 @@ export interface Product {
   in_stock: boolean;
   likes_count: number;
   category: string | null;
+  collection_id: string | null;
+  display_order: number | null;
+  brand: string | null;
+  sku: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,4 +72,35 @@ export interface Review {
   images: string[] | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  parent_id: string | null;
+  display_order: number | null;
+  icon: string | null;
+  image_url: string | null;
+  slug: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  description: string | null;
+  display_order: number | null;
+  image_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCategory {
+  id: string;
+  product_id: string;
+  category_id: string;
+  display_order: number | null;
+  created_at: string;
 }
