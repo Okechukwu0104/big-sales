@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Sparkles, GripVertical, Filter, FolderOpen, Layers } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Sparkles, GripVertical, Filter, FolderOpen, Layers, Loader2, WifiOff } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,68 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
+// Constants
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_DIMENSION = 1200;
+const IMAGE_QUALITY = 0.8;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
+// Utility: Compress image before upload
+const compressImage = async (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      let { width, height } = img;
+      
+      // Scale down if larger than max dimension
+      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+        if (width > height) {
+          height = (height / width) * MAX_IMAGE_DIMENSION;
+          width = MAX_IMAGE_DIMENSION;
+        } else {
+          width = (width / height) * MAX_IMAGE_DIMENSION;
+          height = MAX_IMAGE_DIMENSION;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to compress image'));
+        },
+        'image/jpeg',
+        IMAGE_QUALITY
+      );
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+// Utility: Retry with exponential backoff
+const retryWithBackoff = async <T,>(
+  fn: () => Promise<T>,
+  retries = MAX_RETRIES,
+  delay = RETRY_DELAY
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries === 0) throw error;
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return retryWithBackoff(fn, retries - 1, delay * 2);
+  }
+};
 
 interface SortableProductProps {
   product: Product;
@@ -135,6 +198,8 @@ const AdminProducts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterCollection, setFilterCollection] = useState<string>('all');
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [progressValue, setProgressValue] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -223,17 +288,42 @@ const AdminProducts = () => {
       featured: boolean;
       collection_id: string | null;
     }) => {
+      // Check network connectivity
+      if (!navigator.onLine) {
+        throw new Error('You appear to be offline. Please check your connection and try again.');
+      }
+
       let image_url = null;
       
       if (formData.image) {
-        const fileExt = formData.image.name.split('.').pop();
+        // Validate file size before processing
+        if (formData.image.size > MAX_IMAGE_SIZE) {
+          throw new Error('Image is too large. Please use an image under 5MB.');
+        }
+
+        setUploadProgress('Compressing image...');
+        setProgressValue(10);
+        
+        // Compress image before upload
+        const compressedBlob = await compressImage(formData.image);
+        const compressedFile = new File([compressedBlob], formData.image.name, { type: 'image/jpeg' });
+        
+        setUploadProgress('Uploading image...');
+        setProgressValue(30);
+        
+        const fileExt = 'jpg'; // Always save as jpg after compression
         const fileName = `${Math.random()}.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, formData.image);
+        // Upload with retry logic
+        await retryWithBackoff(async () => {
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, compressedFile);
+          
+          if (uploadError) throw uploadError;
+        });
         
-        if (uploadError) throw uploadError;
+        setProgressValue(60);
         
         const { data } = supabase.storage
           .from('product-images')
@@ -242,28 +332,27 @@ const AdminProducts = () => {
         image_url = data.publicUrl;
       }
 
-      // Get AI-generated category
-      const { data: categoryData } = await supabase.functions.invoke('categorize-product', {
-        body: { 
-          productName: productData.name, 
-          productDescription: productData.description 
-        }
+      setUploadProgress('Saving product...');
+      setProgressValue(70);
+
+      // Create product IMMEDIATELY with "Uncategorized" - don't wait for AI
+      const { data: newProduct, error } = await retryWithBackoff(async () => {
+        const result = await supabase
+          .from('products')
+          .insert([{ 
+            ...productData, 
+            image_url, 
+            category: 'Uncategorized', // Default, AI updates later
+            display_order: (products?.length || 0) + 1 
+          }])
+          .select()
+          .single();
+        
+        if (result.error) throw result.error;
+        return result;
       });
 
-      const category = categoryData?.category || 'Uncategorized';
-
-      const { data: newProduct, error } = await supabase
-        .from('products')
-        .insert([{ 
-          ...productData, 
-          image_url, 
-          category, 
-          display_order: (products?.length || 0) + 1 
-        }])
-        .select()
-        .single();
-      
-      if (error) throw error;
+      setProgressValue(85);
 
       // Add category relationships
       if (formData.selectedCategories.length > 0) {
@@ -271,8 +360,35 @@ const AdminProducts = () => {
           product_id: newProduct.id,
           category_id: catId,
         }));
-        await supabase.from('product_categories').insert(categoryInserts);
+        await retryWithBackoff(async () => {
+          const { error } = await supabase.from('product_categories').insert(categoryInserts);
+          if (error) throw error;
+        });
       }
+
+      setUploadProgress('Product saved! AI categorizing in background...');
+      setProgressValue(100);
+
+      // Trigger AI categorization in background (NON-BLOCKING)
+      // This runs AFTER the product is already saved
+      supabase.functions.invoke('categorize-product', {
+        body: { 
+          productName: productData.name, 
+          productDescription: productData.description 
+        }
+      }).then(({ data: categoryData }) => {
+        if (categoryData?.category && categoryData.category !== 'Uncategorized') {
+          supabase
+            .from('products')
+            .update({ category: categoryData.category })
+            .eq('id', newProduct.id)
+            .then(() => {
+              queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+            });
+        }
+      }).catch(err => {
+        console.log('Background AI categorization failed, product saved with default category:', err);
+      });
 
       return newProduct;
     },
@@ -282,9 +398,13 @@ const AdminProducts = () => {
       toast({ title: "Product created successfully" });
       resetForm();
       setIsDialogOpen(false);
+      setUploadProgress('');
+      setProgressValue(0);
     },
     onError: (error) => {
       toast({ title: "Error creating product", description: error.message, variant: "destructive" });
+      setUploadProgress('');
+      setProgressValue(0);
     },
   });
 
@@ -297,17 +417,39 @@ const AdminProducts = () => {
       featured: boolean;
       collection_id: string | null;
     }) => {
+      // Check network connectivity
+      if (!navigator.onLine) {
+        throw new Error('You appear to be offline. Please check your connection and try again.');
+      }
+
       let updateData: Record<string, unknown> = { ...productData };
       
       if (formData.image) {
-        const fileExt = formData.image.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
+        // Validate file size
+        if (formData.image.size > MAX_IMAGE_SIZE) {
+          throw new Error('Image is too large. Please use an image under 5MB.');
+        }
+
+        setUploadProgress('Compressing image...');
+        setProgressValue(10);
         
-        const { error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, formData.image);
+        // Compress image before upload
+        const compressedBlob = await compressImage(formData.image);
+        const compressedFile = new File([compressedBlob], formData.image.name, { type: 'image/jpeg' });
         
-        if (uploadError) throw uploadError;
+        setUploadProgress('Uploading image...');
+        setProgressValue(40);
+        
+        const fileName = `${Math.random()}.jpg`;
+        
+        // Upload with retry logic
+        await retryWithBackoff(async () => {
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, compressedFile);
+          
+          if (uploadError) throw uploadError;
+        });
         
         const { data } = supabase.storage
           .from('product-images')
@@ -316,14 +458,22 @@ const AdminProducts = () => {
         updateData.image_url = data.publicUrl;
       }
 
-      const { data, error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', editingProduct!.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
+      setUploadProgress('Updating product...');
+      setProgressValue(70);
+
+      const { data, error } = await retryWithBackoff(async () => {
+        const result = await supabase
+          .from('products')
+          .update(updateData)
+          .eq('id', editingProduct!.id)
+          .select()
+          .single();
+        
+        if (result.error) throw result.error;
+        return result;
+      });
+
+      setProgressValue(85);
 
       // Update category relationships
       await supabase.from('product_categories').delete().eq('product_id', editingProduct!.id);
@@ -333,8 +483,13 @@ const AdminProducts = () => {
           product_id: editingProduct!.id,
           category_id: catId,
         }));
-        await supabase.from('product_categories').insert(categoryInserts);
+        await retryWithBackoff(async () => {
+          const { error } = await supabase.from('product_categories').insert(categoryInserts);
+          if (error) throw error;
+        });
       }
+
+      setProgressValue(100);
 
       return data;
     },
@@ -344,17 +499,28 @@ const AdminProducts = () => {
       toast({ title: "Product updated successfully" });
       resetForm();
       setIsDialogOpen(false);
+      setUploadProgress('');
+      setProgressValue(0);
     },
     onError: (error) => {
       toast({ title: "Error updating product", description: error.message, variant: "destructive" });
+      setUploadProgress('');
+      setProgressValue(0);
     },
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: string) => {
-      await supabase.from('product_categories').delete().eq('product_id', productId);
-      const { error } = await supabase.from('products').delete().eq('id', productId);
-      if (error) throw error;
+      // Optimistic update - remove from list immediately
+      queryClient.setQueryData(['admin-products'], (old: Product[] | undefined) => 
+        old?.filter(p => p.id !== productId)
+      );
+
+      await retryWithBackoff(async () => {
+        await supabase.from('product_categories').delete().eq('product_id', productId);
+        const { error } = await supabase.from('products').delete().eq('id', productId);
+        if (error) throw error;
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -362,6 +528,8 @@ const AdminProducts = () => {
       toast({ title: "Product deleted successfully" });
     },
     onError: (error) => {
+      // Rollback optimistic update on error
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast({ title: "Error deleting product", description: error.message, variant: "destructive" });
     },
   });
@@ -412,6 +580,8 @@ const AdminProducts = () => {
       selectedCategories: [],
     });
     setEditingProduct(null);
+    setUploadProgress('');
+    setProgressValue(0);
   };
 
   const openCreateDialog = () => {
@@ -436,6 +606,16 @@ const AdminProducts = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check network before submitting
+    if (!navigator.onLine) {
+      toast({ 
+        title: "You're offline", 
+        description: "Please check your internet connection and try again.", 
+        variant: "destructive" 
+      });
+      return;
+    }
     
     const productData = {
       name: formData.name,
@@ -492,6 +672,8 @@ const AdminProducts = () => {
     return true;
   });
 
+  const isSubmitting = createProductMutation.isPending || updateProductMutation.isPending;
+
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
 
   return (
@@ -509,6 +691,14 @@ const AdminProducts = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 sm:py-8">
+        {/* Offline Warning */}
+        {!navigator.onLine && (
+          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive">
+            <WifiOff className="h-4 w-4" />
+            <span className="text-sm">You appear to be offline. Some features may not work.</span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h2 className="text-lg sm:text-xl font-semibold">Products ({filteredProducts?.length || 0})</h2>
@@ -545,6 +735,7 @@ const AdminProducts = () => {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                     
@@ -555,6 +746,7 @@ const AdminProducts = () => {
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={3}
+                        disabled={isSubmitting}
                       />
                     </div>
                     
@@ -568,6 +760,7 @@ const AdminProducts = () => {
                           value={formData.price}
                           onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                       
@@ -580,6 +773,7 @@ const AdminProducts = () => {
                           value={formData.quantity}
                           onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           required
+                          disabled={isSubmitting}
                         />
                       </div>
                     </div>
@@ -589,6 +783,7 @@ const AdminProducts = () => {
                       <Select 
                         value={formData.collection_id} 
                         onValueChange={(value) => setFormData({ ...formData, collection_id: value })}
+                        disabled={isSubmitting}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="No collection" />
@@ -611,6 +806,7 @@ const AdminProducts = () => {
                               id={`cat-${cat.id}`}
                               checked={formData.selectedCategories.includes(cat.id)}
                               onCheckedChange={() => toggleCategorySelection(cat.id)}
+                              disabled={isSubmitting}
                             />
                             <label htmlFor={`cat-${cat.id}`} className="text-sm cursor-pointer truncate">
                               {cat.name}
@@ -624,13 +820,29 @@ const AdminProducts = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="image">Product Image</Label>
+                      <Label htmlFor="image">Product Image (max 5MB)</Label>
                       <Input
                         id="image"
                         type="file"
                         accept="image/*"
-                        onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && file.size > MAX_IMAGE_SIZE) {
+                            toast({
+                              title: "Image too large",
+                              description: "Please select an image under 5MB.",
+                              variant: "destructive"
+                            });
+                            e.target.value = '';
+                            return;
+                          }
+                          setFormData({ ...formData, image: file || null });
+                        }}
+                        disabled={isSubmitting}
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Images will be automatically compressed for faster upload.
+                      </p>
                     </div>
                     
                     <div className="flex items-center space-x-2">
@@ -638,22 +850,42 @@ const AdminProducts = () => {
                         id="featured"
                         checked={formData.featured}
                         onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+                        disabled={isSubmitting}
                       />
                       <Label htmlFor="featured">Featured Product</Label>
                     </div>
+
+                    {/* Progress indicator */}
+                    {uploadProgress && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {uploadProgress}
+                        </div>
+                        <Progress value={progressValue} className="h-2" />
+                      </div>
+                    )}
                     
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         type="submit" 
-                        disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                        disabled={isSubmitting}
                         className="flex-1"
                       >
-                        {editingProduct ? 'Update' : 'Create'} Product
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            {editingProduct ? 'Updating...' : 'Creating...'}
+                          </>
+                        ) : (
+                          `${editingProduct ? 'Update' : 'Create'} Product`
+                        )}
                       </Button>
                       <Button 
                         type="button" 
                         variant="outline" 
                         onClick={() => setIsDialogOpen(false)}
+                        disabled={isSubmitting}
                       >
                         Cancel
                       </Button>
