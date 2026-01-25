@@ -784,15 +784,15 @@ const AdminProducts = () => {
                     <div>
                       <Label htmlFor="collection">Collection</Label>
                       <Select 
-                        value={formData.collection_id} 
-                        onValueChange={(value) => setFormData({ ...formData, collection_id: value })}
+                        value={formData.collection_id || "none"} 
+                        onValueChange={(value) => setFormData({ ...formData, collection_id: value === "none" ? "" : value })}
                         disabled={isSubmitting}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="No collection" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No collection</SelectItem>
+                          <SelectItem value="none">No collection</SelectItem>
                           {collections?.map(col => (
                             <SelectItem key={col.id} value={col.id}>{col.name}</SelectItem>
                           ))}
