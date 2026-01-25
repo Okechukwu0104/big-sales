@@ -330,14 +330,14 @@ const AdminCategories = () => {
                 <div>
                   <Label htmlFor="parent">Parent Category (Optional)</Label>
                   <Select 
-                    value={formData.parent_id} 
-                    onValueChange={(value) => setFormData({ ...formData, parent_id: value })}
+                    value={formData.parent_id || "none"} 
+                    onValueChange={(value) => setFormData({ ...formData, parent_id: value === "none" ? "" : value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="No parent (top-level)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No parent (top-level)</SelectItem>
+                      <SelectItem value="none">No parent (top-level)</SelectItem>
                       {categories?.filter(c => c.id !== editingCategory?.id).map(cat => (
                         <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                       ))}
