@@ -122,6 +122,9 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
                       key={index}
                       src={image}
                       alt={`Review photo ${index + 1}`}
+                      loading="lazy"
+                      width={80}
+                      height={80}
                       className="w-20 h-20 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => setSelectedImage(image)}
                     />
