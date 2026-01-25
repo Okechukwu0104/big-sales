@@ -143,6 +143,9 @@ const SortableProduct = ({ product, categories, productCategories, collections, 
             <img 
               src={product.image_url} 
               alt={product.name}
+              loading="lazy"
+              width={64}
+              height={64}
               className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded flex-shrink-0"
             />
           )}

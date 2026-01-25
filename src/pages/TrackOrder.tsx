@@ -213,6 +213,9 @@ const TrackOrder = () => {
                           <img 
                             src={item.product.image_url} 
                             alt={item.product.name}
+                            loading="lazy"
+                            width={64}
+                            height={64}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
                         )}

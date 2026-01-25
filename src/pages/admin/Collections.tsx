@@ -73,7 +73,14 @@ const SortableCollection = ({ collection, onEdit, onDelete, productCount }: Sort
           
           <div className="w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
             {collection.image_url ? (
-              <img src={collection.image_url} alt={collection.name} className="w-full h-full object-cover" />
+              <img 
+                src={collection.image_url} 
+                alt={collection.name} 
+                loading="lazy"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover" 
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <ImageIcon className="h-6 w-6 text-muted-foreground" />

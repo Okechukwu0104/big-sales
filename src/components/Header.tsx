@@ -12,10 +12,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 export const Header = () => {
   const { getTotalItems } = useCartContext();
+  const { toast } = useToast();
   
   const { data: storeConfig } = useQuery({
     queryKey: ['store-config'],
@@ -75,7 +76,11 @@ export const Header = () => {
 
     const handleWhatsAppClick = () => {
     if (!storeConfig?.whatsapp_number) {
-      toast.error("WhatsApp not configured. Please contact the store owner directly.");
+      toast({
+        title: "WhatsApp not configured",
+        description: "Please contact the store owner directly.",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -166,13 +171,18 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="/images/big-sales-logo.png" 
-              alt="BIG SALES"
-              className="h-11 w-auto"
-              loading="eager"
-              decoding="async"
-            />
+            <picture>
+              <source srcSet="/images/big-sales-logo.webp" type="image/webp" />
+              <img 
+                src="/images/big-sales-logo.png" 
+                alt="BIG SALES"
+                className="h-11 w-auto"
+                width={120}
+                height={44}
+                loading="eager"
+                decoding="async"
+              />
+            </picture>
           </Link>
           
           <div className="flex items-center space-x-2">

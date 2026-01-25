@@ -175,6 +175,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <img
               src={product.image_url}
               alt={product.name}
+              loading="lazy"
+              width={300}
+              height={300}
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
             />
           ) : (
