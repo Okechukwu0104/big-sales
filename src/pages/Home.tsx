@@ -1,25 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Product } from '@/types';
+import { Product, StoreConfig } from '@/types';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
 import { TrustBadges } from '@/components/TrustBadges';
 import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
+import { ProductSection } from '@/components/ProductSection';
+import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Filter, X, Sparkles, ArrowUp, HelpCircle } from 'lucide-react';
+import { 
+  Search, ChevronLeft, ChevronRight, X, Sparkles, ArrowUp, HelpCircle, 
+  Clock, Flame, Star, ArrowLeft, MessageCircle, Package
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'home' | 'all'>('home');
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const mobileFiltersRef = useRef<HTMLDivElement>(null);
   const faqSectionRef = useRef<HTMLDivElement>(null);
   
-  const { data: products, isLoading } = useQuery({
+  // Fetch all products
+  const { data: products, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,7 +38,74 @@ const Home = () => {
     },
   });
 
-  // Extract unique categories
+  // Fetch store config for WhatsApp
+  const { data: storeConfig } = useQuery({
+    queryKey: ['store-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('store_config')
+        .select('*')
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as StoreConfig | null;
+    },
+  });
+
+  // Fetch orders for best sellers calculation (only admins can read, so handle gracefully)
+  const { data: orders } = useQuery({
+    queryKey: ['orders-for-bestsellers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('order_items');
+      
+      // If error (likely RLS), return empty array
+      if (error) return [];
+      return data || [];
+    },
+  });
+
+  // Calculate best sellers from orders
+  const bestSellers = useMemo(() => {
+    if (!products || !orders || orders.length === 0) return [];
+    
+    const purchaseCounts: Record<string, number> = {};
+    
+    orders.forEach((order) => {
+      const items = order.order_items as any[];
+      if (Array.isArray(items)) {
+        items.forEach((item) => {
+          if (item?.id) {
+            purchaseCounts[item.id] = (purchaseCounts[item.id] || 0) + (item.quantity || 1);
+          }
+        });
+      }
+    });
+    
+    const topProductIds = Object.entries(purchaseCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([id]) => id);
+    
+    return topProductIds
+      .map(id => products.find(p => p.id === id))
+      .filter((p): p is Product => p !== undefined);
+  }, [products, orders]);
+
+  // New arrivals (most recent 8 products)
+  const newArrivals = useMemo(() => {
+    if (!products) return [];
+    return products.slice(0, 8);
+  }, [products]);
+
+  // Featured products
+  const featuredProducts = useMemo(() => {
+    if (!products) return [];
+    return products.filter(p => p.featured).slice(0, 8);
+  }, [products]);
+
+  // Extract unique categories for filtering
   const categories = useMemo(() => {
     if (!products) return ['All'];
     const uniqueCategories = new Set(products.map(p => p.category).filter(Boolean));
@@ -45,12 +118,10 @@ const Home = () => {
     
     let filtered = products;
     
-    // Filter by category
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
     
-    // Filter by search term
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(product => 
@@ -62,17 +133,34 @@ const Home = () => {
     return filtered;
   }, [products, searchTerm, selectedCategory]);
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 200;
-      const newScrollLeft = scrollContainerRef.current.scrollLeft + 
-        (direction === 'left' ? -scrollAmount : scrollAmount);
-      
-      scrollContainerRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth'
+  // Check if search has no results
+  const hasSearchResults = searchTerm.trim() ? filteredProducts.length > 0 : true;
+
+  // WhatsApp request function
+  const requestProductViaWhatsApp = () => {
+    if (!storeConfig?.whatsapp_number) {
+      toast({
+        title: "WhatsApp not configured",
+        description: "Please contact the store owner directly.",
+        variant: "destructive"
       });
+      return;
     }
+
+    const phoneNumber = storeConfig.whatsapp_number.replace(/[^0-9+]/g, '');
+    const message = encodeURIComponent(`Hi! I'm looking for: ${searchTerm}\n\nCould you help me find this product?`);
+    const deepLink = `whatsapp://send?phone=${phoneNumber}&text=${message}`;
+    const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
+
+    // Try deep link first, fallback to web link
+    const link = document.createElement('a');
+    link.href = deepLink;
+    link.click();
+
+    // Fallback after a short delay
+    setTimeout(() => {
+      window.open(webLink, '_blank');
+    }, 500);
   };
 
   // Scroll to FAQ section
@@ -93,7 +181,22 @@ const Home = () => {
     });
   };
 
-  // Show/hide scroll to top button based on scroll position
+  // Handle see all products
+  const handleSeeAll = () => {
+    setViewMode('all');
+    setSelectedCategory('All');
+    setSearchTerm('');
+    scrollToTop();
+  };
+
+  // Handle category selection
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setViewMode('all');
+    scrollToTop();
+  };
+
+  // Show/hide scroll to top button
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 300);
@@ -103,326 +206,241 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile filters when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        showMobileFilters && 
-        mobileFiltersRef.current && 
-        !mobileFiltersRef.current.contains(event.target as Node)
-      ) {
-        setShowMobileFilters(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showMobileFilters]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
-      {/* Header */}
       <Header />
 
-      {/* Main Content */}
       <main className="pt-20">
-        {/* Hero Section with Background Pattern */}
+        {/* Hero Section */}
         <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
-          <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-amber-900/10 backdrop-blur-[1px]"></div>
 
-          <div className="container mx-auto px-4 py-16 relative">
+          <div className="container mx-auto px-4 py-12 md:py-20 relative">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-orange-200">
+              {viewMode === 'all' && (
+                <button
+                  onClick={() => {
+                    setViewMode('home');
+                    setSearchTerm('');
+                    setSelectedCategory('All');
+                  }}
+                  className="inline-flex items-center gap-2 text-orange-700 hover:text-orange-800 mb-6 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Home
+                </button>
+              )}
+
+              <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-orange-200 shadow-sm">
                 <Sparkles className="h-4 w-4 text-orange-600" />
                 <span className="text-sm font-medium text-orange-700">Discover Amazing Deals</span>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                 BIG SALES
               </h1>
               
-              <p className="text-xl md:text-2xl text-orange-300 mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed max-w-2xl mx-auto">
                 Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
               </p>
+
+              {/* Hero Search Bar */}
+              <div className="max-w-2xl mx-auto mb-8">
+                <div className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search for products..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      if (e.target.value.trim()) {
+                        setViewMode('all');
+                      }
+                    }}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    className="w-full pl-14 pr-14 py-4 md:py-5 border-2 border-orange-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 bg-white/95 backdrop-blur-sm text-lg shadow-lg"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        if (viewMode === 'all' && selectedCategory === 'All') {
+                          setViewMode('home');
+                        }
+                      }}
+                      className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
               
-              <div className="flex flex-wrap justify-center gap-4 mb-12">
-                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              {/* Trust Badges in Hero */}
+              <div className="flex flex-wrap justify-center gap-3 md:gap-4">
+                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-gray-700">Premium Quality</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-gray-700">Fast Shipping</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-2xl border border-gray-200">
-                  <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium text-gray-700">Best Prices</span>
                 </div>
               </div>
-
-              {/* FAQ Button in Hero Section */}
-              <button
-                onClick={scrollToFAQ}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white/90 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white transition-all duration-200 border border-gray-300 hover:border-orange-400 hover:shadow-md group"
-              >
-                <HelpCircle className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
-                <span className="font-medium">Have questions? Check our FAQ</span>
-              </button>
             </div>
           </div>
         </section>
 
-        {/* Floating Search Bar */}
-        <div className="sticky top-20 z-30 px-4 py-4 bg-white/80 backdrop-blur-lg border-b border-gray-200 shadow-sm">
-          <div className="container mx-auto">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-              {/* Left Section - Title and Results */}
-              <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold text-gray-900 hidden sm:block">
-                  Our Products
-                </h2>
-                {(searchTerm || selectedCategory !== 'All') && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                      {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-                    </span>
-                    {(searchTerm || selectedCategory !== 'All') && (
-                      <button
-                        onClick={() => {
-                          setSearchTerm('');
-                          setSelectedCategory('All');
-                        }}
-                        className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                      >
-                        <X className="h-3 w-3" />
-                        Clear filters
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right Section - Search and Filters */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-                {/* Mobile: Search and Filter in one line */}
-                <div className="lg:hidden flex gap-3 w-full">
-                  {/* Search Bar */}
-                  <div className={`relative transition-all duration-200 flex-1`}>
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={() => setIsSearchFocused(false)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                    />
-                  </div>
-
-                  {/* Mobile Filter Button */}
-                  <button
-                    onClick={() => setShowMobileFilters(!showMobileFilters)}
-                    className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors flex-shrink-0"
-                  >
-                    <Filter className="h-5 w-5" />
-                    <span className="sr-only">Filters</span>
-                  </button>
-                </div>
-
-                {/* Desktop: Original layout */}
-                <div className="hidden lg:flex flex-row gap-3 w-full lg:w-auto">
-                  {/* Search Bar */}
-                  <div className={`relative transition-all duration-200 ${
-                    isSearchFocused ? 'flex-1' : 'w-80'
-                  }`}>
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={() => setIsSearchFocused(false)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                    />
-                  </div>
-
-                  {/* FAQ Button in Search Bar Area */}
-                  <button
-                    onClick={scrollToFAQ}
-                    className="flex items-center gap-2 px-4 py-3 border border-gray-300 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-gray-50 transition-colors text-gray-700 hover:text-orange-700 group"
-                    title="Frequently Asked Questions"
-                  >
-                    <HelpCircle className="h-5 w-5 text-gray-500 group-hover:text-orange-600 transition-colors" />
-                    <span className="font-medium hidden sm:inline">FAQ</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Category Filters - Desktop */}
-            {categories.length > 1 && (
-              <div className="hidden lg:block mt-4">
-                <div className="flex items-center gap-2">
-                  {categories.length > 6 && (
-                    <button
-                      onClick={() => scroll('left')}
-                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                  )}
-                  
-                  <div 
-                    ref={scrollContainerRef}
-                    className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth py-2"
-                  >
-                    {categories.map((category) => (
-                      <button
-                        key={category}
-                        onClick={() => setSelectedCategory(category)}
-                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
-                          selectedCategory === category
-                            ? 'bg-orange-600 text-white border-orange-600 shadow-md'
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
-                  </div>
-
-                  {categories.length > 6 && (
-                    <button
-                      onClick={() => scroll('right')}
-                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Filters Overlay */}
-          {showMobileFilters && (
+        {/* Main Content Container */}
+        <div className="container mx-auto px-4">
+          {viewMode === 'home' ? (
             <>
-              <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowMobileFilters(false)} />
-              <div 
-                ref={mobileFiltersRef}
-                className="lg:hidden fixed top-20 left-4 right-4 bg-white rounded-2xl shadow-xl p-6 z-50 animate-in slide-in-from-top-5 duration-300"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-                  <button
-                    onClick={() => setShowMobileFilters(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="h-5 w-5 text-gray-600" />
-                  </button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-3 text-gray-900">Categories</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {categories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => {
-                            setSelectedCategory(category);
-                            setShowMobileFilters(false);
-                          }}
-                          className={`p-3 rounded-xl text-sm font-medium transition-all border ${
-                            selectedCategory === category
-                              ? 'bg-orange-600 text-white border-orange-600 shadow-sm'
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                          }`}
-                        >
-                          {category}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setShowMobileFilters(false)}
-                    className="w-full py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-colors"
-                  >
-                    Apply Filters
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+              {/* New Arrivals Section */}
+              <ProductSection
+                title="New Arrivals"
+                icon={<Clock className="h-5 w-5" />}
+                products={newArrivals}
+                isLoading={isLoadingProducts}
+                onSeeAll={handleSeeAll}
+              />
 
-        {/* Products Grid */}
-        <section className="container mx-auto px-4 py-8">
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="animate-pulse bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                  <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
-                  <div className="bg-gray-200 h-4 rounded mb-2"></div>
-                  <div className="bg-gray-200 h-4 rounded w-3/4"></div>
-                </div>
-              ))}
-            </div>
-          ) : filteredProducts && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+              {/* Best Sellers Section */}
+              {bestSellers.length > 0 && (
+                <ProductSection
+                  title="Best Sellers"
+                  icon={<Flame className="h-5 w-5" />}
+                  products={bestSellers}
+                  onSeeAll={handleSeeAll}
+                />
+              )}
+
+              {/* Featured Products Section */}
+              {featuredProducts.length > 0 && (
+                <ProductSection
+                  title="Featured Products"
+                  icon={<Star className="h-5 w-5" />}
+                  products={featuredProducts}
+                  onSeeAll={handleSeeAll}
+                />
+              )}
+
+              {/* Category Browser */}
+              <CategoryBrowser
+                onCategorySelect={handleCategorySelect}
+                selectedCategory={selectedCategory}
+              />
+            </>
           ) : (
-            <div className="text-center py-16">
-              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {searchTerm || selectedCategory !== 'All' 
-                    ? "No products found" 
-                    : "No products available"
-                  }
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {searchTerm || selectedCategory !== 'All'
-                    ? "Try adjusting your search terms or browse different categories."
-                    : "Check back soon for new arrivals!"
-                  }
-                </p>
+            /* All Products View */
+            <section className="py-8">
+              {/* Results Header */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl text-orange-600">
+                      <Package className="h-5 w-5" />
+                    </div>
+                    {selectedCategory !== 'All' ? selectedCategory : 'All Products'}
+                  </h2>
+                  <p className="text-muted-foreground mt-1">
+                    {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
+                    {searchTerm && ` for "${searchTerm}"`}
+                  </p>
+                </div>
+                
                 {(searchTerm || selectedCategory !== 'All') && (
                   <button
                     onClick={() => {
                       setSearchTerm('');
                       setSelectedCategory('All');
                     }}
-                    className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    View All Products
+                    <X className="h-4 w-4" />
+                    Clear filters
                   </button>
                 )}
-                
-                {/* FAQ button in empty state */}
-                <button
-                  onClick={scrollToFAQ}
-                  className="mt-4 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 mx-auto"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  Check FAQ for help
-                </button>
               </div>
-            </div>
+
+              {/* Category Filter Pills */}
+              <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
+                      selectedCategory === category
+                        ? 'bg-orange-600 text-white border-orange-600 shadow-md'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+
+              {/* Products Grid */}
+              {isLoadingProducts ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="animate-pulse bg-card rounded-2xl p-4 border border-border">
+                      <div className="bg-muted aspect-square rounded-xl mb-4"></div>
+                      <div className="bg-muted h-4 rounded mb-2"></div>
+                      <div className="bg-muted h-4 rounded w-3/4 mb-2"></div>
+                      <div className="bg-muted h-6 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                /* No Results - WhatsApp Fallback */
+                <div className="text-center py-16">
+                  <div className="bg-card p-8 rounded-2xl max-w-md mx-auto border border-border shadow-sm">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      Product not found
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      We couldn't find "{searchTerm}" in our catalog. Would you like to request this product?
+                    </p>
+                    
+                    {/* WhatsApp Request Button */}
+                    <button
+                      onClick={requestProductViaWhatsApp}
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-md hover:shadow-lg mb-4"
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                      <span className="font-medium">Request via WhatsApp</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedCategory('All');
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Or browse all products
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
           )}
-        </section>
+        </div>
 
         {/* Trust Badges Section */}
         <TrustBadges />
@@ -430,7 +448,7 @@ const Home = () => {
         {/* Customer Testimonials */}
         <TestimonialCarousel />
 
-        {/* FAQ Section with ref */}
+        {/* FAQ Section */}
         <div ref={faqSectionRef}>
           <FAQ />
         </div>
@@ -448,10 +466,10 @@ const Home = () => {
           <ArrowUp className="h-6 w-6" />
         </button>
 
-        {/* Floating FAQ Button (for mobile users) */}
+        {/* Floating FAQ Button */}
         <button
           onClick={scrollToFAQ}
-          className={`fixed bottom-6 left-6 z-50 p-3 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-all duration-300 hover:scale-110 border border-gray-200 ${
+          className={`fixed bottom-6 left-6 z-50 p-3 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-all duration-300 hover:scale-110 border border-border ${
             showScrollTop 
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 translate-y-10 pointer-events-none'
