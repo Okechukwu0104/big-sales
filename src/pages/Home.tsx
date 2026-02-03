@@ -8,15 +8,19 @@ import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import { FAQ } from '@/components/FAQ';
 import { ProductSection } from '@/components/ProductSection';
 import { CategoryBrowser } from '@/components/CategoryBrowser';
+import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
+import { ContactUsPopup } from '@/components/ContactUsPopup';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Search, ChevronLeft, ChevronRight, X, Sparkles, ArrowUp, HelpCircle, 
-  Clock, Flame, Star, ArrowLeft, MessageCircle, Package
+  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
   const { toast } = useToast();
+  const { recentlyViewedIds } = useRecentlyViewed();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -104,6 +108,15 @@ const Home = () => {
     if (!products) return [];
     return products.filter(p => p.featured).slice(0, 8);
   }, [products]);
+
+  // Recently viewed products
+  const recentlyViewedProducts = useMemo(() => {
+    if (!products || recentlyViewedIds.length === 0) return [];
+    return recentlyViewedIds
+      .map(id => products.find(p => p.id === id))
+      .filter((p): p is Product => p !== undefined)
+      .slice(0, 8);
+  }, [products, recentlyViewedIds]);
 
   // Extract unique categories for filtering
   const categories = useMemo(() => {
@@ -211,6 +224,9 @@ const Home = () => {
       <Header />
 
       <main className="pt-20">
+        {/* Promotional Banner Carousel */}
+        <PromoBannerCarousel />
+
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
           <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-amber-900/10 backdrop-blur-[1px]"></div>
@@ -328,6 +344,16 @@ const Home = () => {
                   title="Featured Products"
                   icon={<Star className="h-5 w-5" />}
                   products={featuredProducts}
+                  onSeeAll={handleSeeAll}
+                />
+              )}
+
+              {/* Recently Viewed Products Section */}
+              {recentlyViewedProducts.length > 0 && (
+                <ProductSection
+                  title="Recently Viewed"
+                  icon={<Eye className="h-5 w-5" />}
+                  products={recentlyViewedProducts}
                   onSeeAll={handleSeeAll}
                 />
               )}
@@ -478,6 +504,9 @@ const Home = () => {
         >
           <HelpCircle className="h-6 w-6 text-orange-600" />
         </button>
+
+        {/* Contact Us Popup (WhatsApp) */}
+        <ContactUsPopup />
       </main>
     </div>
   );
