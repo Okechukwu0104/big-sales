@@ -1,221 +1,189 @@
 
-
-# Home Page Redesign Plan
+# Home Page Enhancement Plan
 
 ## Overview
 
-Transform the home page into a beautiful, professional e-commerce experience with curated product sections, intelligent search, and a WhatsApp fallback for products not found.
+This plan adds four new features to enhance the home page user experience:
+1. Promotional banner carousel for sales and special offers
+2. Recently viewed products section (session-based tracking)
+3. Horizontal scrolling category browser (like New Arrivals)
+4. Contact Us popup for WhatsApp communication
 
 ---
 
-## New Home Page Structure
+## Part 1: Promotional Banner Carousel
 
-### Visual Layout
+### Database Changes
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│                      HEADER                               │
-├──────────────────────────────────────────────────────────┤
-│                                                           │
-│   ┌─────────────────────────────────────────────────┐    │
-│   │              HERO SECTION                        │    │
-│   │   "Discover Amazing Products"                    │    │
-│   │   [    🔍 Search products...           ]        │    │
-│   │   Premium Quality • Fast Shipping • Best Prices │    │
-│   └─────────────────────────────────────────────────┘    │
-│                                                           │
-│   ═══════════════════════════════════════════════════    │
-│                                                           │
-│   🆕 NEW ARRIVALS              [See All Products →]      │
-│   ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                     │
-│   │    │ │    │ │    │ │    │ │    │  ← Horizontal scroll│
-│   └────┘ └────┘ └────┘ └────┘ └────┘                     │
-│                                                           │
-│   ═══════════════════════════════════════════════════    │
-│                                                           │
-│   🔥 BEST SELLERS              [See All Products →]      │
-│   ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                     │
-│   │    │ │    │ │    │ │    │ │    │  ← Horizontal scroll│
-│   └────┘ └────┘ └────┘ └────┘ └────┘                     │
-│                                                           │
-│   ═══════════════════════════════════════════════════    │
-│                                                           │
-│   ⭐ FEATURED PRODUCTS         [See All Products →]      │
-│   ┌────┐ ┌────┐ ┌────┐ ┌────┐                            │
-│   │    │ │    │ │    │ │    │                            │
-│   └────┘ └────┘ └────┘ └────┘                            │
-│                                                           │
-│   ═══════════════════════════════════════════════════    │
-│                                                           │
-│   📦 BROWSE BY CATEGORY                                  │
-│   ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐                    │
-│   │      │ │      │ │      │ │      │                    │
-│   └──────┘ └──────┘ └──────┘ └──────┘                    │
-│                                                           │
-│   ═══════════════════════════════════════════════════    │
-│                                                           │
-│   ✅ Trust Badges | ⭐ Testimonials | ❓ FAQ              │
-│                                                           │
-└──────────────────────────────────────────────────────────┘
+Create a new `promotional_banners` table to store banner content:
+
+```sql
+CREATE TABLE promotional_banners (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  image_url TEXT,
+  background_color TEXT DEFAULT '#f97316',
+  text_color TEXT DEFAULT '#ffffff',
+  link_url TEXT,
+  link_text TEXT,
+  is_active BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  starts_at TIMESTAMP WITH TIME ZONE,
+  ends_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- RLS Policies
+ALTER TABLE promotional_banners ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view active banners"
+  ON promotional_banners FOR SELECT
+  USING (is_active = true);
+
+CREATE POLICY "Admins can manage banners"
+  ON promotional_banners FOR ALL
+  USING (has_role(auth.uid(), 'admin'::app_role))
+  WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 ```
 
----
+### New Component: `src/components/PromoBannerCarousel.tsx`
 
-## Technical Implementation
+A beautiful auto-playing carousel featuring:
+- Full-width banner slides with gradient backgrounds
+- Title, subtitle, and optional call-to-action button
+- Auto-advance every 5 seconds with pause on hover
+- Dot indicators for navigation
+- Smooth slide transitions using Embla Carousel
+- Support for custom background colors and images
+- Responsive design for mobile/desktop
 
-### Part 1: Create New Data Queries
+### File Changes
 
 **File: `src/pages/Home.tsx`**
-
-Add new queries for:
-
-1. **Most Recent Products** (New Arrivals)
-   - Query products ordered by `created_at DESC`
-   - Limit to 8 products
-   
-2. **Most Purchased Products** (Best Sellers)
-   - Parse `order_items` JSONB from orders table
-   - Count product occurrences across all orders
-   - Join with products table to get full details
-   - This requires a database function or client-side calculation
-
-3. **Featured Products**
-   - Query products where `featured = true`
-   - Already exists in current implementation
-
-**Database Query for Best Sellers:**
-Since order_items is JSONB, calculate best sellers client-side by:
-```typescript
-// Fetch all orders
-const { data: orders } = await supabase.from('orders').select('order_items');
-
-// Count product purchases
-const purchaseCounts = {};
-orders.forEach(order => {
-  order.order_items.forEach(item => {
-    purchaseCounts[item.id] = (purchaseCounts[item.id] || 0) + item.quantity;
-  });
-});
-
-// Sort and get top products
-const topProductIds = Object.entries(purchaseCounts)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 8)
-  .map(([id]) => id);
-```
+- Import and add `PromoBannerCarousel` component at the top of the page (above hero section)
 
 ---
 
-### Part 2: Search with "Product Not Found" WhatsApp Flow
+## Part 2: Recently Viewed Products Section
 
-**File: `src/pages/Home.tsx`**
+### Implementation Approach
 
-When search returns no results:
-- Show a friendly "Product not found" message
-- Add a "Can't find what you're looking for?" button
-- Clicking sends a WhatsApp message with the search query
+Use `sessionStorage` to track products viewed during the current browser session (clears when browser closes).
 
-**WhatsApp Message Template:**
-```
-"Hi! I'm looking for: [search term]
-Could you help me find this product?"
-```
-
-**Implementation Pattern** (using existing Header.tsx pattern):
-```typescript
-const requestProductViaWhatsApp = () => {
-  if (!storeConfig?.whatsapp_number) {
-    toast({
-      title: "WhatsApp not configured",
-      description: "Please contact the store owner directly.",
-      variant: "destructive"
-    });
-    return;
-  }
-
-  const message = `Hi! I'm looking for: ${searchTerm}%0ACould you help me find this product?`;
-  const deepLink = `whatsapp://send?phone=${phoneNumber}&text=${message}`;
-  const webLink = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
-  
-  // Use existing fallback pattern from Header.tsx
-};
-```
-
----
-
-### Part 3: Product Section Components
-
-**New File: `src/components/ProductSection.tsx`**
-
-A reusable horizontal scrolling product section:
+### New Hook: `src/hooks/useRecentlyViewed.ts`
 
 ```typescript
-interface ProductSectionProps {
-  title: string;
-  icon: React.ReactNode;
-  products: Product[];
-  showSeeAll?: boolean;
-  onSeeAll?: () => void;
+interface RecentlyViewedItem {
+  productId: string;
+  viewedAt: number;
 }
+
+// Functions:
+// - addToRecentlyViewed(productId: string)
+// - getRecentlyViewed(): string[]
+// - clearRecentlyViewed()
 ```
+
+Logic:
+- Store up to 10 recently viewed product IDs
+- Newest items at the front, remove duplicates
+- Track timestamp for sorting
+
+### File Changes
+
+**File: `src/pages/ProductDetail.tsx`**
+- Call `addToRecentlyViewed(id)` when product page loads
+
+**File: `src/pages/Home.tsx`**
+- Add new query to fetch products by recently viewed IDs
+- Add `ProductSection` for "Recently Viewed" after other sections
+- Only show if there are recently viewed products
+
+---
+
+## Part 3: Horizontal Scrolling Category Browser
+
+### Changes to `src/components/CategoryBrowser.tsx`
+
+Transform from grid layout to horizontal scroll carousel matching `ProductSection` style:
+
+- Change from `grid` to `flex overflow-x-auto` with scroll snap
+- Add left/right navigation arrows (appear on hover)
+- Filter out "Uncategorized" category
+- Add smooth scrolling behavior
+- Keep the visual styling of category cards
+
+Layout comparison:
+```text
+BEFORE (Grid):
+┌────┐ ┌────┐ ┌────┐
+│    │ │    │ │    │
+└────┘ └────┘ └────┘
+┌────┐ ┌────┐ ┌────┐
+│    │ │    │ │    │
+└────┘ └────┘ └────┘
+
+AFTER (Horizontal Scroll):
+← ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐ →
+  │    │ │    │ │    │ │    │ │    │
+  └────┘ └────┘ └────┘ └────┘ └────┘
+```
+
+---
+
+## Part 4: Contact Us Popup (WhatsApp)
+
+### New Component: `src/components/ContactUsPopup.tsx`
+
+A floating button + sheet/dialog that provides easy WhatsApp contact:
 
 Features:
-- Horizontal scroll with smooth snap
-- Left/Right navigation arrows
-- "See All Products" button
-- Animated entrance on scroll
+- Floating button in bottom-right corner (above scroll-to-top button)
+- Opens a sheet/dialog with contact form
+- Pre-filled message options:
+  - "I have a question about a product"
+  - "I need help with my order"
+  - "General inquiry"
+  - Custom message input
+- Uses existing WhatsApp deep-link/web-link pattern from Header.tsx
+- Animated entrance and hover effects
 
----
-
-### Part 4: Category Browser Component
-
-**New File: `src/components/CategoryBrowser.tsx`**
-
-Display product categories as clickable cards:
-- Fetch categories from `categories` table
-- Show category image/icon and name
-- Clicking filters products to that category
-
----
-
-### Part 5: All Products Page/View
-
-**File: `src/pages/Home.tsx`**
-
-Add state for viewing all products:
-```typescript
-const [viewMode, setViewMode] = useState<'home' | 'all'>('home');
+UI Layout:
+```text
+┌──────────────────────────────────────┐
+│  💬 Contact Us                    X  │
+├──────────────────────────────────────┤
+│                                      │
+│  How can we help you?                │
+│                                      │
+│  ┌────────────────────────────────┐  │
+│  │ 📦 Question about a product    │  │
+│  └────────────────────────────────┘  │
+│  ┌────────────────────────────────┐  │
+│  │ 🚚 Help with my order          │  │
+│  └────────────────────────────────┘  │
+│  ┌────────────────────────────────┐  │
+│  │ 💬 General inquiry             │  │
+│  └────────────────────────────────┘  │
+│                                      │
+│  Or type your message:               │
+│  ┌────────────────────────────────┐  │
+│  │                                │  │
+│  └────────────────────────────────┘  │
+│                                      │
+│  ┌────────────────────────────────┐  │
+│  │   💬 Send via WhatsApp         │  │
+│  └────────────────────────────────┘  │
+└──────────────────────────────────────┘
 ```
 
-When "See All Products" is clicked:
-- Switch to full grid view
-- Show all products with search/filter
-- Add "Back to Home" button
+### File Changes
 
----
-
-### Part 6: UI/UX Enhancements
-
-**Visual Design Elements:**
-
-1. **Hero Section**
-   - Large prominent search bar
-   - Animated floating badges
-   - Gradient background with subtle pattern
-
-2. **Section Headers**
-   - Icon + Title + "See All" button aligned
-   - Subtle divider lines between sections
-   
-3. **Product Cards**
-   - Consistent sizing in horizontal scroll
-   - Hover animations (already implemented)
-   - Sale badges, stock indicators (already implemented)
-
-4. **Empty States**
-   - Friendly illustrations
-   - Clear call-to-action buttons
-   - WhatsApp fallback prominently displayed
+**File: `src/pages/Home.tsx`**
+- Import and add `ContactUsPopup` component
+- Position it with the other floating buttons
 
 ---
 
@@ -223,27 +191,36 @@ When "See All Products" is clicked:
 
 | File | Change |
 |------|--------|
-| `src/pages/Home.tsx` | Complete redesign with new sections, queries, and WhatsApp search fallback |
-| `src/components/ProductSection.tsx` | **NEW** - Reusable horizontal product carousel |
-| `src/components/CategoryBrowser.tsx` | **NEW** - Category grid component |
+| `supabase/migrations/` | New migration for `promotional_banners` table |
+| `src/components/PromoBannerCarousel.tsx` | **NEW** - Auto-playing promotional banner carousel |
+| `src/hooks/useRecentlyViewed.ts` | **NEW** - Session-based recently viewed tracking hook |
+| `src/components/CategoryBrowser.tsx` | Convert from grid to horizontal scroll with arrows |
+| `src/components/ContactUsPopup.tsx` | **NEW** - Floating contact button with WhatsApp integration |
+| `src/pages/Home.tsx` | Add promo carousel, recently viewed section, contact popup |
+| `src/pages/ProductDetail.tsx` | Track product views with useRecentlyViewed hook |
+| `src/types/index.ts` | Add PromotionalBanner interface |
 
 ---
 
-## Expected User Experience
+## Technical Notes
 
-1. **Landing** → User sees hero with search, then curated sections
-2. **Discovery** → Scroll through New Arrivals, Best Sellers, Featured
-3. **Search** → Type in search bar, results filter in real-time
-4. **Not Found** → If no results, prompt to request via WhatsApp
-5. **Browse All** → Click "See All Products" to view full catalog
-6. **Category Filter** → Click category cards to filter by category
+### Session Storage for Recently Viewed
+- Uses `sessionStorage` (not `localStorage`) so data clears when browser closes
+- Maximum 10 products stored to prevent memory bloat
+- Products are de-duplicated (viewing same product moves it to front)
 
----
+### Banner Carousel Auto-Play
+- 5-second interval between slides
+- Pauses on hover for better UX
+- Resumes when mouse leaves
+- Uses Embla Carousel (already installed) for smooth transitions
 
-## Performance Considerations
+### WhatsApp Integration
+- Reuses the existing deep-link/web-link fallback pattern from Header.tsx
+- Uses `whatsapp://send` for mobile app deep-link
+- Falls back to `api.whatsapp.com` for web browsers
+- Includes pre-formatted messages for common inquiries
 
-- Products fetch once on page load
-- Best sellers calculated client-side from orders (cached via React Query)
-- Lazy loading for off-screen product images (already implemented)
-- Smooth horizontal scroll with CSS scroll-snap
-
+### Category Filtering
+- Excludes categories with name "Uncategorized" (case-insensitive)
+- Maintains existing category click behavior (navigates to filtered view)
