@@ -1,189 +1,106 @@
 
-# Home Page Enhancement Plan
+
+# Low-Network Optimization, Google AdSense & Build Fix
 
 ## Overview
 
-This plan adds four new features to enhance the home page user experience:
-1. Promotional banner carousel for sales and special offers
-2. Recently viewed products section (session-based tracking)
-3. Horizontal scrolling category browser (like New Arrivals)
-4. Contact Us popup for WhatsApp communication
+Three changes: fix the existing build error, optimize the app for slow networks, and integrate Google AdSense.
 
 ---
 
-## Part 1: Promotional Banner Carousel
+## Part 1: Fix Build Error
 
-### Database Changes
+**File: `supabase/functions/categorize-product/index.ts`** (line 87)
 
-Create a new `promotional_banners` table to store banner content:
-
-```sql
-CREATE TABLE promotional_banners (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  subtitle TEXT,
-  image_url TEXT,
-  background_color TEXT DEFAULT '#f97316',
-  text_color TEXT DEFAULT '#ffffff',
-  link_url TEXT,
-  link_text TEXT,
-  is_active BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0,
-  starts_at TIMESTAMP WITH TIME ZONE,
-  ends_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
-
--- RLS Policies
-ALTER TABLE promotional_banners ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can view active banners"
-  ON promotional_banners FOR SELECT
-  USING (is_active = true);
-
-CREATE POLICY "Admins can manage banners"
-  ON promotional_banners FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role))
-  WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
-```
-
-### New Component: `src/components/PromoBannerCarousel.tsx`
-
-A beautiful auto-playing carousel featuring:
-- Full-width banner slides with gradient backgrounds
-- Title, subtitle, and optional call-to-action button
-- Auto-advance every 5 seconds with pause on hover
-- Dot indicators for navigation
-- Smooth slide transitions using Embla Carousel
-- Support for custom background colors and images
-- Responsive design for mobile/desktop
-
-### File Changes
-
-**File: `src/pages/Home.tsx`**
-- Import and add `PromoBannerCarousel` component at the top of the page (above hero section)
-
----
-
-## Part 2: Recently Viewed Products Section
-
-### Implementation Approach
-
-Use `sessionStorage` to track products viewed during the current browser session (clears when browser closes).
-
-### New Hook: `src/hooks/useRecentlyViewed.ts`
+Add a type guard before accessing `.name` on the caught `unknown` error:
 
 ```typescript
-interface RecentlyViewedItem {
-  productId: string;
-  viewedAt: number;
-}
-
-// Functions:
-// - addToRecentlyViewed(productId: string)
-// - getRecentlyViewed(): string[]
-// - clearRecentlyViewed()
-```
-
-Logic:
-- Store up to 10 recently viewed product IDs
-- Newest items at the front, remove duplicates
-- Track timestamp for sorting
-
-### File Changes
-
-**File: `src/pages/ProductDetail.tsx`**
-- Call `addToRecentlyViewed(id)` when product page loads
-
-**File: `src/pages/Home.tsx`**
-- Add new query to fetch products by recently viewed IDs
-- Add `ProductSection` for "Recently Viewed" after other sections
-- Only show if there are recently viewed products
-
----
-
-## Part 3: Horizontal Scrolling Category Browser
-
-### Changes to `src/components/CategoryBrowser.tsx`
-
-Transform from grid layout to horizontal scroll carousel matching `ProductSection` style:
-
-- Change from `grid` to `flex overflow-x-auto` with scroll snap
-- Add left/right navigation arrows (appear on hover)
-- Filter out "Uncategorized" category
-- Add smooth scrolling behavior
-- Keep the visual styling of category cards
-
-Layout comparison:
-```text
-BEFORE (Grid):
-┌────┐ ┌────┐ ┌────┐
-│    │ │    │ │    │
-└────┘ └────┘ └────┘
-┌────┐ ┌────┐ ┌────┐
-│    │ │    │ │    │
-└────┘ └────┘ └────┘
-
-AFTER (Horizontal Scroll):
-← ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐ →
-  │    │ │    │ │    │ │    │ │    │
-  └────┘ └────┘ └────┘ └────┘ └────┘
+} catch (fetchError) {
+  clearTimeout(timeoutId);
+  if (fetchError instanceof Error && fetchError.name === 'AbortError') {
 ```
 
 ---
 
-## Part 4: Contact Us Popup (WhatsApp)
+## Part 2: Google AdSense Integration
 
-### New Component: `src/components/ContactUsPopup.tsx`
+**File: `index.html`**
 
-A floating button + sheet/dialog that provides easy WhatsApp contact:
+Add the AdSense script inside the `<head>` tag:
 
-Features:
-- Floating button in bottom-right corner (above scroll-to-top button)
-- Opens a sheet/dialog with contact form
-- Pre-filled message options:
-  - "I have a question about a product"
-  - "I need help with my order"
-  - "General inquiry"
-  - Custom message input
-- Uses existing WhatsApp deep-link/web-link pattern from Header.tsx
-- Animated entrance and hover effects
-
-UI Layout:
-```text
-┌──────────────────────────────────────┐
-│  💬 Contact Us                    X  │
-├──────────────────────────────────────┤
-│                                      │
-│  How can we help you?                │
-│                                      │
-│  ┌────────────────────────────────┐  │
-│  │ 📦 Question about a product    │  │
-│  └────────────────────────────────┘  │
-│  ┌────────────────────────────────┐  │
-│  │ 🚚 Help with my order          │  │
-│  └────────────────────────────────┘  │
-│  ┌────────────────────────────────┐  │
-│  │ 💬 General inquiry             │  │
-│  └────────────────────────────────┘  │
-│                                      │
-│  Or type your message:               │
-│  ┌────────────────────────────────┐  │
-│  │                                │  │
-│  └────────────────────────────────┘  │
-│                                      │
-│  ┌────────────────────────────────┐  │
-│  │   💬 Send via WhatsApp         │  │
-│  └────────────────────────────────┘  │
-└──────────────────────────────────────┘
+```html
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5592901106185844"
+     crossorigin="anonymous"></script>
 ```
 
-### File Changes
+Since this is a Single Page Application (SPA), there is only one `index.html` that serves all pages -- so placing it once in the head is sufficient for every route.
 
-**File: `src/pages/Home.tsx`**
-- Import and add `ContactUsPopup` component
-- Position it with the other floating buttons
+---
+
+## Part 3: Low/Slow Network Optimizations
+
+### 3a. React Query Caching & Offline Resilience
+
+**File: `src/App.tsx`**
+
+Configure the QueryClient with aggressive caching and retry settings:
+
+```typescript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,       // 5 min before refetch
+      gcTime: 30 * 60 * 1000,         // Keep cache 30 min
+      retry: 3,                        // Retry failed requests 3 times
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000),
+      refetchOnWindowFocus: false,     // Don't refetch on tab switch
+      networkMode: 'offlineFirst',     // Use cache when offline
+    },
+  },
+});
+```
+
+### 3b. Lazy Loading Routes
+
+**File: `src/App.tsx`**
+
+Use `React.lazy` and `Suspense` for admin pages and less-visited pages so the initial bundle is smaller:
+
+```typescript
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminProducts = lazy(() => import('./pages/admin/Products'));
+// ... etc for all admin routes
+```
+
+Wrap routes in a `<Suspense>` with a lightweight loading spinner.
+
+### 3c. Image Loading Optimization
+
+**File: `src/components/ProductCard.tsx`**
+
+Add `loading="lazy"` to product images (if not already present) so images only load when scrolled into view.
+
+### 3d. Offline Detection Banner
+
+**File: `src/App.tsx`** or **`src/components/Header.tsx`**
+
+Add a small banner that appears when the user goes offline:
+
+```typescript
+const [isOnline, setIsOnline] = useState(navigator.onLine);
+useEffect(() => {
+  const handleOnline = () => setIsOnline(true);
+  const handleOffline = () => setIsOnline(false);
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+  return () => {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+  };
+}, []);
+```
+
+Display a subtle toast/banner: "You're offline. Some features may be unavailable."
 
 ---
 
@@ -191,36 +108,9 @@ UI Layout:
 
 | File | Change |
 |------|--------|
-| `supabase/migrations/` | New migration for `promotional_banners` table |
-| `src/components/PromoBannerCarousel.tsx` | **NEW** - Auto-playing promotional banner carousel |
-| `src/hooks/useRecentlyViewed.ts` | **NEW** - Session-based recently viewed tracking hook |
-| `src/components/CategoryBrowser.tsx` | Convert from grid to horizontal scroll with arrows |
-| `src/components/ContactUsPopup.tsx` | **NEW** - Floating contact button with WhatsApp integration |
-| `src/pages/Home.tsx` | Add promo carousel, recently viewed section, contact popup |
-| `src/pages/ProductDetail.tsx` | Track product views with useRecentlyViewed hook |
-| `src/types/index.ts` | Add PromotionalBanner interface |
+| `supabase/functions/categorize-product/index.ts` | Fix `fetchError` type guard (build error) |
+| `index.html` | Add Google AdSense script in head |
+| `src/App.tsx` | QueryClient caching config, lazy-loaded routes, Suspense fallback |
+| `src/components/ProductCard.tsx` | Ensure `loading="lazy"` on images |
+| `src/components/Header.tsx` | Offline detection banner |
 
----
-
-## Technical Notes
-
-### Session Storage for Recently Viewed
-- Uses `sessionStorage` (not `localStorage`) so data clears when browser closes
-- Maximum 10 products stored to prevent memory bloat
-- Products are de-duplicated (viewing same product moves it to front)
-
-### Banner Carousel Auto-Play
-- 5-second interval between slides
-- Pauses on hover for better UX
-- Resumes when mouse leaves
-- Uses Embla Carousel (already installed) for smooth transitions
-
-### WhatsApp Integration
-- Reuses the existing deep-link/web-link fallback pattern from Header.tsx
-- Uses `whatsapp://send` for mobile app deep-link
-- Falls back to `api.whatsapp.com` for web browsers
-- Includes pre-formatted messages for common inquiries
-
-### Category Filtering
-- Excludes categories with name "Uncategorized" (case-insensitive)
-- Maintains existing category click behavior (navigates to filtered view)
