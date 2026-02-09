@@ -84,7 +84,7 @@ serve(async (req) => {
       clearTimeout(timeoutId);
       
       // Handle timeout/abort specifically
-      if (fetchError.name === 'AbortError') {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         console.log(`AI categorization timed out for product "${productName}", using default category`);
         return new Response(JSON.stringify({ 
           category: "Uncategorized",
