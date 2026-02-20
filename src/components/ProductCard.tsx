@@ -195,7 +195,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           
           {/* Badges - top left */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2">
+          <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-1 sm:gap-2">
             {product.featured && (
               <Badge className="gradient-accent-button border-0 text-accent-foreground">
                 <Star className="w-3 h-3 mr-1" />
@@ -216,12 +216,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             )}
           </div>
           
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleLike}
-              className="h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-lg"
+              className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-white/90 hover:bg-white shadow-lg"
               disabled={likeMutation.isPending}
             >
               <Heart 
@@ -232,10 +232,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </Link>
       
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-3">
+      <CardContent className="p-3 sm:p-5">
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
           <Link to={`/product/${product.id}`}>
-            <h3 className="font-bold text-xl group-hover:text-primary transition-colors duration-300 line-clamp-1">
+            <h3 className="font-bold text-base sm:text-lg group-hover:text-primary transition-colors duration-300 line-clamp-1">
               {product.name}
             </h3>
           </Link>
@@ -260,14 +260,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         )}
         
         {product.description && (
-          <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">
+          <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed hidden sm:block">
             {product.description}
           </p>
         )}
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold hero-text">
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-xl sm:text-2xl font-bold hero-text">
               {formatPrice(product.price)}
             </span>
             <div className="flex items-center gap-1 text-muted-foreground">
@@ -283,11 +283,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </CardContent>
       
-      <CardFooter className="p-6 pt-0 flex gap-2">
+      <CardFooter className="p-3 sm:p-5 pt-0 flex gap-2">
         <Button 
           onClick={handleAddToCart} 
           className="flex-1 relative overflow-hidden" 
-          size="lg"
+          size="default"
           disabled={!product.in_stock}
           variant={product.in_stock ? "outline" : "outline"}
         >
@@ -297,7 +297,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         {product.in_stock && (
           <Button 
             onClick={handleQuickBuy}
-            size="lg"
+            size="default"
             className="relative overflow-hidden"
           >
             <div className="shimmer absolute inset-0"></div>

@@ -13,6 +13,7 @@ export interface Product {
   display_order: number | null;
   brand: string | null;
   sku: string | null;
+  video_url: string | null;
   created_at: string;
   updated_at: string;
 }

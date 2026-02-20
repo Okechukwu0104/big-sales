@@ -124,26 +124,26 @@ const Checkout = () => {
         </Link>
 
         {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-4 mb-8">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 mb-8">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
               <CheckCircle className="h-5 w-5" />
             </div>
-            <span className="text-sm font-medium">Cart</span>
+            <span className="text-sm font-medium hidden sm:inline">Cart</span>
           </div>
-          <div className="w-12 h-0.5 bg-primary"></div>
-          <div className="flex items-center gap-2">
+          <div className="w-8 sm:w-12 h-0.5 bg-primary"></div>
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">2</div>
-            <span className="text-sm font-medium">Checkout</span>
+            <span className="text-sm font-medium hidden sm:inline">Checkout</span>
           </div>
-          <div className="w-12 h-0.5 bg-muted"></div>
-          <div className="flex items-center gap-2">
+          <div className="w-8 sm:w-12 h-0.5 bg-muted"></div>
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-medium">3</div>
-            <span className="text-sm text-muted-foreground">Complete</span>
+            <span className="text-sm text-muted-foreground hidden sm:inline">Complete</span>
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-8">Checkout</h1>
 
         <div className="grid lg:grid-cols-2 gap-8">
           <Card>

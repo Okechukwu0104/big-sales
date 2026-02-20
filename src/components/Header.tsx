@@ -168,7 +168,7 @@ export const Header = () => {
 
   return ( 
     <header className="fixed top-0 left-0 right-0 w-full bg-background/95 backdrop-blur-md border-b border-border z-50">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <picture>
@@ -176,7 +176,7 @@ export const Header = () => {
               <img 
                 src="/images/big-sales-logo.png" 
                 alt="BIG SALES"
-                className="h-11 w-auto"
+                className="h-9 sm:h-11 w-auto"
                 width={120}
                 height={44}
                 loading="eager"

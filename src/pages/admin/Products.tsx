@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Sparkles, GripVertical, Filter, FolderOpen, Layers, Loader2, WifiOff } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Sparkles, GripVertical, Filter, FolderOpen, Layers, Loader2, WifiOff, Video } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -36,16 +36,15 @@ import { CSS } from '@dnd-kit/utilities';
 
 // Constants
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_IMAGE_DIMENSION = 1200;
 const IMAGE_QUALITY = 0.8;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
-// Utility: Compress image before upload
+// Utility: Iterative image compression
 const compressImage = async (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
     const img = new Image();
     
     img.onload = () => {
@@ -62,18 +61,48 @@ const compressImage = async (file: File): Promise<Blob> => {
         }
       }
       
+      const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
+      const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
       
-      canvas.toBlob(
-        (blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Failed to compress image'));
-        },
-        'image/jpeg',
-        IMAGE_QUALITY
-      );
+      // Iteratively reduce quality until under 5MB
+      const tryCompress = (quality: number): void => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            if (blob.size <= MAX_IMAGE_SIZE || quality <= 0.1) {
+              // If still too large after min quality, try reducing dimensions
+              if (blob.size > MAX_IMAGE_SIZE && width > 800) {
+                const ratio = 800 / Math.max(width, height);
+                canvas.width = width * ratio;
+                canvas.height = height * ratio;
+                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(
+                  (smallBlob) => {
+                    if (smallBlob) resolve(smallBlob);
+                    else resolve(blob);
+                  },
+                  'image/jpeg',
+                  0.7
+                );
+              } else {
+                resolve(blob);
+              }
+            } else {
+              tryCompress(Math.round((quality - 0.1) * 10) / 10);
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      
+      tryCompress(0.9);
     };
     
     img.onerror = () => reject(new Error('Failed to load image'));
@@ -177,6 +206,12 @@ const SortableProduct = ({ product, categories, productCategories, collections, 
               {product.featured && (
                 <Badge className="text-xs">Featured</Badge>
               )}
+              {product.video_url && (
+                <Badge variant="outline" className="text-xs">
+                  <Video className="h-3 w-3 mr-1" />
+                  Video
+                </Badge>
+              )}
             </div>
           </div>
           
@@ -210,6 +245,7 @@ const AdminProducts = () => {
     quantity: '',
     featured: false,
     image: null as File | null,
+    video: null as File | null,
     collection_id: '',
     selectedCategories: [] as string[],
   });
@@ -335,19 +371,46 @@ const AdminProducts = () => {
         image_url = data.publicUrl;
       }
 
+      // Handle video upload
+      let video_url = null;
+      if (formData.video) {
+        setUploadProgress('Uploading video...');
+        setProgressValue(50);
+        
+        const videoExt = formData.video.name.split('.').pop() || 'mp4';
+        const videoFileName = `${Math.random()}.${videoExt}`;
+        
+        await retryWithBackoff(async () => {
+          const { error: uploadError } = await supabase.storage
+            .from('product-videos')
+            .upload(videoFileName, formData.video!);
+          
+          if (uploadError) throw uploadError;
+        });
+        
+        const { data: videoData } = supabase.storage
+          .from('product-videos')
+          .getPublicUrl(videoFileName);
+        
+        video_url = videoData.publicUrl;
+      }
+
       setUploadProgress('Saving product...');
       setProgressValue(70);
 
       // Create product IMMEDIATELY with "Uncategorized" - don't wait for AI
       const { data: newProduct, error } = await retryWithBackoff(async () => {
-        const result = await supabase
-          .from('products')
-          .insert([{ 
+      const insertData = { 
             ...productData, 
             image_url, 
-            category: 'Uncategorized', // Default, AI updates later
+            video_url,
+            category: 'Uncategorized' as string,
             display_order: (products?.length || 0) + 1 
-          }])
+          };
+          
+          const result = await supabase
+          .from('products')
+          .insert([insertData])
           .select()
           .single();
         
@@ -459,6 +522,29 @@ const AdminProducts = () => {
           .getPublicUrl(fileName);
         
         updateData.image_url = data.publicUrl;
+      }
+
+      // Handle video upload
+      if (formData.video) {
+        setUploadProgress('Uploading video...');
+        setProgressValue(55);
+        
+        const videoExt = formData.video.name.split('.').pop() || 'mp4';
+        const videoFileName = `${Math.random()}.${videoExt}`;
+        
+        await retryWithBackoff(async () => {
+          const { error: uploadError } = await supabase.storage
+            .from('product-videos')
+            .upload(videoFileName, formData.video!);
+          
+          if (uploadError) throw uploadError;
+        });
+        
+        const { data: videoData } = supabase.storage
+          .from('product-videos')
+          .getPublicUrl(videoFileName);
+        
+        updateData.video_url = videoData.publicUrl;
       }
 
       setUploadProgress('Updating product...');
@@ -579,6 +665,7 @@ const AdminProducts = () => {
       quantity: '', 
       featured: false, 
       image: null,
+      video: null,
       collection_id: '',
       selectedCategories: [],
     });
@@ -601,6 +688,7 @@ const AdminProducts = () => {
       quantity: product.quantity?.toString() || '0',
       featured: product.featured,
       image: null,
+      video: null,
       collection_id: product.collection_id || '',
       selectedCategories: productCategories?.[product.id] || [],
     });
@@ -846,6 +934,38 @@ const AdminProducts = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         Images will be automatically compressed for faster upload.
                       </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="video">Product Video (max 50MB)</Label>
+                      <Input
+                        id="video"
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && file.size > MAX_VIDEO_SIZE) {
+                            toast({
+                              title: "Video too large",
+                              description: "Please select a video under 50MB.",
+                              variant: "destructive"
+                            });
+                            e.target.value = '';
+                            return;
+                          }
+                          setFormData({ ...formData, video: file || null });
+                        }}
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Supported formats: MP4, WebM, MOV. Video will appear on product page.
+                      </p>
+                      {editingProduct?.video_url && !formData.video && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
+                          <Video className="h-3 w-3" />
+                          <span>Current product has a video</span>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="flex items-center space-x-2">

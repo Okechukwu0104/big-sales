@@ -207,7 +207,7 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-4 py-8 pt-20">
         <Link 
           to="/" 
           className="inline-flex items-center text-primary hover:text-primary/80 mb-6 sm:mb-8 transition-colors font-medium"
@@ -217,7 +217,7 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-4">
+          <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
             {product.image_url ? (
               <img
                 src={product.image_url}
@@ -233,6 +233,21 @@ const ProductDetail = () => {
               </div>
             )}
           </div>
+
+          {/* Video Player */}
+          {product.video_url && (
+            <div className="mt-4 rounded-xl overflow-hidden shadow-lg bg-card">
+              <video
+                src={product.video_url}
+                controls
+                preload="metadata"
+                className="w-full rounded-xl"
+                playsInline
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
 
           <div className="space-y-4 sm:space-y-6">
             <div>
