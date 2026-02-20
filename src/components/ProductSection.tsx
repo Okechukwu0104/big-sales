@@ -43,14 +43,14 @@ export const ProductSection = ({
   }
 
   return (
-    <section className="py-8">
+    <section className="py-5 sm:py-8">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl text-orange-600">
             {icon}
           </div>
-          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+          <h2 className="text-lg sm:text-2xl font-bold text-foreground">{title}</h2>
         </div>
         
         {showSeeAll && onSeeAll && (
@@ -86,7 +86,7 @@ export const ProductSection = ({
             Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 w-[280px] snap-start animate-pulse bg-card rounded-2xl p-4 border border-border"
+                className="flex-shrink-0 w-[200px] sm:w-[260px] snap-start animate-pulse bg-card rounded-2xl p-4 border border-border"
               >
                 <div className="bg-muted aspect-square rounded-xl mb-4"></div>
                 <div className="bg-muted h-4 rounded mb-2"></div>
@@ -98,7 +98,7 @@ export const ProductSection = ({
             products.map((product) => (
               <div
                 key={product.id}
-                className="flex-shrink-0 w-[280px] snap-start"
+                className="flex-shrink-0 w-[200px] sm:w-[260px] snap-start"
               >
                 <ProductCard product={product} />
               </div>

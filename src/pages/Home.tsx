@@ -274,11 +274,11 @@ const Home = () => {
                 <span className="text-sm font-medium text-orange-700">Discover Amazing Deals</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                 BIG SALES
               </h1>
 
-              <p className="text-lg md:text-xl text-orange-700 mb-8 leading-relaxed max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-orange-700 mb-8 leading-relaxed max-w-2xl mx-auto">
                 Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
               </p>
 
@@ -437,7 +437,7 @@ const Home = () => {
 
               {/* Products Grid */}
               {isLoadingProducts ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div key={i} className="animate-pulse bg-white rounded-2xl p-4 border border-gray-200">
                       <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
@@ -448,7 +448,7 @@ const Home = () => {
                   ))}
                 </div>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
@@ -504,7 +504,7 @@ const Home = () => {
         {/* Scroll to Top Button */}
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-6 right-6 z-50 p-3 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 ${
+          className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 ${
             showScrollTop
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-10 pointer-events-none'
@@ -517,7 +517,7 @@ const Home = () => {
         {/* Floating FAQ Button */}
         <button
           onClick={scrollToFAQ}
-          className={`fixed bottom-6 left-6 z-50 p-3 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-all duration-300 hover:scale-110 border border-gray-200 ${
+          className={`fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50 p-3 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-all duration-300 hover:scale-110 border border-gray-200 ${
             showScrollTop 
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 translate-y-10 pointer-events-none'

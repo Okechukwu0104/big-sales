@@ -378,6 +378,7 @@ export type Database = {
           quantity: number | null
           sku: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           brand?: string | null
@@ -396,6 +397,7 @@ export type Database = {
           quantity?: number | null
           sku?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           brand?: string | null
@@ -414,6 +416,7 @@ export type Database = {
           quantity?: number | null
           sku?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
