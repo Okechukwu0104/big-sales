@@ -308,9 +308,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         
         {product.description && (
           <p className="text-muted-foreground text-xs mb-2 line-clamp-1 leading-relaxed hidden sm:block">
-            {product.description}
+            {product.description.slice(0, 20)}
           </p>
         )}
+
+        
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
