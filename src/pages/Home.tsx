@@ -278,7 +278,7 @@ const Home = () => {
                 BIG SALES
               </h1>
 
-              <p className="text-base sm:text-lg md:text-xl text-white-100 mb-8 leading-relaxed max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-white-800 mb-8 leading-relaxed max-w-2xl mx-auto">
                 Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
               </p>
 
