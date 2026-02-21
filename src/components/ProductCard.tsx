@@ -335,7 +335,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           disabled={!product.in_stock}
           variant="outline"
         >
-          <ShoppingCart className="h-3.5 w-3.5 mr-1" />
+          <ShoppingCart className="h-3 w-3 mr-0.5" />
           <span className="hidden sm:inline">{product.in_stock ? 'Add' : 'Out of Stock'}</span>
           <span className="sm:hidden">{product.in_stock ? '' : 'N/A'}</span>
         </Button>
@@ -346,7 +346,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             className="relative overflow-hidden gradient-accent-button text-accent-foreground text-xs sm:text-sm h-8 sm:h-9"
           >
             <Zap className="h-3.5 w-3.5 mr-1" />
-            <span>Buy</span>
+            <span>Buy Now</span>
           </Button>
         )}
       </CardFooter>
