@@ -1,197 +1,164 @@
 
-# Video Upload, AdSense Verification & Mobile Responsiveness Overhaul
+# Video Preview on Product Cards, Shorter Descriptions & Modern Nigerian-Focused Redesign
 
 ## Overview
 
-This plan covers three areas:
-1. Admin video upload for products
-2. AdSense verification and setup
-3. Comprehensive mobile responsiveness improvements across the entire app
+Three interconnected changes to make the store feel premium and appealing to Nigerian shoppers:
+1. Video preview on product cards (YouTube-style autoplay loop on hover)
+2. Shorter product descriptions everywhere
+3. Visual redesign with Nigerian market appeal -- bolder colors, Naira-forward pricing, urgency cues, and a more vibrant, marketplace-inspired feel
 
 ---
 
-## Part 1: Admin Video Upload for Products
+## Part 1: Video Preview on Product Cards
 
-### Database Migration
+### How It Works
 
-Add a `video_url` column to the `products` table and create a `product-videos` storage bucket:
+When a product has a `video_url` instead of (or alongside) an image, the product card will:
+- Show the video thumbnail/first frame as the static preview
+- On hover (desktop) or tap-hold (mobile), play the first ~10 seconds of the video in a silent, looping preview -- just like YouTube thumbnails
+- Show a small "play" icon overlay so users know it's a video
+- On the product detail page, show the full video player with controls
 
-```sql
-ALTER TABLE products ADD COLUMN video_url TEXT;
+### File: `src/components/ProductCard.tsx`
 
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('product-videos', 'product-videos', true);
+- Add a `useRef` for the video element and a `isHovering` state
+- In the card media area, check if `product.video_url` exists:
+  - If yes, render a `<video>` element with `muted`, `loop`, `playsInline`, `preload="metadata"`
+  - On `mouseEnter`: set `currentTime = 0`, call `play()`, and set a timeout to pause after 10 seconds
+  - On `mouseLeave`: pause and reset to 0
+  - Overlay a small play/video icon badge (bottom-right) to signal "this is a video"
+- If both `image_url` and `video_url` exist, prefer video preview on hover with the image as the static poster frame
+- If only `video_url` exists (no image), show the video element as the poster
 
-CREATE POLICY "Public video access"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'product-videos');
+### File: `src/pages/ProductDetail.tsx`
 
-CREATE POLICY "Admins can upload videos"
-ON storage.objects FOR INSERT
-WITH CHECK (
-  bucket_id = 'product-videos' AND
-  has_role(auth.uid(), 'admin'::app_role)
-);
-
-CREATE POLICY "Admins can delete videos"
-ON storage.objects FOR DELETE
-USING (
-  bucket_id = 'product-videos' AND
-  has_role(auth.uid(), 'admin'::app_role)
-);
-```
-
-### Type Update
-
-**File: `src/types/index.ts`**
-- Add `video_url: string | null;` to the `Product` interface
-
-### Admin Products Form Changes
-
-**File: `src/pages/admin/Products.tsx`**
-
-Add video upload field below the image upload:
-- New `video` field in `formData` state
-- File input accepting `video/*` with 50MB limit
-- Video upload logic in create/update mutations using `product-videos` bucket
-- "Has Video" badge in product list
-- Iterative image compression: reduce quality from 0.9 down to 0.1 in steps until image is under 5MB, then reduce dimensions to 800px as last resort
-
-### Product Detail Video Player
-
-**File: `src/pages/ProductDetail.tsx`**
-
-Display a video player below the product image when `product.video_url` exists:
-```
-[Product Image]
-[Video Player - controls, preload metadata]
-```
+- Move the video player into the main media column (currently it sits outside the grid which breaks layout)
+- Show image first, then video below it in the same column
+- Add poster attribute using `image_url` if available
 
 ---
 
-## Part 2: AdSense Verification
+## Part 2: Shorter Product Descriptions
 
-### Current Status - Already Complete
+### File: `src/components/ProductCard.tsx`
+- Change `line-clamp-2` to `line-clamp-1` for the description on desktop
+- Keep it hidden on mobile (already `hidden sm:block`)
 
-The AdSense setup is already properly configured:
-- AdSense script tag is in `index.html` head
-- `<meta name="google-adsense-account">` tag is present
-- `public/ads.txt` file exists with the correct publisher ID
+### File: `src/pages/ProductDetail.tsx`
+- Truncate description to first 150 characters with a "Read more" toggle
+- Show full description when expanded
 
-Since this is an SPA (Single Page Application), the script in `index.html` head loads once and covers all routes. No additional changes needed for AdSense -- it is ready to serve ads once Google approves the account.
+### File: `src/components/ProductSection.tsx`
+- No description shown in carousel cards (they're already compact)
 
 ---
 
-## Part 3: Mobile Responsiveness Improvements
+## Part 3: Modern Nigerian-Focused Visual Redesign
 
-### 3a. Product Cards - Smaller on Mobile
+### Design Philosophy
+Nigerian e-commerce shoppers respond to:
+- Bold, vibrant colors (green and gold -- national colors)
+- Clear pricing in Naira prominently displayed
+- Trust signals (verified, original, fast delivery)
+- Social proof (likes, reviews count visible)
+- Urgency and scarcity cues ("selling fast", "only X left")
+- WhatsApp integration as a primary communication channel
+- Mobile-first design (majority of Nigerian shoppers use mobile)
+
+### 3a. Color System Update
+
+**File: `src/index.css`**
+
+Refresh the color palette to be more vibrant and Nigerian-market appropriate:
+- Primary: Keep orange (it's already strong and associated with deals/sales)
+- Accent: Shift from deep green to a richer Nigerian green (`145 63% 42%`) -- the green from the Nigerian flag
+- Add a gold accent for premium feel (`45 93% 47%`)
+- Warmer card backgrounds with subtle gradients
+- Add new CSS utility class `.naira-price` for bold, attention-grabbing price styling
+- Add a `.badge-hot` class with red/orange gradient for "Hot Deal" badges
+- Add subtle green-white-green color bar (Nigerian flag colors) as a decorative element
+
+### 3b. Product Card Redesign
 
 **File: `src/components/ProductCard.tsx`**
 
-Current issues:
-- `p-6` padding is too spacious on mobile
-- `text-3xl` price is oversized on small screens
-- `text-xl` product name is too large
-- Button sizes are excessive on mobile
+Modern card redesign:
+- Add a "HOT" or "New" badge with fire emoji for new arrivals (products created within last 7 days)
+- Price displayed bigger and bolder with Naira symbol prominent
+- Add a subtle "Original Product" or "Verified" trust badge
+- Discount-style pricing: if there's no discount, still show price confidently in green
+- Add "Add to Cart" icon-only button on mobile (saves space)
+- "Buy Now" button with a green accent gradient (action color)
+- Likes count shown as a small heart counter
+- Reviews stars shown more compactly
+- Smooth hover animation: card lifts with a colored shadow
 
-Changes:
-- Padding: `p-6` becomes `p-3 sm:p-5`
-- Product name: `text-xl` becomes `text-base sm:text-lg`
-- Price: `text-3xl` becomes `text-xl sm:text-2xl`
-- Description: hide on mobile (`hidden sm:block`)
-- Footer padding: `p-6` becomes `p-3 sm:p-5`
-- Buttons: `size="lg"` becomes `size="default"` on mobile via responsive classes
-- Badges: reduce padding on mobile with `text-[10px] sm:text-xs`
-- Heart button: `h-10 w-10` becomes `h-8 w-8 sm:h-10 sm:w-10`
-- Badge container: `top-4 left-4` becomes `top-2 left-2 sm:top-4 sm:left-4`
-
-### 3b. Product Section Carousel - Narrower Cards on Mobile
-
-**File: `src/components/ProductSection.tsx`**
-
-Changes:
-- Card width in carousel: `w-[280px]` becomes `w-[200px] sm:w-[260px]`
-- Section title: `text-2xl` becomes `text-lg sm:text-2xl`
-- Loading skeleton width matches card width
-- Section padding: `py-8` becomes `py-5 sm:py-8`
-
-### 3c. Home Page Grid - 2 Columns on Mobile
+### 3c. Home Page Modernization
 
 **File: `src/pages/Home.tsx`**
 
-Changes:
-- Products grid: `grid-cols-1 sm:grid-cols-2` becomes `grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`
-- Grid gap: `gap-6` becomes `gap-3 sm:gap-6`
-- Loading skeleton grid matches
-- Hero heading: `text-4xl sm:text-5xl md:text-7xl` becomes `text-3xl sm:text-5xl md:text-7xl`
-- Hero subtitle: smaller text on mobile
-- Search bar padding: reduce on mobile
-- Trust badges: smaller text and padding on mobile
-- Floating buttons: `bottom-6 right-6` becomes `bottom-4 right-4` for better mobile spacing
+- Hero section: Add a green-white-green subtle stripe at top (Nigerian flag nod)
+- "Flash Deals" label with animated countdown-style feel (pulsing dot)
+- Category pills: rounder, more colorful, with emoji icons
+- Section headers: bolder with colored accent line underneath
+- Footer area: add "Proudly Nigerian" badge with flag colors
+- Add a "Free Delivery in Lagos" or similar localized trust badge (configurable from store config)
 
-### 3d. Product Detail Page - Mobile Polish
-
-**File: `src/pages/ProductDetail.tsx`**
-
-Changes:
-- Container padding: `pt-24` becomes `pt-20` (less wasted space under header)
-- Image area padding: `p-4` becomes `p-2 sm:p-4`
-- Review section grid: already responsive, no changes needed
-
-### 3e. Checkout Page - Mobile Polish
-
-**File: `src/pages/Checkout.tsx`**
-
-Changes:
-- Progress indicator: hide text labels on mobile, show only circles
-- Container top padding adjustment
-- Heading: `text-3xl` becomes `text-2xl sm:text-3xl`
-
-### 3f. Header - Compact on Mobile
+### 3d. Header Polish
 
 **File: `src/components/Header.tsx`**
 
-Changes:
-- Logo height: `h-11` becomes `h-9 sm:h-11`
-- Container padding: `py-4` becomes `py-3 sm:py-4`
-- Button sizes: slightly smaller touch targets that still meet 44px minimum
+- Add a thin green-white-green stripe at the very top of the page (1-2px each color)
+- Cart button: show total price alongside item count
+- More prominent WhatsApp support button with green WhatsApp color
+
+### 3e. Trust Badges Nigerian Focus
+
+**File: `src/components/TrustBadges.tsx`**
+
+Update copy to resonate with Nigerian shoppers:
+- "100% Original Products" (combats counterfeit concerns)
+- "Nationwide Delivery" (instead of generic "Fast Delivery")
+- "Pay on Delivery Available" (popular in Nigeria)
+- "WhatsApp Support" (preferred communication channel)
+- Use the Nigerian green color for trust-related icons
+
+### 3f. Testimonial Section Polish
+
+**File: `src/components/TestimonialCarousel.tsx`**
+
+- Show "Verified Purchase" badge in green
+- Add location to reviewer display (e.g. "Lagos, Nigeria")
+- Warmer background gradient
 
 ---
 
-## Summary of Changes
+## Technical Details
 
-| File | Change |
-|------|--------|
-| `supabase/migrations/` | Add `video_url` column, create `product-videos` bucket with RLS |
-| `src/types/index.ts` | Add `video_url` to Product interface |
-| `src/pages/admin/Products.tsx` | Video upload UI + iterative image compression |
-| `src/pages/ProductDetail.tsx` | Video player + mobile padding adjustments |
-| `src/components/ProductCard.tsx` | Compact mobile layout (smaller padding, text, buttons) |
-| `src/components/ProductSection.tsx` | Narrower carousel cards on mobile |
-| `src/pages/Home.tsx` | 2-column mobile grid, smaller hero text, compact floating buttons |
-| `src/pages/Checkout.tsx` | Compact progress indicator on mobile |
-| `src/components/Header.tsx` | Smaller logo and padding on mobile |
+### Video Autoplay Constraints
+Browsers require videos to be `muted` for autoplay without user interaction. The implementation uses:
+- `muted` attribute (required for autoplay)
+- `playsInline` (prevents fullscreen on mobile)
+- `preload="metadata"` (only loads the first frame initially, saves bandwidth)
+- JavaScript `play()` on hover with a 10-second timeout
+- `poster` attribute set to `product.image_url` for instant display before video loads
 
----
+### Performance Considerations
+- Videos only load metadata initially (not the full video)
+- Video playback only triggers on hover (desktop) -- no autoplay on mobile to save data
+- On mobile, a tap on the card navigates to the product page where the full video plays
+- `loading="lazy"` on all images maintained
+- Video elements use `preload="metadata"` to minimize bandwidth on slow networks
 
-## Technical Notes
+### Files Modified
 
-### Image Compression Algorithm
-The enhanced compression iteratively reduces JPEG quality from 0.9 to 0.1 in 0.1 steps. If the image still exceeds 5MB after quality reduction, it falls back to reducing max dimensions from 1200px to 800px at 0.7 quality. This guarantees all uploaded images are under 5MB.
-
-### Video Upload Constraints
-- Maximum file size: 50MB
-- Accepted formats: MP4, WebM, MOV (via `accept="video/*"`)
-- Uploaded to dedicated `product-videos` storage bucket
-- Public read access, admin-only write access
-
-### Mobile Card Layout Strategy
-The product cards use a "compact-first" approach:
-- 2-column grid on mobile (phones see 2 products side by side)
-- Cards have tight 12px padding on mobile vs 20px on desktop
-- Description text hidden on mobile to save vertical space
-- Price text scaled down from 3xl to xl on mobile
-- Buttons use default size instead of large on mobile
-
-### AdSense Status
-Everything is correctly configured. Google typically takes 1-2 days to review and approve a site for ad serving. The `ads.txt` file at `/ads.txt` and the meta tag in the head are both present and correctly reference `ca-pub-5592901106185844`.
+| File | Changes |
+|------|---------|
+| `src/components/ProductCard.tsx` | Video hover preview, shorter description, visual redesign with Nigerian market appeal |
+| `src/pages/ProductDetail.tsx` | Fix video player layout, description truncation with "Read more" |
+| `src/pages/Home.tsx` | Nigerian flag color accents, bolder section headers, "Proudly Nigerian" footer |
+| `src/components/Header.tsx` | Green-white-green top stripe, enhanced WhatsApp button |
+| `src/components/TrustBadges.tsx` | Nigerian-focused copy and green color scheme |
+| `src/components/TestimonialCarousel.tsx` | Verified purchase badge, warmer styling |
+| `src/index.css` | Updated color palette, new utility classes for Nigerian market styling |
