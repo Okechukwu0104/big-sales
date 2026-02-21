@@ -17,16 +17,16 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 5%;
 
-    --primary: 24 100% 50%; /* Bright Orange from palette */
+    --primary: 24 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 45% 35%; /* Dark Bronze from palette */
+    --secondary: 30 45% 35%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 30 15% 92%;
     --muted-foreground: 30 8% 45%;
 
-    --accent: 120 100% 25%; /* Deep Green */
+    --accent: 145 63% 32%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -38,20 +38,23 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    /* Bronze/Orange Gradients */
+    /* Nigerian gold */
+    --gold: 45 93% 47%;
+
+    /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(24 100% 50%), hsl(30 80% 45%));
-    --gradient-hero: linear-gradient(135deg, hsl(24 100% 50% / 0.1), hsl(30 80% 45% / 0.08), hsl(120 100% 25% / 0.05));
+    --gradient-hero: linear-gradient(135deg, hsl(24 100% 50% / 0.1), hsl(30 80% 45% / 0.08), hsl(145 63% 32% / 0.05));
     --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(30 15% 95%));
     --gradient-button: linear-gradient(135deg, hsl(24 100% 50%), hsl(24, 93%, 68%));
     --gradient-secondary-button: linear-gradient(135deg, hsl(30, 80%, 50%), hsl(30 45% 40%));
-    --gradient-accent-button: linear-gradient(135deg, hsl(120 100% 25%), hsl(120 100% 30%));
+    --gradient-accent-button: linear-gradient(135deg, hsl(145 63% 32%), hsl(145 63% 40%));
     --gradient-bronze: linear-gradient(135deg, hsl(30 80% 45%), hsl(30 60% 35%), hsl(30 45% 25%));
     --gradient-glass: linear-gradient(135deg, hsl(var(--background) / 0.8), hsla(30, 88%, 58%, 0.6));
     
-    /* Warm Glow Effects */
+    /* Glow Effects */
     --glow-primary: 0 0 30px hsl(24 100% 50% / 0.6), 0 0 60px hsl(24 100% 50% / 0.4);
     --glow-secondary: 0 0 30px hsl(30 45% 35% / 0.6), 0 0 60px hsl(30 45% 35% / 0.4);
-    --glow-accent: 0 0 30px hsl(120 100% 25% / 0.6), 0 0 60px hsl(120 100% 25% / 0.4);
+    --glow-accent: 0 0 30px hsl(145 63% 32% / 0.6), 0 0 60px hsl(145 63% 32% / 0.4);
     --glow-bronze: 0 0 40px hsl(30 80% 45% / 0.5), 0 0 80px hsl(30 60% 35% / 0.3);
     --glow-soft: 0 4px 20px hsl(24 100% 50% / 0.3), 0 8px 40px hsl(30 45% 35% / 0.2);
     
@@ -80,16 +83,16 @@ All colors MUST be HSL.
     --popover: 30 15% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 24 100% 60%; /* Bright Orange for dark mode */
+    --primary: 24 100% 60%;
     --primary-foreground: 0 0% 5%;
 
-    --secondary: 30 50% 45%; /* Bronze for dark mode */
+    --secondary: 30 50% 45%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 30 15% 18%;
     --muted-foreground: 30 8% 65%;
 
-    --accent: 120 100% 35%; /* Brighter Green for dark mode */
+    --accent: 145 63% 40%;
     --accent-foreground: 0 0% 5%;
 
     --destructive: 0 75% 60%;
@@ -98,6 +101,8 @@ All colors MUST be HSL.
     --border: 30 15% 22%;
     --input: 30 15% 22%;
     --ring: 24 100% 60%;
+
+    --gold: 45 93% 55%;
 
     --sidebar-background: 20 15% 4%;
     --sidebar-foreground: 20 10% 96%;
@@ -121,7 +126,7 @@ All colors MUST be HSL.
 }
 
 @layer components {
-  /* Stunning text effects */
+  /* Text effects */
   .glow-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -139,7 +144,7 @@ All colors MUST be HSL.
     filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.5));
   }
   
-  /* Beautiful gradient backgrounds */
+  /* Gradient backgrounds */
   .gradient-primary { background: var(--gradient-primary); }
   .gradient-hero { background: var(--gradient-hero); }
   .gradient-card { background: var(--gradient-card); }
@@ -153,12 +158,10 @@ All colors MUST be HSL.
     border: 1px solid hsl(var(--border) / 0.2);
   }
   
-  /* Bronze glow effect */
   .glow-bronze {
     box-shadow: var(--glow-bronze);
   }
   
-  /* Modern card styles */
   .card-modern {
     background: var(--gradient-card);
     border: 1px solid hsl(var(--border) / 0.5);
@@ -171,7 +174,6 @@ All colors MUST be HSL.
     box-shadow: var(--shadow-elegant);
   }
   
-  /* Interactive hover effects */
   .hover-glow:hover {
     box-shadow: var(--glow-soft);
     transform: translateY(-2px);
@@ -183,9 +185,29 @@ All colors MUST be HSL.
     transition: transform 0.2s ease;
   }
   
-  /* Floating animation */
   .float {
     animation: float 3s ease-in-out infinite;
+  }
+
+  /* Nigerian flag stripe */
+  .flag-stripe {
+    background: linear-gradient(to right, hsl(145 63% 32%) 33.33%, hsl(0 0% 100%) 33.33%, hsl(0 0% 100%) 66.66%, hsl(145 63% 32%) 66.66%);
+    height: 3px;
+  }
+
+  /* Naira price styling */
+  .naira-price {
+    color: hsl(var(--accent));
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Hot deal badge */
+  .badge-hot {
+    background: linear-gradient(135deg, hsl(0 84% 60%), hsl(24 100% 50%));
+    color: white;
+    font-weight: 700;
+    animation: pulse-badge 2s ease-in-out infinite;
   }
 }
 
@@ -200,21 +222,18 @@ All colors MUST be HSL.
   }
   
   @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
   }
   
   @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
   
   .shimmer {

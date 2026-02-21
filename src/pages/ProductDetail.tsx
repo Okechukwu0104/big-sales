@@ -24,6 +24,7 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
+  const [descExpanded, setDescExpanded] = useState(false);
   const { addToRecentlyViewed } = useRecentlyViewed();
 
   // Track product view
@@ -217,37 +218,39 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
-            {product.image_url ? (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                loading="lazy"
-                width={600}
-                height={600}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                <span className="text-muted-foreground text-lg">No image available</span>
+          <div className="space-y-4">
+            <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  loading="lazy"
+                  width={600}
+                  height={600}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
+                  <span className="text-muted-foreground text-lg">No image available</span>
+                </div>
+              )}
+            </div>
+            
+            {product.video_url && (
+              <div className="rounded-xl overflow-hidden shadow-lg bg-card">
+                <video
+                  src={product.video_url}
+                  controls
+                  preload="metadata"
+                  poster={product.image_url || undefined}
+                  className="w-full rounded-xl"
+                  playsInline
+                >
+                  Your browser does not support the video tag.
+                </video>
               </div>
             )}
           </div>
-
-          {/* Video Player */}
-          {product.video_url && (
-            <div className="mt-4 rounded-xl overflow-hidden shadow-lg bg-card">
-              <video
-                src={product.video_url}
-                controls
-                preload="metadata"
-                className="w-full rounded-xl"
-                playsInline
-              >
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
 
           <div className="space-y-4 sm:space-y-6">
             <div>
@@ -292,7 +295,19 @@ const ProductDetail = () => {
             {product.description && (
               <div>
                 <h2 className="text-lg font-semibold mb-2 text-foreground">Description</h2>
-                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
+                  {descExpanded || product.description.length <= 150
+                    ? product.description
+                    : `${product.description.slice(0, 150)}...`}
+                </p>
+                {product.description.length > 150 && (
+                  <button
+                    onClick={() => setDescExpanded(!descExpanded)}
+                    className="text-primary text-sm font-medium mt-1 hover:underline"
+                  >
+                    {descExpanded ? 'Show less' : 'Read more'}
+                  </button>
+                )}
               </div>
             )}
 

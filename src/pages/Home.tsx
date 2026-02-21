@@ -319,18 +319,18 @@ const Home = () => {
               </div>
               
               {/* Trust Badges in Hero */}
-              <div className="flex flex-wrap justify-center gap-3 md:gap-4">
-                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700">Premium Quality</span>
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                  <span className="text-xs sm:text-sm font-medium text-foreground">100% Original</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700">Fast Shipping</span>
+                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  <span className="text-xs sm:text-sm font-medium text-foreground">Nationwide Delivery</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="w-2.5 h-2.5 bg-amber-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-700">Best Prices</span>
+                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  <span className="text-xs sm:text-sm font-medium text-foreground">Pay on Delivery</span>
                 </div>
               </div>
             </div>
@@ -495,6 +495,14 @@ const Home = () => {
 
         {/* Customer Testimonials */}
         <TestimonialCarousel />
+
+        {/* Proudly Nigerian */}
+        <div className="py-6 text-center">
+          <div className="inline-flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-full border border-accent/20">
+            <div className="flag-stripe w-6 rounded-sm" />
+            <span className="text-sm font-semibold text-accent">Proudly Nigerian 🇳🇬</span>
+          </div>
+        </div>
 
         {/* FAQ Section */}
         <div ref={faqSectionRef}>
