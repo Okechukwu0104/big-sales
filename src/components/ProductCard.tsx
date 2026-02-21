@@ -335,7 +335,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         >
           <ShoppingCart className="h-3.5 w-3.5 mr-1" />
           <span className="hidden sm:inline">{product.in_stock ? 'Add' : 'Out of Stock'}</span>
-          <span className="sm:hidden">{product.in_stock ? 'Add' : 'N/A'}</span>
+          <span className="sm:hidden">{product.in_stock ? '' : 'N/A'}</span>
         </Button>
         {product.in_stock && (
           <Button 
