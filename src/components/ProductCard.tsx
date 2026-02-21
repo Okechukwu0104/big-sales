@@ -345,7 +345,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             size="sm"
             className="relative overflow-hidden gradient-accent-button text-accent-foreground text-xs sm:text-sm h-8 sm:h-9"
           >
-            <Zap className="h-3.5 w-3.5 mr-1" />
+            <Zap className="h-3 w-3 mr-0.5" />
             <span>Buy Now</span>
           </Button>
         )}
