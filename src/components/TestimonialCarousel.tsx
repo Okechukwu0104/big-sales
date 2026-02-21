@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, BadgeCheck } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface Review {
@@ -34,43 +34,46 @@ export const TestimonialCarousel = () => {
   }
 
   return (
-    <section className="py-12 bg-gradient-to-br from-primary/5 to-amber-50">
+    <section className="py-10 bg-gradient-to-br from-accent/5 via-background to-primary/5">
       <div className="container mx-auto px-4">
-        <h2 className="text-2xl font-bold text-center mb-2 text-foreground">What Our Customers Say</h2>
-        <p className="text-center text-muted-foreground mb-8">Real reviews from happy customers</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-foreground">What Our Customers Say</h2>
+        <p className="text-center text-muted-foreground mb-6 text-sm">Real reviews from happy customers</p>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {reviews.map((review) => (
-            <Card key={review.id} className="bg-white/80 backdrop-blur-sm border-border">
-              <CardContent className="p-6">
-                <Quote className="h-8 w-8 text-primary/20 mb-3" />
+            <Card key={review.id} className="bg-card/80 backdrop-blur-sm border-border">
+              <CardContent className="p-4 sm:p-5">
+                <Quote className="h-6 w-6 text-primary/20 mb-2" />
                 
-                <div className="flex items-center gap-1 mb-3">
+                <div className="flex items-center gap-1 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      className={`w-4 h-4 ${
+                      className={`w-3.5 h-3.5 ${
                         star <= review.rating
                           ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
+                          : 'text-muted'
                       }`}
                     />
                   ))}
                 </div>
                 
-                <p className="text-foreground mb-4 line-clamp-3">
+                <p className="text-foreground mb-3 line-clamp-3 text-sm">
                   "{review.review_text}"
                 </p>
                 
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">
+                  <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center">
+                    <span className="text-sm font-semibold text-accent">
                       {review.reviewer_name.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
                     <p className="font-medium text-sm text-foreground">{review.reviewer_name}</p>
-                    <p className="text-xs text-muted-foreground">Verified Buyer</p>
+                    <div className="flex items-center gap-1">
+                      <BadgeCheck className="h-3 w-3 text-accent" />
+                      <p className="text-xs text-accent font-medium">Verified Purchase</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
