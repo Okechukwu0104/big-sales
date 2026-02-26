@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/components/ui/cart-provider";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import { WifiOff } from "lucide-react";
 import Home from "./pages/Home";
 import ProductDetail from "./pages/ProductDetail";
@@ -63,13 +63,11 @@ const OfflineBanner = () => {
   if (isOnline) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100]">
-      <Alert variant="destructive" className="rounded-none border-x-0 border-t-0">
-        <WifiOff className="h-4 w-4" />
-        <AlertDescription>
-          You're offline. Some features may be unavailable.
-        </AlertDescription>
-      </Alert>
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-destructive text-destructive-foreground">
+      <div className="flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium">
+        <WifiOff className="h-4 w-4 shrink-0" />
+        <span>You're offline. Some features may be unavailable.</span>
+      </div>
     </div>
   );
 };
