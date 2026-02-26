@@ -240,8 +240,13 @@ const AdminProducts = () => {
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [progressValue, setProgressValue] = useState(0);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [pendingCount, setPendingCount] = useState(getQueueCount());
+  const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Initialize pending count from IndexedDB
+  useEffect(() => {
+    getQueueCount().then(setPendingCount);
+  }, []);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -279,14 +284,44 @@ const AdminProducts = () => {
 
   // Auto-sync offline queue when coming back online
   const syncOfflineQueue = useCallback(async () => {
-    const queue = getQueue();
-    if (queue.length === 0 || isSyncing) return;
+    if (isSyncing) return;
+    const queue = await getQueue();
+    if (queue.length === 0) return;
     
     setIsSyncing(true);
     let synced = 0;
     
     for (const item of queue) {
       try {
+        let image_url: string | null = null;
+        let video_url: string | null = null;
+
+        // Upload cached image if present
+        if (item.imageFile && item.imageName) {
+          const blob = new Blob([item.imageFile], { type: item.imageType || 'image/jpeg' });
+          const ext = item.imageName.split('.').pop() || 'jpg';
+          const fileName = `${Math.random()}.${ext}`;
+          const { error: imgErr } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, blob);
+          if (!imgErr) {
+            image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
+          }
+        }
+
+        // Upload cached video if present
+        if (item.videoFile && item.videoName) {
+          const blob = new Blob([item.videoFile], { type: item.videoType || 'video/mp4' });
+          const ext = item.videoName.split('.').pop() || 'mp4';
+          const fileName = `${Math.random()}.${ext}`;
+          const { error: vidErr } = await supabase.storage
+            .from('product-videos')
+            .upload(fileName, blob);
+          if (!vidErr) {
+            video_url = supabase.storage.from('product-videos').getPublicUrl(fileName).data.publicUrl;
+          }
+        }
+
         const { data: newProduct, error } = await supabase
           .from('products')
           .insert([{
@@ -296,6 +331,8 @@ const AdminProducts = () => {
             quantity: item.quantity,
             featured: item.featured,
             collection_id: item.collection_id,
+            image_url,
+            video_url,
             category: 'Uncategorized',
             display_order: 999,
           }])
@@ -323,7 +360,7 @@ const AdminProducts = () => {
           }
         }).catch(() => {});
 
-        removeFromQueue(item.id);
+        await removeFromQueue(item.id);
         synced++;
       } catch (err) {
         console.error('Failed to sync offline product:', item.name, err);
@@ -331,7 +368,8 @@ const AdminProducts = () => {
       }
     }
 
-    setPendingCount(getQueueCount());
+    const remaining = await getQueueCount();
+    setPendingCount(remaining);
     setIsSyncing(false);
 
     if (synced > 0) {
@@ -339,7 +377,7 @@ const AdminProducts = () => {
       queryClient.invalidateQueries({ queryKey: ['product-categories'] });
       toast({
         title: `${synced} offline product${synced > 1 ? 's' : ''} synced!`,
-        description: getQueueCount() > 0 ? `${getQueueCount()} still pending.` : 'All caught up.',
+        description: remaining > 0 ? `${remaining} still pending.` : 'All caught up.',
       });
     }
   }, [isSyncing, queryClient, toast]);
@@ -796,16 +834,19 @@ const AdminProducts = () => {
       collection_id: formData.collection_id || null,
     };
 
-    // If offline and creating (not editing), save to local queue
+    // If offline and creating (not editing), save to local queue with media
     if (!isOnline && !editingProduct) {
-      addToQueue({
-        ...productData,
-        selectedCategories: formData.selectedCategories,
-      });
-      setPendingCount(getQueueCount());
+      addToQueue(
+        {
+          ...productData,
+          selectedCategories: formData.selectedCategories,
+        },
+        formData.image,
+        formData.video,
+      ).then(() => getQueueCount()).then(setPendingCount);
       toast({
-        title: "Product saved locally",
-        description: "It will auto-upload when you're back online. Images/videos can be added later.",
+        title: "Product saved locally (with media)",
+        description: "It will auto-upload with images/videos when you're back online.",
       });
       resetForm();
       setIsDialogOpen(false);
@@ -1055,10 +1096,10 @@ const AdminProducts = () => {
                           }
                           setFormData({ ...formData, image: file || null });
                         }}
-                        disabled={isSubmitting || !isOnline}
+                        disabled={isSubmitting}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        {!isOnline ? 'Image upload available when online.' : 'Images will be automatically compressed for faster upload.'}
+                        {!isOnline ? 'Image will be cached locally and uploaded when online.' : 'Images will be automatically compressed for faster upload.'}
                       </p>
                     </div>
 
@@ -1081,10 +1122,10 @@ const AdminProducts = () => {
                           }
                           setFormData({ ...formData, video: file || null });
                         }}
-                        disabled={isSubmitting || !isOnline}
+                        disabled={isSubmitting}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        {!isOnline ? 'Video upload available when online.' : 'Supported formats: MP4, WebM, MOV. Video will appear on product page.'}
+                        {!isOnline ? 'Video will be cached locally and uploaded when online.' : 'Supported formats: MP4, WebM, MOV. Video will appear on product page.'}
                       </p>
                       {editingProduct?.video_url && !formData.video && (
                         <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
