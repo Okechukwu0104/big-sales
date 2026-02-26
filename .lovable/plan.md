@@ -1,164 +1,84 @@
 
-# Video Preview on Product Cards, Shorter Descriptions & Modern Nigerian-Focused Redesign
 
-## Overview
+# Fix Offline Banner Alignment & Offline Product Upload Strategy
 
-Three interconnected changes to make the store feel premium and appealing to Nigerian shoppers:
-1. Video preview on product cards (YouTube-style autoplay loop on hover)
-2. Shorter product descriptions everywhere
-3. Visual redesign with Nigerian market appeal -- bolder colors, Naira-forward pricing, urgency cues, and a more vibrant, marketplace-inspired feel
+## Part 1: Fix Offline Banner Alignment
 
----
+The current offline banner uses the `Alert` component with `[&>svg~*]:pl-7` and absolute-positioned icon which causes misalignment. The fix is to use flexbox for proper centering.
 
-## Part 1: Video Preview on Product Cards
+### File: `src/App.tsx` (lines 65-74)
 
-### How It Works
+Replace the current banner with a properly aligned flexbox layout:
+- Use a `flex items-center justify-center gap-2` container inside the fixed div
+- Use `py-2 px-4` for compact spacing
+- Add a destructive background color directly instead of relying on the Alert component's absolute positioning
+- Keep the `WifiOff` icon inline with the text
+- Add `text-sm font-medium` for readability
 
-When a product has a `video_url` instead of (or alongside) an image, the product card will:
-- Show the video thumbnail/first frame as the static preview
-- On hover (desktop) or tap-hold (mobile), play the first ~10 seconds of the video in a silent, looping preview -- just like YouTube thumbnails
-- Show a small "play" icon overlay so users know it's a video
-- On the product detail page, show the full video player with controls
+The new markup:
+```
+<div className="fixed top-0 left-0 right-0 z-[100] bg-destructive text-destructive-foreground">
+  <div className="flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium">
+    <WifiOff className="h-4 w-4 shrink-0" />
+    <span>You're offline. Some features may be unavailable.</span>
+  </div>
+</div>
+```
 
-### File: `src/components/ProductCard.tsx`
-
-- Add a `useRef` for the video element and a `isHovering` state
-- In the card media area, check if `product.video_url` exists:
-  - If yes, render a `<video>` element with `muted`, `loop`, `playsInline`, `preload="metadata"`
-  - On `mouseEnter`: set `currentTime = 0`, call `play()`, and set a timeout to pause after 10 seconds
-  - On `mouseLeave`: pause and reset to 0
-  - Overlay a small play/video icon badge (bottom-right) to signal "this is a video"
-- If both `image_url` and `video_url` exist, prefer video preview on hover with the image as the static poster frame
-- If only `video_url` exists (no image), show the video element as the poster
-
-### File: `src/pages/ProductDetail.tsx`
-
-- Move the video player into the main media column (currently it sits outside the grid which breaks layout)
-- Show image first, then video below it in the same column
-- Add poster attribute using `image_url` if available
+This removes the `Alert` component dependency and gives clean, centered alignment.
 
 ---
 
-## Part 2: Shorter Product Descriptions
+## Part 2: Offline Product Upload - Recommendation
 
-### File: `src/components/ProductCard.tsx`
-- Change `line-clamp-2` to `line-clamp-1` for the description on desktop
-- Keep it hidden on mobile (already `hidden sm:block`)
+True offline uploads for admin are technically possible but complex. Here are the options:
 
-### File: `src/pages/ProductDetail.tsx`
-- Truncate description to first 150 characters with a "Read more" toggle
-- Show full description when expanded
+### Option A: Local Queue with Auto-Sync (Recommended - Practical)
+- When offline, save product data (name, price, description, category) to `localStorage` as a queue
+- Show a "Pending Uploads" indicator in the admin panel
+- When the browser comes back online (`navigator.onLine`), automatically process the queue one by one
+- **Limitation**: Images/videos cannot be stored in localStorage (too large). Only text fields are queued. Media must be uploaded when back online.
+- Implementation: ~moderate complexity
 
-### File: `src/components/ProductSection.tsx`
-- No description shown in carousel cards (they're already compact)
+### Option B: IndexedDB with Full Media Caching
+- Use IndexedDB to store product data AND binary image/video files offline
+- Full offline capability including media
+- Much more complex, requires a service worker for background sync
+- Implementation: high complexity
 
----
+### Recommended approach: Option A
+- Store product text data (name, price, description, etc.) in localStorage when offline
+- Show a toast: "Product saved locally. Will upload when you're back online."
+- Add an `useEffect` that listens for `online` event and processes the queue
+- Display a "Pending uploads (X)" badge in the admin sidebar
+- For images: show a placeholder and prompt admin to add image when back online
+- Skip video uploads entirely when offline (too large for local storage)
 
-## Part 3: Modern Nigerian-Focused Visual Redesign
+### Implementation Details
 
-### Design Philosophy
-Nigerian e-commerce shoppers respond to:
-- Bold, vibrant colors (green and gold -- national colors)
-- Clear pricing in Naira prominently displayed
-- Trust signals (verified, original, fast delivery)
-- Social proof (likes, reviews count visible)
-- Urgency and scarcity cues ("selling fast", "only X left")
-- WhatsApp integration as a primary communication channel
-- Mobile-first design (majority of Nigerian shoppers use mobile)
+**File: `src/pages/admin/Products.tsx`**
 
-### 3a. Color System Update
+Changes:
+- Add `isOnline` state using `navigator.onLine` + event listeners
+- Add `pendingProducts` state from localStorage
+- In the create mutation's `onMutate`: if offline, save to localStorage queue and show info toast, then return early
+- Add `useEffect` on `online` event: process localStorage queue by calling the create mutation for each item
+- Show "X pending uploads" banner at top of products page when queue is not empty
+- Disable image/video file inputs when offline with helper text "Available when online"
 
-**File: `src/index.css`**
-
-Refresh the color palette to be more vibrant and Nigerian-market appropriate:
-- Primary: Keep orange (it's already strong and associated with deals/sales)
-- Accent: Shift from deep green to a richer Nigerian green (`145 63% 42%`) -- the green from the Nigerian flag
-- Add a gold accent for premium feel (`45 93% 47%`)
-- Warmer card backgrounds with subtle gradients
-- Add new CSS utility class `.naira-price` for bold, attention-grabbing price styling
-- Add a `.badge-hot` class with red/orange gradient for "Hot Deal" badges
-- Add subtle green-white-green color bar (Nigerian flag colors) as a decorative element
-
-### 3b. Product Card Redesign
-
-**File: `src/components/ProductCard.tsx`**
-
-Modern card redesign:
-- Add a "HOT" or "New" badge with fire emoji for new arrivals (products created within last 7 days)
-- Price displayed bigger and bolder with Naira symbol prominent
-- Add a subtle "Original Product" or "Verified" trust badge
-- Discount-style pricing: if there's no discount, still show price confidently in green
-- Add "Add to Cart" icon-only button on mobile (saves space)
-- "Buy Now" button with a green accent gradient (action color)
-- Likes count shown as a small heart counter
-- Reviews stars shown more compactly
-- Smooth hover animation: card lifts with a colored shadow
-
-### 3c. Home Page Modernization
-
-**File: `src/pages/Home.tsx`**
-
-- Hero section: Add a green-white-green subtle stripe at top (Nigerian flag nod)
-- "Flash Deals" label with animated countdown-style feel (pulsing dot)
-- Category pills: rounder, more colorful, with emoji icons
-- Section headers: bolder with colored accent line underneath
-- Footer area: add "Proudly Nigerian" badge with flag colors
-- Add a "Free Delivery in Lagos" or similar localized trust badge (configurable from store config)
-
-### 3d. Header Polish
-
-**File: `src/components/Header.tsx`**
-
-- Add a thin green-white-green stripe at the very top of the page (1-2px each color)
-- Cart button: show total price alongside item count
-- More prominent WhatsApp support button with green WhatsApp color
-
-### 3e. Trust Badges Nigerian Focus
-
-**File: `src/components/TrustBadges.tsx`**
-
-Update copy to resonate with Nigerian shoppers:
-- "100% Original Products" (combats counterfeit concerns)
-- "Nationwide Delivery" (instead of generic "Fast Delivery")
-- "Pay on Delivery Available" (popular in Nigeria)
-- "WhatsApp Support" (preferred communication channel)
-- Use the Nigerian green color for trust-related icons
-
-### 3f. Testimonial Section Polish
-
-**File: `src/components/TestimonialCarousel.tsx`**
-
-- Show "Verified Purchase" badge in green
-- Add location to reviewer display (e.g. "Lagos, Nigeria")
-- Warmer background gradient
+**New utility: `src/utils/offlineQueue.ts`**
+- `addToQueue(product)` - saves product data to localStorage
+- `getQueue()` - retrieves pending products
+- `removeFromQueue(id)` - removes after successful upload
+- `getQueueCount()` - returns count for badge display
 
 ---
 
-## Technical Details
-
-### Video Autoplay Constraints
-Browsers require videos to be `muted` for autoplay without user interaction. The implementation uses:
-- `muted` attribute (required for autoplay)
-- `playsInline` (prevents fullscreen on mobile)
-- `preload="metadata"` (only loads the first frame initially, saves bandwidth)
-- JavaScript `play()` on hover with a 10-second timeout
-- `poster` attribute set to `product.image_url` for instant display before video loads
-
-### Performance Considerations
-- Videos only load metadata initially (not the full video)
-- Video playback only triggers on hover (desktop) -- no autoplay on mobile to save data
-- On mobile, a tap on the card navigates to the product page where the full video plays
-- `loading="lazy"` on all images maintained
-- Video elements use `preload="metadata"` to minimize bandwidth on slow networks
-
-### Files Modified
+## Summary
 
 | File | Changes |
 |------|---------|
-| `src/components/ProductCard.tsx` | Video hover preview, shorter description, visual redesign with Nigerian market appeal |
-| `src/pages/ProductDetail.tsx` | Fix video player layout, description truncation with "Read more" |
-| `src/pages/Home.tsx` | Nigerian flag color accents, bolder section headers, "Proudly Nigerian" footer |
-| `src/components/Header.tsx` | Green-white-green top stripe, enhanced WhatsApp button |
-| `src/components/TrustBadges.tsx` | Nigerian-focused copy and green color scheme |
-| `src/components/TestimonialCarousel.tsx` | Verified purchase badge, warmer styling |
-| `src/index.css` | Updated color palette, new utility classes for Nigerian market styling |
+| `src/App.tsx` | Fix offline banner alignment with flexbox |
+| `src/pages/admin/Products.tsx` | Add offline queue logic, pending uploads indicator, disable media inputs when offline |
+| `src/utils/offlineQueue.ts` | New utility for localStorage-based offline queue management |
+
