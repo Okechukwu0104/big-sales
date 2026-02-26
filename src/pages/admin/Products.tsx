@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Sparkles, GripVertical, Filter, FolderOpen, Layers, Loader2, WifiOff, Video } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Sparkles, GripVertical, Filter, FolderOpen, Layers, Loader2, WifiOff, Video, CloudUpload, Clock } from 'lucide-react';
+import { addToQueue, getQueue, removeFromQueue, getQueueCount, OfflineProduct } from '@/utils/offlineQueue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -238,6 +239,9 @@ const AdminProducts = () => {
   const [filterCollection, setFilterCollection] = useState<string>('all');
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [progressValue, setProgressValue] = useState(0);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingCount, setPendingCount] = useState(getQueueCount());
+  const [isSyncing, setIsSyncing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -260,6 +264,91 @@ const AdminProducts = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Online/offline detection
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  // Auto-sync offline queue when coming back online
+  const syncOfflineQueue = useCallback(async () => {
+    const queue = getQueue();
+    if (queue.length === 0 || isSyncing) return;
+    
+    setIsSyncing(true);
+    let synced = 0;
+    
+    for (const item of queue) {
+      try {
+        const { data: newProduct, error } = await supabase
+          .from('products')
+          .insert([{
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            quantity: item.quantity,
+            featured: item.featured,
+            collection_id: item.collection_id,
+            category: 'Uncategorized',
+            display_order: 999,
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add category relationships
+        if (item.selectedCategories.length > 0) {
+          await supabase.from('product_categories').insert(
+            item.selectedCategories.map(catId => ({
+              product_id: newProduct.id,
+              category_id: catId,
+            }))
+          );
+        }
+
+        // Background AI categorization
+        supabase.functions.invoke('categorize-product', {
+          body: { productName: item.name, productDescription: item.description }
+        }).then(({ data: categoryData }) => {
+          if (categoryData?.category && categoryData.category !== 'Uncategorized') {
+            supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id);
+          }
+        }).catch(() => {});
+
+        removeFromQueue(item.id);
+        synced++;
+      } catch (err) {
+        console.error('Failed to sync offline product:', item.name, err);
+        break;
+      }
+    }
+
+    setPendingCount(getQueueCount());
+    setIsSyncing(false);
+
+    if (synced > 0) {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
+      toast({
+        title: `${synced} offline product${synced > 1 ? 's' : ''} synced!`,
+        description: getQueueCount() > 0 ? `${getQueueCount()} still pending.` : 'All caught up.',
+      });
+    }
+  }, [isSyncing, queryClient, toast]);
+
+  useEffect(() => {
+    if (isOnline) {
+      syncOfflineQueue();
+    }
+  }, [isOnline, syncOfflineQueue]);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products'],
@@ -698,16 +787,6 @@ const AdminProducts = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check network before submitting
-    if (!navigator.onLine) {
-      toast({ 
-        title: "You're offline", 
-        description: "Please check your internet connection and try again.", 
-        variant: "destructive" 
-      });
-      return;
-    }
-    
     const productData = {
       name: formData.name,
       description: formData.description || null,
@@ -716,6 +795,31 @@ const AdminProducts = () => {
       featured: formData.featured,
       collection_id: formData.collection_id || null,
     };
+
+    // If offline and creating (not editing), save to local queue
+    if (!isOnline && !editingProduct) {
+      addToQueue({
+        ...productData,
+        selectedCategories: formData.selectedCategories,
+      });
+      setPendingCount(getQueueCount());
+      toast({
+        title: "Product saved locally",
+        description: "It will auto-upload when you're back online. Images/videos can be added later.",
+      });
+      resetForm();
+      setIsDialogOpen(false);
+      return;
+    }
+
+    if (!isOnline && editingProduct) {
+      toast({ 
+        title: "You're offline", 
+        description: "Editing requires an internet connection.", 
+        variant: "destructive" 
+      });
+      return;
+    }
 
     if (editingProduct) {
       updateProductMutation.mutate(productData);
@@ -783,10 +887,32 @@ const AdminProducts = () => {
 
       <main className="container mx-auto px-4 py-6 sm:py-8">
         {/* Offline Warning */}
-        {!navigator.onLine && (
+        {!isOnline && (
           <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive">
-            <WifiOff className="h-4 w-4" />
-            <span className="text-sm">You appear to be offline. Some features may not work.</span>
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span className="text-sm">You're offline. You can still add products — they'll sync when you're back online.</span>
+          </div>
+        )}
+
+        {/* Pending Uploads Banner */}
+        {pendingCount > 0 && (
+          <div className="mb-4 p-3 bg-accent/10 border border-accent/20 rounded-lg flex items-center gap-2 text-foreground">
+            {isSyncing ? (
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            ) : (
+              <Clock className="h-4 w-4 shrink-0" />
+            )}
+            <span className="text-sm font-medium">
+              {isSyncing 
+                ? 'Syncing offline products...' 
+                : `${pendingCount} product${pendingCount > 1 ? 's' : ''} waiting to upload`}
+            </span>
+            {isOnline && !isSyncing && (
+              <Button size="sm" variant="outline" className="ml-auto h-7 text-xs" onClick={syncOfflineQueue}>
+                <CloudUpload className="h-3 w-3 mr-1" />
+                Sync Now
+              </Button>
+            )}
           </div>
         )}
 
@@ -929,10 +1055,10 @@ const AdminProducts = () => {
                           }
                           setFormData({ ...formData, image: file || null });
                         }}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !isOnline}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Images will be automatically compressed for faster upload.
+                        {!isOnline ? 'Image upload available when online.' : 'Images will be automatically compressed for faster upload.'}
                       </p>
                     </div>
 
@@ -955,10 +1081,10 @@ const AdminProducts = () => {
                           }
                           setFormData({ ...formData, video: file || null });
                         }}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !isOnline}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Supported formats: MP4, WebM, MOV. Video will appear on product page.
+                        {!isOnline ? 'Video upload available when online.' : 'Supported formats: MP4, WebM, MOV. Video will appear on product page.'}
                       </p>
                       {editingProduct?.video_url && !formData.video && (
                         <div className="flex items-center gap-1 mt-1 text-xs text-green-600">
