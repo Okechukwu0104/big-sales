@@ -10,6 +10,8 @@ export interface OfflineProduct {
   quantity: number;
   featured: boolean;
   collection_id: string | null;
+  original_price: number | null;
+  discount_price: number | null;
   selectedCategories: string[];
   createdAt: string;
   imageFile?: ArrayBuffer | null;

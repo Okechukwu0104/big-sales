@@ -367,6 +367,7 @@ export type Database = {
           collection_id: string | null
           created_at: string
           description: string | null
+          discount_price: number | null
           display_order: number | null
           featured: boolean | null
           id: string
@@ -374,6 +375,7 @@ export type Database = {
           in_stock: boolean | null
           likes_count: number
           name: string
+          original_price: number | null
           price: number
           quantity: number | null
           sku: string | null
@@ -386,6 +388,7 @@ export type Database = {
           collection_id?: string | null
           created_at?: string
           description?: string | null
+          discount_price?: number | null
           display_order?: number | null
           featured?: boolean | null
           id?: string
@@ -393,6 +396,7 @@ export type Database = {
           in_stock?: boolean | null
           likes_count?: number
           name: string
+          original_price?: number | null
           price: number
           quantity?: number | null
           sku?: string | null
@@ -405,6 +409,7 @@ export type Database = {
           collection_id?: string | null
           created_at?: string
           description?: string | null
+          discount_price?: number | null
           display_order?: number | null
           featured?: boolean | null
           id?: string
@@ -412,6 +417,7 @@ export type Database = {
           in_stock?: boolean | null
           likes_count?: number
           name?: string
+          original_price?: number | null
           price?: number
           quantity?: number | null
           sku?: string | null
