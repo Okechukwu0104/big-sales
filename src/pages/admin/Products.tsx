@@ -42,6 +42,8 @@ const MAX_IMAGE_DIMENSION = 1200;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 const MAX_BULK_FILES = 10;
+const BULK_UPLOAD_LIMIT = 2;
+const BULK_UPLOAD_STORAGE_KEY = 'bulk_upload_usage';
 
 // Utility: Iterative image compression
 const compressImage = async (file: File): Promise<Blob> => {
@@ -147,6 +149,54 @@ const retryWithBackoff = async <T,>(
     await new Promise(resolve => setTimeout(resolve, delay));
     return retryWithBackoff(fn, retries - 1, delay * 2);
   }
+};
+
+// Rate limiting utility for bulk upload
+const checkBulkUploadLimit = (): { allowed: boolean; remaining: number; resetTime: string } => {
+  const today = new Date().toDateString();
+  const stored = localStorage.getItem(BULK_UPLOAD_STORAGE_KEY);
+  
+  let usage = { date: today, count: 0 };
+  
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.date === today) {
+        usage = parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse bulk upload usage', e);
+    }
+  }
+  
+  const remaining = Math.max(0, BULK_UPLOAD_LIMIT - usage.count);
+  const resetTime = new Date(new Date().setHours(23, 59, 59, 999)).toLocaleTimeString();
+  
+  return { 
+    allowed: usage.count < BULK_UPLOAD_LIMIT, 
+    remaining,
+    resetTime
+  };
+};
+
+const incrementBulkUploadCount = () => {
+  const today = new Date().toDateString();
+  const stored = localStorage.getItem(BULK_UPLOAD_STORAGE_KEY);
+  
+  let usage = { date: today, count: 0 };
+  
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.date === today) {
+        usage = parsed;
+      }
+    } catch (e) {}
+  }
+  
+  usage.count += 1;
+  localStorage.setItem(BULK_UPLOAD_STORAGE_KEY, JSON.stringify(usage));
+  return usage.count;
 };
 
 // Bulk upload item interface
@@ -694,6 +744,18 @@ const AdminProducts = () => {
   };
 
   const handleCreateAllBulk = async () => {
+    // Check bulk upload limit
+    const { allowed, remaining, resetTime } = checkBulkUploadLimit();
+    if (!allowed) {
+      toast({ 
+        title: "Daily limit reached", 
+        description: `You've used all ${BULK_UPLOAD_LIMIT} bulk uploads today. Next reset at ${resetTime}.`, 
+        variant: "destructive" 
+      });
+      setBulkProcessing(false);
+      return;
+    }
+
     setBulkProcessing(true);
     let created = 0;
     for (let i = 0; i < bulkItems.length; i++) {
@@ -737,7 +799,7 @@ const AdminProducts = () => {
             name: item.name,
             description: item.description || null,
             price: parseFloat(item.price) || 5000,
-            quantity: 7,
+            quantity: 7, // Changed from 0 to 7
             featured: false,
             image_url, video_url,
             category: item.category || 'Uncategorized',
@@ -753,12 +815,19 @@ const AdminProducts = () => {
       }
     }
 
+    // After successful creation, increment the counter
+    if (created > 0) {
+      incrementBulkUploadCount();
+      const { remaining: newRemaining } = checkBulkUploadLimit();
+      toast({ 
+        title: `${created} product${created > 1 ? 's' : ''} created!`,
+        description: `You have ${newRemaining} bulk upload${newRemaining !== 1 ? 's' : ''} remaining today.`
+      });
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    }
+    
     setBulkProcessing(false);
     setBulkProgress('');
-    if (created > 0) {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-      toast({ title: `${created} product${created > 1 ? 's' : ''} created!` });
-    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -800,6 +869,9 @@ const AdminProducts = () => {
   const isSubmitting = createProductMutation.isPending || updateProductMutation.isPending;
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+
+  // Get remaining uses for today
+  const { remaining: remainingUses } = checkBulkUploadLimit();
 
   return (
     <div className="min-h-screen bg-background">
@@ -846,18 +918,48 @@ const AdminProducts = () => {
                 <span className="sm:hidden">AI</span>
               </Button>
 
-              {/* Bulk Upload Button */}
-              <Dialog open={isBulkDialogOpen} onOpenChange={(open) => { setIsBulkDialogOpen(open); if (!open) { setBulkItems([]); setBulkProcessing(false); setBulkProgress(''); } }}>
+              {/* Bulk Upload Button with usage indicator */}
+              <Dialog open={isBulkDialogOpen} onOpenChange={(open) => { 
+                setIsBulkDialogOpen(open); 
+                if (!open) { 
+                  setBulkItems([]); 
+                  setBulkProcessing(false); 
+                  setBulkProgress(''); 
+                } else {
+                  // Check limit when opening dialog
+                  const { allowed, resetTime } = checkBulkUploadLimit();
+                  if (!allowed) {
+                    toast({ 
+                      title: "Daily limit reached", 
+                      description: `You've used all ${BULK_UPLOAD_LIMIT} bulk uploads today. Next reset at ${resetTime}.`, 
+                      variant: "destructive" 
+                    });
+                    setIsBulkDialogOpen(false);
+                  }
+                }
+              }}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
+                  <Button variant="outline" size="sm" className="flex-1 sm:flex-none relative">
                     <ImagePlus className="h-4 w-4 mr-2" />
                     <span className="hidden sm:inline">Bulk Upload</span>
                     <span className="sm:hidden">Bulk</span>
+                    {remainingUses > 0 && (
+                      <Badge variant="secondary" className="ml-2 text-[10px] hidden sm:inline-flex">
+                        {remainingUses}/{BULK_UPLOAD_LIMIT}
+                      </Badge>
+                    )}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Bulk Upload Products ({bulkItems.length}/{MAX_BULK_FILES})</DialogTitle>
+                    <DialogTitle>
+                      Bulk Upload Products ({bulkItems.length}/{MAX_BULK_FILES})
+                      {remainingUses > 0 && (
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {remainingUses} of {BULK_UPLOAD_LIMIT} uses left today
+                        </Badge>
+                      )}
+                    </DialogTitle>
                   </DialogHeader>
 
                   {bulkItems.length === 0 ? (
@@ -868,6 +970,7 @@ const AdminProducts = () => {
                       <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
                       <p className="text-sm font-medium">Drop files or click to select</p>
                       <p className="text-xs text-muted-foreground mt-1">Max {MAX_BULK_FILES} images/videos. AI will generate product info for each.</p>
+                      <p className="text-xs text-primary mt-2">You have {remainingUses} bulk upload{remainingUses !== 1 ? 's' : ''} remaining today.</p>
                       <input
                         ref={bulkFileRef}
                         type="file"
