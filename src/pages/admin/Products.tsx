@@ -737,7 +737,7 @@ const AdminProducts = () => {
             name: item.name,
             description: item.description || null,
             price: parseFloat(item.price) || 5000,
-            quantity: 0,
+            quantity: 7,
             featured: false,
             image_url, video_url,
             category: item.category || 'Uncategorized',
