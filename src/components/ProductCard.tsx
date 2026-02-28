@@ -315,10 +315,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         
         
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="text-base sm:text-lg font-extrabold naira-price">
-              {formatPrice(product.price)}
-            </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {product.original_price != null && product.discount_price != null ? (
+              <>
+                <span className="line-through text-muted-foreground text-xs">
+                  {formatPrice(product.original_price)}
+                </span>
+                <span className="text-base sm:text-lg font-extrabold naira-price">
+                  {formatPrice(product.discount_price)}
+                </span>
+                <Badge variant="destructive" className="text-[10px] px-1 py-0">
+                  {Math.round((1 - product.discount_price / product.original_price) * 100)}% OFF
+                </Badge>
+              </>
+            ) : (
+              <span className="text-base sm:text-lg font-extrabold naira-price">
+                {formatPrice(product.price)}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
             <Heart className="h-3 w-3" />

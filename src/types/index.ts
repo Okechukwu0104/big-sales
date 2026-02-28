@@ -14,6 +14,8 @@ export interface Product {
   brand: string | null;
   sku: string | null;
   video_url: string | null;
+  original_price: number | null;
+  discount_price: number | null;
   created_at: string;
   updated_at: string;
 }

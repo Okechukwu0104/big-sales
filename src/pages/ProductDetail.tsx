@@ -274,7 +274,17 @@ const ProductDetail = () => {
                 </Button>
               </div>
               <div className="flex items-center gap-4 mb-2 flex-wrap">
-                <p className="text-2xl sm:text-3xl font-bold text-primary">{formatPrice(product.price)}</p>
+                {product.original_price != null && product.discount_price != null ? (
+                  <>
+                    <p className="text-lg sm:text-xl line-through text-muted-foreground">{formatPrice(product.original_price)}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-primary">{formatPrice(product.discount_price)}</p>
+                    <Badge variant="destructive" className="text-xs">
+                      {Math.round((1 - product.discount_price / product.original_price) * 100)}% OFF
+                    </Badge>
+                  </>
+                ) : (
+                  <p className="text-2xl sm:text-3xl font-bold text-primary">{formatPrice(product.price)}</p>
+                )}
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <Heart className="h-4 w-4" />
                   <span className="text-sm">{product.likes_count} likes</span>
