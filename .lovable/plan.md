@@ -1,84 +1,157 @@
+# AI Bulk Product Creator + Discount Pricing System
 
+## Overview
 
-# Fix Offline Banner Alignment & Offline Product Upload Strategy
+Two major features:
 
-## Part 1: Fix Offline Banner Alignment
-
-The current offline banner uses the `Alert` component with `[&>svg~*]:pl-7` and absolute-positioned icon which causes misalignment. The fix is to use flexbox for proper centering.
-
-### File: `src/App.tsx` (lines 65-74)
-
-Replace the current banner with a properly aligned flexbox layout:
-- Use a `flex items-center justify-center gap-2` container inside the fixed div
-- Use `py-2 px-4` for compact spacing
-- Add a destructive background color directly instead of relying on the Alert component's absolute positioning
-- Keep the `WifiOff` icon inline with the text
-- Add `text-sm font-medium` for readability
-
-The new markup:
-```
-<div className="fixed top-0 left-0 right-0 z-[100] bg-destructive text-destructive-foreground">
-  <div className="flex items-center justify-center gap-2 py-2 px-4 text-sm font-medium">
-    <WifiOff className="h-4 w-4 shrink-0" />
-    <span>You're offline. Some features may be unavailable.</span>
-  </div>
-</div>
-```
-
-This removes the `Alert` component dependency and gives clean, centered alignment.
+1. **AI Bulk Product Creator**: Upload up to 10 images/videos at once, AI analyzes each and generates complete product cards (name, description, price suggestion, category)
+2. **Discount Pricing**: Add `original_price` and `discount_price` columns so products can show strikethrough original price alongside the discounted price
 
 ---
 
-## Part 2: Offline Product Upload - Recommendation
+## Part 1: Database Migration
 
-True offline uploads for admin are technically possible but complex. Here are the options:
+Add discount pricing columns to the `products` table:
 
-### Option A: Local Queue with Auto-Sync (Recommended - Practical)
-- When offline, save product data (name, price, description, category) to `localStorage` as a queue
-- Show a "Pending Uploads" indicator in the admin panel
-- When the browser comes back online (`navigator.onLine`), automatically process the queue one by one
-- **Limitation**: Images/videos cannot be stored in localStorage (too large). Only text fields are queued. Media must be uploaded when back online.
-- Implementation: ~moderate complexity
+```sql
+ALTER TABLE products
+  ADD COLUMN original_price numeric DEFAULT NULL,
+  ADD COLUMN discount_price numeric DEFAULT NULL;
+```
 
-### Option B: IndexedDB with Full Media Caching
-- Use IndexedDB to store product data AND binary image/video files offline
-- Full offline capability including media
-- Much more complex, requires a service worker for background sync
-- Implementation: high complexity
-
-### Recommended approach: Option A
-- Store product text data (name, price, description, etc.) in localStorage when offline
-- Show a toast: "Product saved locally. Will upload when you're back online."
-- Add an `useEffect` that listens for `online` event and processes the queue
-- Display a "Pending uploads (X)" badge in the admin sidebar
-- For images: show a placeholder and prompt admin to add image when back online
-- Skip video uploads entirely when offline (too large for local storage)
-
-### Implementation Details
-
-**File: `src/pages/admin/Products.tsx`**
-
-Changes:
-- Add `isOnline` state using `navigator.onLine` + event listeners
-- Add `pendingProducts` state from localStorage
-- In the create mutation's `onMutate`: if offline, save to localStorage queue and show info toast, then return early
-- Add `useEffect` on `online` event: process localStorage queue by calling the create mutation for each item
-- Show "X pending uploads" banner at top of products page when queue is not empty
-- Disable image/video file inputs when offline with helper text "Available when online"
-
-**New utility: `src/utils/offlineQueue.ts`**
-- `addToQueue(product)` - saves product data to localStorage
-- `getQueue()` - retrieves pending products
-- `removeFromQueue(id)` - removes after successful upload
-- `getQueueCount()` - returns count for badge display
+- `original_price`: the "was" price (shown with strikethrough)
+- `discount_price`: the sale price (shown bold)
+- When both are set, the frontend shows the discount UI
+- `price` remains the canonical selling price (updated to match `discount_price` when a discount is active)
 
 ---
 
-## Summary
+## Part 2: AI Bulk Product Creator Edge Function
 
-| File | Changes |
-|------|---------|
-| `src/App.tsx` | Fix offline banner alignment with flexbox |
-| `src/pages/admin/Products.tsx` | Add offline queue logic, pending uploads indicator, disable media inputs when offline |
-| `src/utils/offlineQueue.ts` | New utility for localStorage-based offline queue management |
+**New file: `supabase/functions/ai-generate-product/index.ts**`
 
+- Accepts a base64 image (or video thumbnail frame)
+- Sends it to Lovable AI (Gemini 2.5 Flash -- supports image input) with tool calling to extract structured output:
+  - `name`, `description`, `price` (suggested in Naira), `category`
+- Returns the structured product data
+- 20-second timeout with fallback defaults
+- Handles 429/402 errors gracefully
+
+**Config update: `supabase/config.toml**`
+
+```toml
+[functions.ai-generate-product]
+verify_jwt = true
+```
+
+---
+
+## Part 3: Bulk Upload UI in Admin Products
+
+**File: `src/pages/admin/Products.tsx**`
+
+Add a new "Bulk Upload" dialog button alongside "Add Product":
+
+- File input accepting `image/*,video/*` with `multiple`, max 10 files
+- On file selection:
+  1. Show a grid preview of all selected files with thumbnails
+  2. For each file, compress images client-side (reuse existing `compressImage`)
+  3. For videos, extract a thumbnail frame using canvas + video element
+  4. Send each image/thumbnail to `ai-generate-product` edge function sequentially (with 1s delay between to avoid rate limits)
+  5. Display AI-generated product info (name, description, price, category) in editable fields per item
+  6. Admin can review/edit any field before confirming
+  7. "Create All" button processes them one by one: uploads media to storage, creates product records
+- Progress bar showing "Processing 3/10..." with per-item status
+- Low-network optimization: sequential processing (not parallel), retry with backoff, compressed images
+- Offline support: if offline, queue all items to IndexedDB with media cached as ArrayBuffers
+
+### UI Layout for Bulk Upload Dialog
+
+```text
++------------------------------------------+
+| Bulk Upload Products (0/10 selected)     |
++------------------------------------------+
+| [Drop files or click to select]          |
+| Max 10 images/videos                     |
++------------------------------------------+
+| [Thumb1] Name: ___  Price: ___  [Edit]   |
+|          Desc: ___  Cat: ___    [Remove] |
+|          Status: ✅ AI Generated          |
++------------------------------------------+
+| [Thumb2] Name: ___  Price: ___  [Edit]   |
+|          Status: ⏳ Analyzing...          |
++------------------------------------------+
+|        [Create All Products]              |
++------------------------------------------+
+```
+
+---
+
+## Part 4: Discount Pricing in Product Types & Forms
+
+### Types Update (`src/types/index.ts`)
+
+Add to Product interface:
+
+```typescript
+original_price: number | null;
+discount_price: number | null;
+```
+
+### Admin Form (`src/pages/admin/Products.tsx`)
+
+- Add "Original Price" and "Discount Price" fields below the existing Price field
+- Toggle: "Enable Discount" switch -- when on, shows original_price and discount_price inputs
+- When discount is enabled, `price` is auto-set to `discount_price` value on save
+- Validation: discount_price must be less than original_price
+
+### Product Card (`src/components/ProductCard.tsx`)
+
+When `original_price` and `discount_price` are both set:
+
+```text
+₦15,000  ₦8,500
+ ~~~~     (bold green)
+```
+
+- Original price: `line-through text-muted-foreground text-xs`
+- Discount price: `font-extrabold naira-price text-base`
+- Show discount percentage badge: "43% OFF"
+
+### Product Detail (`src/pages/ProductDetail.tsx`)
+
+Same strikethrough/discount display but larger text.
+
+---
+
+## Part 5: Offline Queue Update
+
+**File: `src/utils/offlineQueue.ts**`
+
+Add `original_price` and `discount_price` to the `OfflineProduct` interface so bulk-created products with discounts can also be queued offline.
+
+---
+
+## Summary of Changes
+
+
+| File                                              | Changes                                                         |
+| ------------------------------------------------- | --------------------------------------------------------------- |
+| `supabase/migrations/`                            | Add `original_price`, `discount_price` columns                  |
+| `supabase/functions/ai-generate-product/index.ts` | New edge function for AI image analysis                         |
+| `supabase/config.toml`                            | Add ai-generate-product function config                         |
+| `src/types/index.ts`                              | Add discount fields to Product interface                        |
+| `src/utils/offlineQueue.ts`                       | Add discount fields to OfflineProduct                           |
+| `src/pages/admin/Products.tsx`                    | Bulk upload dialog, discount form fields, bulk creation logic   |
+| `src/components/ProductCard.tsx`                  | Strikethrough original price + discount display + "% OFF" badge |
+| `src/pages/ProductDetail.tsx`                     | Discount price display on detail page                           |
+
+
+### Low-Network Strategy
+
+- Images compressed before AI analysis (saves upload bandwidth)
+- Sequential AI calls with 1s spacing (avoids rate limits)
+- Retry with exponential backoff on failures
+- Each product created independently (one failure doesn't block others)
+- Full offline queue support via IndexedDB for all bulk items
+- Video thumbnails extracted client-side (no video sent to AI)
