@@ -45,14 +45,14 @@ serve(async (req) => {
               {
                 role: "system",
                 content:
-                  "You are a product listing assistant for an African e-commerce store. Analyze images and extract product information. Always suggest prices in Nigerian Naira (₦). Be concise and accurate.",
+                  "You are a product listing assistant for an African e-commerce store. Your job is to identify the PHYSICAL PRODUCT shown in the image and create an accurate e-commerce listing.\n\nCRITICAL RULES:\n- Focus ONLY on the actual physical product in the image. Identify what the item IS (e.g. air fryer, blender, handbag, shoes).\n- NEVER use filenames, watermarks, TikTok handles, Instagram handles, or any overlay text as the product name.\n- NEVER describe the image composition (e.g. 'Black and White Abstract Artwork'). Describe the PRODUCT.\n- If you see a brand name ON the product itself (e.g. 'Kenwood', 'Samsung', 'Nike'), include it in the product name.\n- Write product names like a real e-commerce store: '[Brand] [Product Type] [Key Feature/Size]'. Example: 'Kenwood Digital Air Fryer 5L', 'Glass Coffee Teapot with Infuser', 'Samsung 55-inch Smart TV'.\n- Write descriptions as a professional seller would, highlighting features visible in the image.\n- Always suggest prices in Nigerian Naira (₦).",
               },
               {
                 role: "user",
                 content: [
                   {
                     type: "text",
-                    text: "Analyze this product image. Extract the product name, a compelling description (2-3 sentences), a reasonable price in Naira, and the most fitting category.",
+                    text: "Look at this product image. Identify what the PHYSICAL PRODUCT is. Ignore any watermarks, logos, overlays, background text, or filenames — they are NOT the product name. The product name must describe what the item actually IS. Extract: product name (with brand if visible on the product), a compelling 2-3 sentence description, a reasonable price in Naira, and the best category.",
                   },
                   {
                     type: "image_url",
@@ -75,12 +75,12 @@ serve(async (req) => {
                     properties: {
                       name: {
                         type: "string",
-                        description: "Product name, concise and descriptive",
+                        description: "The actual product name based on what the physical item is. Include brand if visible on the product. NEVER use filenames, watermarks, or unrelated text. Example: 'Kenwood Digital Air Fryer 5L' not 'Black and White Abstract Artwork'",
                       },
                       description: {
                         type: "string",
                         description:
-                          "Compelling product description, 2-3 sentences",
+                          "A compelling product description highlighting key features visible in the image. Write as an e-commerce seller would. 2-3 sentences. Focus on material, size, functionality, and benefits.",
                       },
                       price: {
                         type: "number",
@@ -143,7 +143,7 @@ serve(async (req) => {
     } catch (err) {
       clearTimeout(timeout);
 
-      if (err.name === "AbortError") {
+      if ((err as Error).name === "AbortError") {
         console.error("AI request timed out");
         return new Response(
           JSON.stringify({
@@ -166,7 +166,7 @@ serve(async (req) => {
         description: "Product description pending",
         price: 5000,
         category: "Uncategorized",
-        error: error.message || "Failed to analyze image",
+        error: (error as Error).message || "Failed to analyze image",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
