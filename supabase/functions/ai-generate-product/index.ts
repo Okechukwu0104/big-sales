@@ -12,11 +12,36 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, mimeType } = await req.json();
+    const { imageBase64, imageUrl, mimeType, nameHint } = await req.json();
 
-    if (!imageBase64) {
+    let finalBase64 = imageBase64;
+    let finalMimeType = mimeType || "image/jpeg";
+
+    // Support imageUrl: fetch and convert to base64
+    if (!finalBase64 && imageUrl) {
+      try {
+        const imgResponse = await fetch(imageUrl);
+        if (!imgResponse.ok) throw new Error(`Failed to fetch image: ${imgResponse.status}`);
+        finalMimeType = imgResponse.headers.get("content-type") || "image/jpeg";
+        const arrayBuffer = await imgResponse.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        finalBase64 = btoa(binary);
+      } catch (fetchErr) {
+        console.error("Failed to fetch imageUrl:", fetchErr);
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch image from URL" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    if (!finalBase64) {
       return new Response(
-        JSON.stringify({ error: "imageBase64 is required" }),
+        JSON.stringify({ error: "imageBase64 or imageUrl is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -45,19 +70,19 @@ serve(async (req) => {
               {
                 role: "system",
                 content:
-                  "You are a product listing assistant for an African e-commerce store. Your job is to identify the PHYSICAL PRODUCT shown in the image and create an accurate e-commerce listing.\n\nCRITICAL RULES:\n- Focus ONLY on the actual physical product in the image. Identify what the item IS (e.g. air fryer, blender, handbag, shoes).\n- NEVER use filenames, watermarks, TikTok handles, Instagram handles, or any overlay text as the product name.\n- NEVER describe the image composition (e.g. 'Black and White Abstract Artwork'). Describe the PRODUCT.\n- If you see a brand name ON the product itself (e.g. 'Kenwood', 'Samsung', 'Nike'), include it in the product name.\n- Write product names like a real e-commerce store: '[Brand] [Product Type] [Key Feature/Size]'. Example: 'Kenwood Digital Air Fryer 5L', 'Glass Coffee Teapot with Infuser', 'Samsung 55-inch Smart TV'.\n- Write descriptions as a professional seller would, highlighting features visible in the image.\n- Always suggest prices in Nigerian Naira (₦).",
+                  "You are a product listing assistant for an African e-commerce store. Your job is to identify the PHYSICAL PRODUCT shown in the image and create an accurate e-commerce listing.\n\nCRITICAL RULES:\n- Focus ONLY on the actual physical product in the image. Identify what the item IS (e.g. air fryer, blender, handbag, shoes).\n- NEVER use filenames, watermarks, TikTok handles, Instagram handles, or any overlay text as the product name.\n- NEVER describe the image composition (e.g. 'Black and White Abstract Artwork'). Describe the PRODUCT.\n- If you see a brand name ON the product itself (e.g. 'Kenwood', 'Samsung', 'Nike'), include it in the product name.\n- Write product names like a real e-commerce store: '[Brand] [Product Type] [Key Feature/Size]'. Example: 'Kenwood Digital Air Fryer 5L', 'Glass Coffee Teapot with Infuser', 'Samsung 55-inch Smart TV'.\n- Write DETAILED, ELABORATE descriptions of 4-5 sentences as a professional e-commerce seller. Cover: what the product is, key features and specifications, material/build quality, ideal use cases, and a compelling reason to buy.\n- Always suggest prices in Nigerian Naira (₦)." + (nameHint ? `\n\nHINT: The product is likely called "${nameHint}". Use this as context but verify against what you see in the image.` : ""),
               },
               {
                 role: "user",
                 content: [
                   {
                     type: "text",
-                    text: "Look at this product image. Identify what the PHYSICAL PRODUCT is. Ignore any watermarks, logos, overlays, background text, or filenames — they are NOT the product name. The product name must describe what the item actually IS. Extract: product name (with brand if visible on the product), a compelling 2-3 sentence description, a reasonable price in Naira, and the best category.",
+                    text: "Look at this product image. Identify what the PHYSICAL PRODUCT is. Ignore any watermarks, logos, overlays, background text, or filenames — they are NOT the product name. The product name must describe what the item actually IS. Extract: product name (with brand if visible on the product), a detailed 4-5 sentence product description covering features, specs, materials, use cases, and benefits, a reasonable price in Naira, and the best category.",
                   },
                   {
                     type: "image_url",
                     image_url: {
-                      url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}`,
+                      url: `data:${finalMimeType};base64,${finalBase64}`,
                     },
                   },
                 ],
@@ -80,7 +105,7 @@ serve(async (req) => {
                       description: {
                         type: "string",
                         description:
-                          "A compelling product description highlighting key features visible in the image. Write as an e-commerce seller would. 2-3 sentences. Focus on material, size, functionality, and benefits.",
+                          "A detailed, elaborate product description of 4-5 sentences. Cover: what the product is, key features and specifications, material/build quality, ideal use cases, and a compelling reason to buy. Write as a professional e-commerce seller highlighting benefits the buyer cares about.",
                       },
                       price: {
                         type: "number",

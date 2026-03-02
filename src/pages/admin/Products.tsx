@@ -294,7 +294,7 @@ const AdminProducts = () => {
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [discountEnabled, setDiscountEnabled] = useState(false);
-
+  const [isFixingDescriptions, setIsFixingDescriptions] = useState(false);
   // Bulk upload state
   const [bulkItems, setBulkItems] = useState<BulkItem[]>([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
@@ -845,6 +845,52 @@ const AdminProducts = () => {
     }
   };
 
+  // Fix poor descriptions using AI
+  const handleFixDescriptions = async () => {
+    if (!products) return;
+    setIsFixingDescriptions(true);
+    
+    const poorProducts = products.filter(p => {
+      const desc = p.description || '';
+      return desc.length < 80;
+    });
+
+    if (poorProducts.length === 0) {
+      toast({ title: "All descriptions look good!", description: "No products with short descriptions found." });
+      setIsFixingDescriptions(false);
+      return;
+    }
+
+    toast({ title: `Fixing ${poorProducts.length} description${poorProducts.length > 1 ? 's' : ''}...`, description: "This may take a moment." });
+
+    let fixed = 0;
+    for (let i = 0; i < poorProducts.length; i++) {
+      const product = poorProducts[i];
+      toast({ title: `Fixing descriptions`, description: `${i + 1}/${poorProducts.length}: ${product.name}` });
+
+      try {
+        if (product.image_url) {
+          const { data, error } = await supabase.functions.invoke('ai-generate-product', {
+            body: { imageUrl: product.image_url, nameHint: product.name },
+          });
+          if (error) throw error;
+          if (data?.description && data.description.length > 50) {
+            await supabase.from('products').update({ description: data.description }).eq('id', product.id);
+            fixed++;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fix description for:', product.name, err);
+      }
+
+      if (i < poorProducts.length - 1) await new Promise(r => setTimeout(r, 1500));
+    }
+
+    setIsFixingDescriptions(false);
+    queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    toast({ title: `Fixed ${fixed}/${poorProducts.length} descriptions`, description: "Product descriptions have been updated." });
+  };
+
   const toggleCategorySelection = (categoryId: string) => {
     setFormData(prev => ({
       ...prev,
@@ -916,6 +962,12 @@ const AdminProducts = () => {
                 <Sparkles className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">{batchCategorizeMutation.isPending ? 'Categorizing...' : 'AI Categorize'}</span>
                 <span className="sm:hidden">AI</span>
+              </Button>
+
+              <Button variant="outline" onClick={handleFixDescriptions} disabled={isFixingDescriptions} size="sm" className="flex-1 sm:flex-none">
+                {isFixingDescriptions ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                <span className="hidden sm:inline">{isFixingDescriptions ? 'Fixing...' : 'Fix Descriptions'}</span>
+                <span className="sm:hidden">Fix</span>
               </Button>
 
               {/* Bulk Upload Button with usage indicator */}
