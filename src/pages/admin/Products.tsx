@@ -852,7 +852,9 @@ const AdminProducts = () => {
     
     const poorProducts = products.filter(p => {
       const desc = p.description || '';
-      return desc.length < 80;
+      const hasRawPrice = /₦|naira|NGN\s?\d/i.test(desc);
+      const hasImgName = /^IMG[-_]/i.test(p.name);
+      return desc.length < 120 || hasRawPrice || hasImgName;
     });
 
     if (poorProducts.length === 0) {
@@ -875,7 +877,12 @@ const AdminProducts = () => {
           });
           if (error) throw error;
           if (data?.description && data.description.length > 50) {
-            await supabase.from('products').update({ description: data.description }).eq('id', product.id);
+            const updateData: Record<string, string> = { description: data.description };
+            // Also fix IMG- names
+            if (/^IMG[-_]/i.test(product.name) && data?.name) {
+              updateData.name = data.name;
+            }
+            await supabase.from('products').update(updateData).eq('id', product.id);
             fixed++;
           }
         }

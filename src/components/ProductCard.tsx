@@ -8,7 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useAuth } from '@/hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Star, Heart, Zap, TrendingUp, Eye, Play } from 'lucide-react';
+import { ShoppingCart, Star, Heart, Zap, TrendingUp, Eye, Play, Share2 } from 'lucide-react';
+import { ProductShare } from '@/components/ProductShare';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -265,7 +266,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             )}
           </div>
           
-          <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -277,6 +278,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 className={`h-4 w-4 ${currentlyLiked ? 'fill-red-500 text-red-500' : 'text-slate-600'}`}
               />
             </Button>
+            <ProductShare
+              productId={product.id}
+              productName={product.name}
+              productPrice={product.price}
+              productImage={product.image_url}
+              discountPrice={product.discount_price}
+              variant="icon"
+            />
           </div>
         </div>
       </Link>

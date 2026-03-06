@@ -7,6 +7,7 @@ import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus, Minus, ShoppingCart, Heart, Zap } from 'lucide-react';
+import { ProductShare } from '@/components/ProductShare';
 import { useCartContext } from '@/components/ui/cart-provider';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useToast } from '@/hooks/use-toast';
@@ -261,17 +262,27 @@ const ProductDetail = () => {
                     <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Featured</Badge>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleLike}
-                  className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0"
-                  disabled={likeMutation.isPending}
-                >
-                  <Heart 
-                    className={`h-5 w-5 sm:h-6 sm:w-6 ${isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+                <div className="flex items-center gap-1">
+                  <ProductShare
+                    productId={product.id}
+                    productName={product.name}
+                    productPrice={product.price}
+                    productImage={product.image_url}
+                    discountPrice={product.discount_price}
+                    variant="button"
                   />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLike}
+                    className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0"
+                    disabled={likeMutation.isPending}
+                  >
+                    <Heart 
+                      className={`h-5 w-5 sm:h-6 sm:w-6 ${isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+                    />
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-4 mb-2 flex-wrap">
                 {product.original_price != null && product.discount_price != null ? (
