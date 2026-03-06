@@ -1,60 +1,72 @@
 
 
-# More Elaborate AI Descriptions + Fix Existing Poor Descriptions
+# Fix AI Descriptions + Product Share Button with QR Code
 
-## Problem
+## Part 1: Fix AI Description Quality
 
-1. The AI prompt asks for "2-3 sentences" which produces thin descriptions. Some existing products have even worse manually-entered descriptions like "Also Designed for baking", "Very effective", "Very strong And active".
-2. Several existing products need their descriptions regenerated.
+### Edge Function Update (`supabase/functions/ai-generate-product/index.ts`)
+The current prompt already asks for 4-5 sentences, but descriptions are still coming out thin. Strengthen with:
+- Add explicit **minimum word count** instruction: "Write AT LEAST 60 words"
+- Add example output in the system prompt so the AI sees what a good description looks like
+- Add to tool parameter: "MINIMUM 60 words. Must cover: 1) What the product is 2) Key specs/features 3) Material/build quality 4) Who it's for and use cases 5) Why buy it"
 
-## Changes
+### Fix Existing Descriptions (`src/pages/admin/Products.tsx`)
+The `handleFixDescriptions` threshold is 80 chars. Some poor descriptions might be longer but still bad (e.g. product pricing text pasted in). Update:
+- Increase threshold to 120 chars to catch more thin descriptions
+- Also fix descriptions containing raw price text (regex for "₦" or "naira" patterns)
+- Also fix names that still contain "IMG-" patterns by updating the name alongside the description
 
-### 1. Update AI prompt for richer descriptions
+## Part 2: Product Share Button with Branded QR Code
 
-**File: `supabase/functions/ai-generate-product/index.ts`**
+### New Component: `src/components/ProductShare.tsx`
 
-Change the description guidance from "2-3 sentences" to "4-5 sentences" in three places:
-- **System prompt**: Change "Write descriptions as a professional seller would, highlighting features visible in the image" to include instructions for elaborate descriptions covering: what the product is, key features/specs, material/build quality, use cases, and why the buyer should want it.
-- **User prompt**: Change "a compelling 2-3 sentence description" to "a detailed 4-5 sentence product description covering features, specs, materials, use cases, and benefits"
-- **Tool parameter `description`**: Update from "2-3 sentences" to "A detailed, elaborate product description of 4-5 sentences. Cover: what the product is, key features and specifications, material/build quality, ideal use cases, and a compelling reason to buy. Write as a professional e-commerce seller."
+A share button on the ProductDetail page and ProductCard that opens a dialog containing:
 
-### 2. Add "Regenerate Descriptions" admin feature
+1. **Branded QR Code Sticker** — a visually designed card with:
+   - Brown patterned background (using the existing `bg-pattern.avif`)
+   - BIG SALES logo centered above or below the QR code
+   - QR code generated using a lightweight canvas-based generator (no external library — use the native `qrcode` approach or a small inline QR encoder)
+   - Attractive text: "Scan to shop!" / product name / price
+   - Download button to save as image (using `html2canvas` pattern via canvas export)
 
-**File: `src/pages/admin/Products.tsx`**
+2. **Social Media Share Links**:
+   - WhatsApp (with pre-filled message including product link, name, price)
+   - Facebook share
+   - Twitter/X share
+   - Copy link button
+   - Native share (Web Share API where supported)
 
-Add a button in the admin toolbar: "Fix Descriptions" (with Sparkles icon). When clicked:
-- Queries all products where `description` is null, empty, or shorter than 80 characters (catches the thin ones)
-- For each product that has an `image_url`, sends the image to the `ai-generate-product` edge function to get a new elaborate description
-- Updates only the `description` field in Supabase (preserves name, price, etc.)
-- Processes sequentially with 1s delays, shows progress toast
-- Products without images get a generic enhanced description based on their name via a simple text-only AI call
+### QR Code Generation
+Use a lightweight inline QR code generator function (no npm dependency needed — there are well-known ~100-line canvas-based QR implementations). Alternatively, use a tiny library. I'll implement a canvas-based QR renderer to keep bundle size minimal and work offline.
 
-This is a one-time cleanup tool. Implementation:
-- New state: `isFixingDescriptions` boolean
-- New function: `handleFixDescriptions()` that fetches image URLs, calls AI, updates DB
-- Button shown in the toolbar area near "Add Product" and "Bulk Upload"
-- Progress shown as toast updates: "Fixing 3/7..."
+Actually, to keep it professional and reliable, I'll use the `qrcode` npm package (small, well-maintained) for generating QR as data URL, then composite it onto the branded sticker canvas.
 
-### 3. Edge function update to also accept a `mode` parameter
+### Sticker Design (canvas-rendered, downloadable)
+```text
++----------------------------------+
+|  [brown patterned background]    |
+|                                  |
+|     🏷️ BIG SALES                |
+|     [QR CODE]                    |
+|                                  |
+|   "Kenwood Air Fryer 5L"        |
+|       ₦15,000                    |
+|   ✨ Scan to Shop Now! ✨        |
++----------------------------------+
+```
 
-**File: `supabase/functions/ai-generate-product/index.ts`**
+### Integration Points
+- **ProductDetail.tsx**: Add a Share button (Share2 icon) next to the Like button
+- **ProductCard.tsx**: Add a small share icon button in the card footer or overlay
 
-Add support for an optional `imageUrl` parameter (in addition to `imageBase64`) so we can pass existing product image URLs for re-analysis. Also add an optional `nameHint` parameter so the AI can use the existing product name as context when regenerating just the description.
-
-When `imageUrl` is provided instead of `imageBase64`, fetch the image, convert to base64, then proceed as normal.
-
-## Technical Details
-
-Products needing fixes (description < 80 chars or clearly poor):
-- "Kenwood Airfryer" → "Also Designed for baking"
-- "IMG-20260217-WA0036(1)" → "Very effective"
-- "Quides Super Blender" → "Qiudes super blender Very strong And active"
-- "Borosilicate Beautiful Glass Kettle" → has price info in description
-- "Wooden Wardrobe" → has raw pricing text in description
-- "Portable Outdoor Stainless Steel Mug" → single long sentence, could be better
+### Files to Create/Modify
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/ai-generate-product/index.ts` | Longer description prompts (4-5 sentences), support `imageUrl` + `nameHint` params |
-| `src/pages/admin/Products.tsx` | "Fix Descriptions" button + logic to regenerate poor descriptions via AI |
+| `supabase/functions/ai-generate-product/index.ts` | Stronger description prompt with min word count + example |
+| `src/pages/admin/Products.tsx` | Increase fix threshold to 120 chars, also fix IMG- names |
+| `src/components/ProductShare.tsx` | New component: share dialog with QR sticker + social links |
+| `src/pages/ProductDetail.tsx` | Add Share button |
+| `src/components/ProductCard.tsx` | Add share icon |
+| `package.json` | Add `qrcode` package for QR generation |
 
