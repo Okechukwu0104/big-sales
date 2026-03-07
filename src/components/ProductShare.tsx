@@ -266,7 +266,7 @@ export const ProductShare = ({
             variant="ghost"
             size="icon"
             className={`h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-white/90 hover:bg-white shadow-md ${className}`}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onClick={(e) => { e.stopPropagation(); }}
           >
             <Share2 className="h-4 w-4 text-slate-600" />
           </Button>
@@ -275,7 +275,7 @@ export const ProductShare = ({
             variant="ghost"
             size="icon"
             className={`h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 ${className}`}
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onClick={(e) => { e.stopPropagation(); }}
           >
             <Share2 className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
           </Button>
