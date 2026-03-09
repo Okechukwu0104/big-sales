@@ -317,7 +317,7 @@ const Home = () => {
               <div className="max-w-2xl mx-auto mb-4" ref={searchContainerRef}>
                 <div className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
                   {/* Animated glow ring */}
-                  <div className={`absolute -inset-[3px] rounded-[20px] bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] transition-opacity duration-300 ${isSearchFocused ? 'opacity-100 animate-[shimmer_2s_ease-in-out_infinite]' : 'opacity-50 animate-[shimmer_3s_ease-in-out_infinite]'}`} />
+                  <div className={`absolute -inset-[3px] rounded-[20px] bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 bg-[length:200%_100%] transition-opacity duration-300 ${isSearchFocused ? 'opacity-100 animate-[shimmer_2s_ease-in-out_infinite]' : 'opacity-40 animate-[shimmer_3s_ease-in-out_infinite]'}`} />
                   
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
