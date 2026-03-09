@@ -11,11 +11,13 @@ import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
 import { ContactUsPopup } from '@/components/ContactUsPopup';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, X, Sparkles, ArrowUp, HelpCircle, 
-  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye
+  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye, Keyboard
 } from 'lucide-react';
+import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
 import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
