@@ -1,41 +1,52 @@
-import { Shield, Truck, Award, Package, Clock, MessageCircle } from 'lucide-react';
+import { Shield, Truck, Award, Package, Clock, MessageCircle, RefreshCw, Lock } from 'lucide-react';
 
 export const TrustBadges = () => {
   const badges = [
     {
       icon: Shield,
       title: "100% Original",
-      description: "Authentic products guaranteed"
+      description: "Every product is authentic and quality-checked"
     },
     {
       icon: Truck,
       title: "Nationwide Delivery",
-      description: "We deliver across Nigeria"
+      description: "We deliver to all 36 states in Nigeria"
     },
     {
       icon: Award,
       title: "Pay on Delivery",
-      description: "Pay when you receive"
+      description: "Only pay when your order arrives safely"
+    },
+    {
+      icon: RefreshCw,
+      title: "Easy Returns",
+      description: "7-day hassle-free return policy"
+    },
+    {
+      icon: Lock,
+      title: "Secure Orders",
+      description: "Your personal info is always protected"
     },
     {
       icon: MessageCircle,
-      title: "WhatsApp Support",
-      description: "Chat with us anytime"
+      title: "24/7 WhatsApp Support",
+      description: "Get instant help anytime you need it"
     }
   ];
 
   return (
-    <section className="py-10 bg-card border-y border-border">
+    <section className="py-12 bg-card border-y border-border">
       <div className="container mx-auto px-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 text-foreground">Why Shop With Us?</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-foreground">Why Shop With Us?</h2>
+        <p className="text-center text-muted-foreground mb-8 text-sm">Thousands of Nigerians trust BIG SALES for quality and reliability</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {badges.map((badge, index) => (
-            <div key={index} className="flex flex-col items-center text-center p-3">
-              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-2">
-                <badge.icon className="h-6 w-6 text-accent" />
+            <div key={index} className="flex flex-col items-center text-center p-4 rounded-xl bg-muted/40 border border-border/50 hover:shadow-md hover:border-primary/20 transition-all duration-300 group">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                <badge.icon className="h-7 w-7 text-primary" />
               </div>
-              <h3 className="font-semibold text-sm text-foreground mb-0.5">{badge.title}</h3>
-              <p className="text-xs text-muted-foreground">{badge.description}</p>
+              <h3 className="font-semibold text-sm text-foreground mb-1">{badge.title}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{badge.description}</p>
             </div>
           ))}
         </div>
