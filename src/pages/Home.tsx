@@ -11,15 +11,18 @@ import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
 import { ContactUsPopup } from '@/components/ContactUsPopup';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, X, Sparkles, ArrowUp, HelpCircle, 
-  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye
+  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye, Keyboard
 } from 'lucide-react';
+import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
 import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { recentlyViewedIds } = useRecentlyViewed();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -27,10 +30,42 @@ const Home = () => {
   const [viewMode, setViewMode] = useState<'home' | 'all'>('home');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   
   const faqSectionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const searchPlaceholders = [
+    "Search for Air Fryer...",
+    "Search for Blender...",
+    "Search for Kitchen Set...",
+    "Search for Power Bank...",
+    "Search for Smart Watch...",
+    "Search for Perfume...",
+  ];
+
+  // Rotate placeholder text
+  useEffect(() => {
+    if (isSearchFocused || searchTerm) return;
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isSearchFocused, searchTerm, searchPlaceholders.length]);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch all products
   const { data: products, isLoading: isLoadingProducts } = useQuery({
@@ -249,76 +284,106 @@ const Home = () => {
         {/* Promotional Banner Carousel */}
         <PromoBannerCarousel />
 
-        {/* Hero Section */}
+        {/* Hero Section — Search-First */}
         <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-900/20 to-amber-900/10 backdrop-blur-[1px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-900/30 to-amber-900/15 backdrop-blur-[1px]"></div>
 
-          <div className="container mx-auto px-4 py-12 md:py-20 relative">
-            <div className="max-w-4xl mx-auto text-center">
+          <div className="container mx-auto px-4 py-10 md:py-16 relative">
+            <div className="max-w-3xl mx-auto text-center">
               {viewMode === 'all' && (
                 <button
                   onClick={() => {
                     setViewMode('home');
                     setSearchTerm('');
                     setSelectedCategory('All');
+                    setShowSearchDropdown(false);
                   }}
-                  className="inline-flex items-center gap-2 text-orange-700 hover:text-orange-800 mb-6 transition-colors"
+                  className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Home
                 </button>
               )}
 
-              <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-orange-200 shadow-sm">
-                <Sparkles className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium text-orange-700">Discover Amazing Deals</span>
-              </div>
-
-              <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent drop-shadow-sm">
                 BIG SALES
               </h1>
 
-              <p className="text-base sm:text-lg md:text-xl text-white mb-8 leading-relaxed max-w-2xl mx-auto">
-                Discover incredible products at unbeatable prices. Quality you can trust, delivered fast.
+              <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 leading-relaxed max-w-xl mx-auto">
+                🔍 What are you looking for today?
               </p>
 
-              {/* Hero Search Bar */}
-              <div className="max-w-2xl mx-auto mb-8">
+              {/* Search Bar — The Hero */}
+              <div className="max-w-2xl mx-auto mb-4" ref={searchContainerRef}>
                 <div className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search for products..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      if (e.target.value.trim()) {
-                        setViewMode('all');
-                      }
-                    }}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setIsSearchFocused(false)}
-                    className="w-full pl-14 pr-14 py-4 md:py-5 border-2 border-orange-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 bg-white/95 backdrop-blur-sm text-lg shadow-lg"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        if (viewMode === 'all' && selectedCategory === 'All') {
-                          setViewMode('home');
+                  {/* Animated glow ring */}
+                  <div className={`absolute -inset-[3px] rounded-[20px] bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] transition-opacity duration-300 ${isSearchFocused ? 'opacity-100 animate-[shimmer_2s_ease-in-out_infinite]' : 'opacity-50 animate-[shimmer_3s_ease-in-out_infinite]'}`} />
+                  
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                      <Search className={`h-6 w-6 transition-colors ${isSearchFocused ? 'text-primary' : 'text-muted-foreground'}`} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder={searchPlaceholders[placeholderIndex]}
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setShowSearchDropdown(true);
+                      }}
+                      onFocus={() => {
+                        setIsSearchFocused(true);
+                        if (searchTerm.trim()) setShowSearchDropdown(true);
+                      }}
+                      onBlur={() => setIsSearchFocused(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setShowSearchDropdown(false);
+                          (e.target as HTMLInputElement).blur();
+                        }
+                        if (e.key === 'Enter' && searchTerm.trim()) {
+                          setShowSearchDropdown(false);
+                          setViewMode('all');
                         }
                       }}
-                      className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
+                      className="w-full pl-14 pr-14 py-5 md:py-6 rounded-2xl focus:outline-none bg-card text-foreground text-lg shadow-2xl border-0 placeholder:text-muted-foreground/60"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setShowSearchDropdown(false);
+                          if (viewMode === 'all' && selectedCategory === 'All') {
+                            setViewMode('home');
+                          }
+                        }}
+                        className="absolute inset-y-0 right-0 pr-5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Instant Search Dropdown */}
+                  {showSearchDropdown && searchTerm.trim() && (
+                    <InstantSearchDropdown
+                      searchTerm={searchTerm}
+                      products={filteredProducts}
+                      isLoading={isLoadingProducts}
+                      onClose={() => setShowSearchDropdown(false)}
+                      onRequestWhatsApp={requestProductViaWhatsApp}
+                    />
                   )}
                 </div>
               </div>
+
+              {/* Hint text */}
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <Keyboard className="h-3.5 w-3.5 text-white/50" />
+                <span className="text-xs sm:text-sm text-white/60">Type to find any product instantly</span>
+              </div>
               
-              {/* Trust Badges in Hero */}
+              {/* Trust Badges */}
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
                 <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
                   <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
