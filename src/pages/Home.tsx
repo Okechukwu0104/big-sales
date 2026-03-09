@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Home = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { recentlyViewedIds } = useRecentlyViewed();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -29,10 +30,42 @@ const Home = () => {
   const [viewMode, setViewMode] = useState<'home' | 'all'>('home');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   
   const faqSectionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const searchPlaceholders = [
+    "Search for Air Fryer...",
+    "Search for Blender...",
+    "Search for Kitchen Set...",
+    "Search for Power Bank...",
+    "Search for Smart Watch...",
+    "Search for Perfume...",
+  ];
+
+  // Rotate placeholder text
+  useEffect(() => {
+    if (isSearchFocused || searchTerm) return;
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isSearchFocused, searchTerm, searchPlaceholders.length]);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch all products
   const { data: products, isLoading: isLoadingProducts } = useQuery({
