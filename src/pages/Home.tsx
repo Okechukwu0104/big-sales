@@ -305,7 +305,7 @@ const Home = () => {
                 </button>
               )}
 
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent drop-shadow-sm">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent drop-shadow-sm">
                 BIG SALES
               </h1>
 
