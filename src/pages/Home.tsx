@@ -557,8 +557,14 @@ const Home = () => {
           )}
         </div>
 
+        {/* Social Proof Stats */}
+        <SocialProofStats />
+
         {/* Trust Badges Section */}
         <TrustBadges />
+
+        {/* How It Works */}
+        <HowItWorks />
 
         {/* Customer Testimonials */}
         <TestimonialCarousel />
