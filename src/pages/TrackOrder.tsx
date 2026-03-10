@@ -61,10 +61,10 @@ const TrackOrder = () => {
     <div className="min-h-screen gradient-hero">
       <Header />
       
-      <main className="container mx-auto px-4 pt-24 pb-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-4xl font-bold mb-3">Track Your Order</h1>
+            <h1 className="text-4xl font-bold mb-3">Track Your Order</h1>
             <p className="text-muted-foreground text-lg">
               Enter your order ID or exact email address to check your order status
             </p>

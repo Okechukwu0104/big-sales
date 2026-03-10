@@ -22,8 +22,8 @@ const steps = [
   {
     icon: Package,
     step: '4',
-    title: 'Receive Your Order',
-    description: 'Get your order delivered right to your doorstep',
+    title: 'Receive & Pay',
+    description: 'Get your order delivered and pay on delivery',
   },
 ];
 

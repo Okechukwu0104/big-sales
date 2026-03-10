@@ -14,8 +14,8 @@ export const TrustBadges = () => {
     },
     {
       icon: Award,
-      title: "Unbeatable Prices",
-      description: "We offer the best deals you won't find anywhere else"
+      title: "Pay on Delivery",
+      description: "Only pay when your order arrives safely"
     },
     {
       icon: RefreshCw,
