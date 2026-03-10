@@ -10,8 +10,6 @@ import { ProductSection } from '@/components/ProductSection';
 import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
 import { ContactUsPopup } from '@/components/ContactUsPopup';
-import { SocialProofStats } from '@/components/SocialProofStats';
-import { HowItWorks } from '@/components/HowItWorks';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -316,7 +314,7 @@ const Home = () => {
               </p>
 
               {/* Search Bar — The Hero */}
-              <div className="max-w-2xl mx-auto mb-4" ref={searchContainerRef}>
+              <div className="max-w-2xl mx-auto mb-4 relative z-20" ref={searchContainerRef}>
                 <div className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
                   {/* Animated glow ring */}
                   <div className={`absolute -inset-[3px] rounded-[20px] bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 bg-[length:200%_100%] transition-opacity duration-300 ${isSearchFocused ? 'opacity-100 animate-[shimmer_2s_ease-in-out_infinite]' : 'opacity-40 animate-[shimmer_3s_ease-in-out_infinite]'}`} />
@@ -368,25 +366,27 @@ const Home = () => {
 
                   {/* Instant Search Dropdown */}
                   {showSearchDropdown && searchTerm.trim() && (
-                    <InstantSearchDropdown
-                      searchTerm={searchTerm}
-                      products={filteredProducts}
-                      isLoading={isLoadingProducts}
-                      onClose={() => setShowSearchDropdown(false)}
-                      onRequestWhatsApp={requestProductViaWhatsApp}
-                    />
+                    <div className="absolute left-0 right-0 mt-2 z-50">
+                      <InstantSearchDropdown
+                        searchTerm={searchTerm}
+                        products={filteredProducts}
+                        isLoading={isLoadingProducts}
+                        onClose={() => setShowSearchDropdown(false)}
+                        onRequestWhatsApp={requestProductViaWhatsApp}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Hint text */}
-              <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="flex items-center justify-center gap-2 mb-8">
                 <Keyboard className="h-3.5 w-3.5 text-white/50" />
                 <span className="text-xs sm:text-sm text-white/60">Type to find any product instantly</span>
               </div>
               
               {/* Trust Badges */}
-              <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-3 relative z-10">
                 <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
                   <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
                   <span className="text-xs sm:text-sm font-medium text-foreground">100% Original</span>
@@ -557,14 +557,8 @@ const Home = () => {
           )}
         </div>
 
-        {/* Social Proof Stats */}
-        <SocialProofStats />
-
         {/* Trust Badges Section */}
         <TrustBadges />
-
-        {/* How It Works */}
-        <HowItWorks />
 
         {/* Customer Testimonials */}
         <TestimonialCarousel />
