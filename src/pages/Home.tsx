@@ -368,15 +368,13 @@ const Home = () => {
 
                   {/* Instant Search Dropdown */}
                   {showSearchDropdown && searchTerm.trim() && (
-                    <div className="absolute left-0 right-0 mt-2 z-50">
-                      <InstantSearchDropdown
-                        searchTerm={searchTerm}
-                        products={filteredProducts}
-                        isLoading={isLoadingProducts}
-                        onClose={() => setShowSearchDropdown(false)}
-                        onRequestWhatsApp={requestProductViaWhatsApp}
-                      />
-                    </div>
+                    <InstantSearchDropdown
+                      searchTerm={searchTerm}
+                      products={filteredProducts}
+                      isLoading={isLoadingProducts}
+                      onClose={() => setShowSearchDropdown(false)}
+                      onRequestWhatsApp={requestProductViaWhatsApp}
+                    />
                   )}
                 </div>
               </div>
