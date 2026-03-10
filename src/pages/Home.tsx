@@ -10,6 +10,8 @@ import { ProductSection } from '@/components/ProductSection';
 import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
 import { ContactUsPopup } from '@/components/ContactUsPopup';
+import { SocialProofStats } from '@/components/SocialProofStats';
+import { HowItWorks } from '@/components/HowItWorks';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -366,15 +368,13 @@ const Home = () => {
 
                   {/* Instant Search Dropdown */}
                   {showSearchDropdown && searchTerm.trim() && (
-                    <div className="absolute left-0 right-0 mt-2 z-50">
-                      <InstantSearchDropdown
-                        searchTerm={searchTerm}
-                        products={filteredProducts}
-                        isLoading={isLoadingProducts}
-                        onClose={() => setShowSearchDropdown(false)}
-                        onRequestWhatsApp={requestProductViaWhatsApp}
-                      />
-                    </div>
+                    <InstantSearchDropdown
+                      searchTerm={searchTerm}
+                      products={filteredProducts}
+                      isLoading={isLoadingProducts}
+                      onClose={() => setShowSearchDropdown(false)}
+                      onRequestWhatsApp={requestProductViaWhatsApp}
+                    />
                   )}
                 </div>
               </div>
@@ -397,7 +397,7 @@ const Home = () => {
                 </div>
                 <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <span className="text-xs sm:text-sm font-medium text-foreground">Pay on Delivery</span>
+                  <span className="text-xs sm:text-sm font-medium text-foreground">Best Prices Guaranteed</span>
                 </div>
               </div>
             </div>
@@ -557,8 +557,14 @@ const Home = () => {
           )}
         </div>
 
+        {/* Social Proof Stats */}
+        <SocialProofStats />
+
         {/* Trust Badges Section */}
         <TrustBadges />
+
+        {/* How It Works */}
+        <HowItWorks />
 
         {/* Customer Testimonials */}
         <TestimonialCarousel />

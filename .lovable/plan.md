@@ -1,42 +1,72 @@
 
 
-# Fix Search Dropdown, Stats & Trust Badges
+# Fix AI Descriptions + Product Share Button with QR Code
 
-## Issues Found
+## Part 1: Fix AI Description Quality
 
-1. **Search dropdown positioning** — The `InstantSearchDropdown` has `absolute top-full` in its own component AND is wrapped in another `absolute` div in Home.tsx, causing double-positioning. The dropdown renders behind/misaligned with the trust badges below (z-index conflict with `z-10` on badges vs `z-50` on dropdown).
+### Edge Function Update (`supabase/functions/ai-generate-product/index.ts`)
+The current prompt already asks for 4-5 sentences, but descriptions are still coming out thin. Strengthen with:
+- Add explicit **minimum word count** instruction: "Write AT LEAST 60 words"
+- Add example output in the system prompt so the AI sees what a good description looks like
+- Add to tool parameter: "MINIMUM 60 words. Must cover: 1) What the product is 2) Key specs/features 3) Material/build quality 4) Who it's for and use cases 5) Why buy it"
 
-2. **SocialProofStats & HowItWorks removed** — The last diff shows these were removed from Home.tsx. They need to be re-added with corrected data.
+### Fix Existing Descriptions (`src/pages/admin/Products.tsx`)
+The `handleFixDescriptions` threshold is 80 chars. Some poor descriptions might be longer but still bad (e.g. product pricing text pasted in). Update:
+- Increase threshold to 120 chars to catch more thin descriptions
+- Also fix descriptions containing raw price text (regex for "₦" or "naira" patterns)
+- Also fix names that still contain "IMG-" patterns by updating the name alongside the description
 
-3. **Incorrect stats** — Cities should be 5 (not 36), and the customer/order counts should pull from real data (Supabase). For now, we'll query actual counts from the database.
+## Part 2: Product Share Button with Branded QR Code
 
-4. **"Pay on Delivery" needs replacing** — Both in the hero trust badges and TrustBadges section.
+### New Component: `src/components/ProductShare.tsx`
 
-## Plan
+A share button on the ProductDetail page and ProductCard that opens a dialog containing:
 
-### 1. Fix Search Dropdown (`src/pages/Home.tsx` + `src/components/InstantSearchDropdown.tsx`)
-- Remove the extra `absolute` wrapper div in Home.tsx (lines 369-377) — the dropdown component already positions itself absolutely
-- The dropdown component already has `absolute top-full z-50` — that's sufficient
-- This fixes the double-positioning issue visible in the screenshot
+1. **Branded QR Code Sticker** — a visually designed card with:
+   - Brown patterned background (using the existing `bg-pattern.avif`)
+   - BIG SALES logo centered above or below the QR code
+   - QR code generated using a lightweight canvas-based generator (no external library — use the native `qrcode` approach or a small inline QR encoder)
+   - Attractive text: "Scan to shop!" / product name / price
+   - Download button to save as image (using `html2canvas` pattern via canvas export)
 
-### 2. Fix Stats (`src/components/SocialProofStats.tsx`)
-- Change cities from 36 to **5**
-- Query Supabase for real counts: total unique customers (from `orders` table), total delivered orders, and average review rating
-- Fall back to animated counters with real data instead of hardcoded numbers
+2. **Social Media Share Links**:
+   - WhatsApp (with pre-filled message including product link, name, price)
+   - Facebook share
+   - Twitter/X share
+   - Copy link button
+   - Native share (Web Share API where supported)
 
-### 3. Re-add SocialProofStats & HowItWorks to Home.tsx
-- Import and place them back between the product sections and TrustBadges
+### QR Code Generation
+Use a lightweight inline QR code generator function (no npm dependency needed — there are well-known ~100-line canvas-based QR implementations). Alternatively, use a tiny library. I'll implement a canvas-based QR renderer to keep bundle size minimal and work offline.
 
-### 4. Replace "Pay on Delivery" (`src/pages/Home.tsx` + `src/components/TrustBadges.tsx`)
-- Hero badge: Replace "Pay on Delivery" with **"Best Prices Guaranteed"**
-- TrustBadges section: Replace the "Pay on Delivery" badge with **"Unbeatable Prices"** — "We offer the best deals you won't find anywhere else"
+Actually, to keep it professional and reliable, I'll use the `qrcode` npm package (small, well-maintained) for generating QR as data URL, then composite it onto the branded sticker canvas.
 
-### File Changes
+### Sticker Design (canvas-rendered, downloadable)
+```text
++----------------------------------+
+|  [brown patterned background]    |
+|                                  |
+|     🏷️ BIG SALES                |
+|     [QR CODE]                    |
+|                                  |
+|   "Kenwood Air Fryer 5L"        |
+|       ₦15,000                    |
+|   ✨ Scan to Shop Now! ✨        |
++----------------------------------+
+```
+
+### Integration Points
+- **ProductDetail.tsx**: Add a Share button (Share2 icon) next to the Like button
+- **ProductCard.tsx**: Add a small share icon button in the card footer or overlay
+
+### Files to Create/Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Home.tsx` | Remove double-absolute wrapper on dropdown; re-add SocialProofStats + HowItWorks imports; replace "Pay on Delivery" hero badge |
-| `src/components/InstantSearchDropdown.tsx` | No changes needed (positioning is correct) |
-| `src/components/SocialProofStats.tsx` | Query real customer/order/rating counts from Supabase; change cities to 5 |
-| `src/components/TrustBadges.tsx` | Replace "Pay on Delivery" with "Unbeatable Prices" |
+| `supabase/functions/ai-generate-product/index.ts` | Stronger description prompt with min word count + example |
+| `src/pages/admin/Products.tsx` | Increase fix threshold to 120 chars, also fix IMG- names |
+| `src/components/ProductShare.tsx` | New component: share dialog with QR sticker + social links |
+| `src/pages/ProductDetail.tsx` | Add Share button |
+| `src/components/ProductCard.tsx` | Add share icon |
+| `package.json` | Add `qrcode` package for QR generation |
 
