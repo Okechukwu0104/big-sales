@@ -348,7 +348,7 @@ const Home = () => {
                           setViewMode('all');
                         }
                       }}
-                      className="w-full pl-14 pr-14 py-5 md:py-6 rounded-2xl focus:outline-none bg-card text-foreground text-lg shadow-2xl border-0 placeholder:text-muted-foreground/60"
+                      className="w-full pl-14 pr-14 py-4 md:py-6 rounded-2xl focus:outline-none bg-card text-foreground text-base md:text-lg shadow-2xl border-0 placeholder:text-muted-foreground/60"
                     />
                     {searchTerm && (
                       <button
@@ -365,18 +365,18 @@ const Home = () => {
                       </button>
                     )}
                   </div>
-
-                  {/* Instant Search Dropdown */}
-                  {showSearchDropdown && searchTerm.trim() && (
-                    <InstantSearchDropdown
-                      searchTerm={searchTerm}
-                      products={filteredProducts}
-                      isLoading={isLoadingProducts}
-                      onClose={() => setShowSearchDropdown(false)}
-                      onRequestWhatsApp={requestProductViaWhatsApp}
-                    />
-                  )}
                 </div>
+
+                {/* Instant Search Dropdown — outside glow wrapper to avoid clipping */}
+                {showSearchDropdown && searchTerm.trim() && (
+                  <InstantSearchDropdown
+                    searchTerm={searchTerm}
+                    products={filteredProducts}
+                    isLoading={isLoadingProducts}
+                    onClose={() => setShowSearchDropdown(false)}
+                    onRequestWhatsApp={requestProductViaWhatsApp}
+                  />
+                )}
               </div>
 
               {/* Hint text */}

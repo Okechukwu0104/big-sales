@@ -1,33 +1,72 @@
 
 
-# Fix Search Dropdown Overlap & Mobile Responsiveness
+# Fix AI Descriptions + Product Share Button with QR Code
 
-## Problem
-The search dropdown is clipped/overlapping because it's rendered **inside** the `relative` div that contains the animated glow ring (line 320 of Home.tsx). The dropdown's `absolute top-full` positions relative to that inner div, but the content below (trust badges at `z-10`) overlaps it.
+## Part 1: Fix AI Description Quality
 
-## Fix
+### Edge Function Update (`supabase/functions/ai-generate-product/index.ts`)
+The current prompt already asks for 4-5 sentences, but descriptions are still coming out thin. Strengthen with:
+- Add explicit **minimum word count** instruction: "Write AT LEAST 60 words"
+- Add example output in the system prompt so the AI sees what a good description looks like
+- Add to tool parameter: "MINIMUM 60 words. Must cover: 1) What the product is 2) Key specs/features 3) Material/build quality 4) Who it's for and use cases 5) Why buy it"
 
-### 1. Search Dropdown Clipping Fix (`src/pages/Home.tsx`)
-- Move the `InstantSearchDropdown` **outside** the glow ring wrapper div (the `relative transition-all` div at line 320), but keep it inside the `searchContainerRef` div (line 319) which already has `relative z-20`
-- This ensures the dropdown positions correctly from the outer container and stays above all content below
+### Fix Existing Descriptions (`src/pages/admin/Products.tsx`)
+The `handleFixDescriptions` threshold is 80 chars. Some poor descriptions might be longer but still bad (e.g. product pricing text pasted in). Update:
+- Increase threshold to 120 chars to catch more thin descriptions
+- Also fix descriptions containing raw price text (regex for "₦" or "naira" patterns)
+- Also fix names that still contain "IMG-" patterns by updating the name alongside the description
 
-### 2. Mobile Responsiveness Audit & Fixes
+## Part 2: Product Share Button with Branded QR Code
 
-| File | Issue | Fix |
-|------|-------|-----|
-| `src/pages/Home.tsx` | Hero padding too large on mobile; search bar text/padding oversized | Reduce `py-10` to `py-6` on mobile; reduce input `py-5` to `py-4` on mobile; scale heading down |
-| `src/pages/Checkout.tsx` | Missing `pt-20` for header offset; empty cart missing `pt-24` | Add `pt-20` to main content |
-| `src/pages/OrderSuccess.tsx` | Missing `pt-20` for header offset | Add `pt-20` to main content |
-| `src/pages/TrackOrder.tsx` | Missing `pt-20` for header offset; heading too large on mobile | Add `pt-20`; scale heading from `text-4xl` to `text-2xl sm:text-4xl` |
-| `src/components/InstantSearchDropdown.tsx` | Dropdown uses `overflow-hidden` which clips the scrollable content; needs `max-height` + scroll for many results on mobile | Add `max-h-[60vh] overflow-y-auto` to the results container |
+### New Component: `src/components/ProductShare.tsx`
 
-### File Changes
+A share button on the ProductDetail page and ProductCard that opens a dialog containing:
+
+1. **Branded QR Code Sticker** — a visually designed card with:
+   - Brown patterned background (using the existing `bg-pattern.avif`)
+   - BIG SALES logo centered above or below the QR code
+   - QR code generated using a lightweight canvas-based generator (no external library — use the native `qrcode` approach or a small inline QR encoder)
+   - Attractive text: "Scan to shop!" / product name / price
+   - Download button to save as image (using `html2canvas` pattern via canvas export)
+
+2. **Social Media Share Links**:
+   - WhatsApp (with pre-filled message including product link, name, price)
+   - Facebook share
+   - Twitter/X share
+   - Copy link button
+   - Native share (Web Share API where supported)
+
+### QR Code Generation
+Use a lightweight inline QR code generator function (no npm dependency needed — there are well-known ~100-line canvas-based QR implementations). Alternatively, use a tiny library. I'll implement a canvas-based QR renderer to keep bundle size minimal and work offline.
+
+Actually, to keep it professional and reliable, I'll use the `qrcode` npm package (small, well-maintained) for generating QR as data URL, then composite it onto the branded sticker canvas.
+
+### Sticker Design (canvas-rendered, downloadable)
+```text
++----------------------------------+
+|  [brown patterned background]    |
+|                                  |
+|     🏷️ BIG SALES                |
+|     [QR CODE]                    |
+|                                  |
+|   "Kenwood Air Fryer 5L"        |
+|       ₦15,000                    |
+|   ✨ Scan to Shop Now! ✨        |
++----------------------------------+
+```
+
+### Integration Points
+- **ProductDetail.tsx**: Add a Share button (Share2 icon) next to the Like button
+- **ProductCard.tsx**: Add a small share icon button in the card footer or overlay
+
+### Files to Create/Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/Home.tsx` | Move dropdown outside glow wrapper; mobile-optimize hero spacing |
-| `src/components/InstantSearchDropdown.tsx` | Add max-height + scroll so all results are visible on mobile |
-| `src/pages/Checkout.tsx` | Add `pt-20` header offset |
-| `src/pages/OrderSuccess.tsx` | Add `pt-20` header offset |
-| `src/pages/TrackOrder.tsx` | Add `pt-20` header offset; responsive heading size |
+| `supabase/functions/ai-generate-product/index.ts` | Stronger description prompt with min word count + example |
+| `src/pages/admin/Products.tsx` | Increase fix threshold to 120 chars, also fix IMG- names |
+| `src/components/ProductShare.tsx` | New component: share dialog with QR sticker + social links |
+| `src/pages/ProductDetail.tsx` | Add Share button |
+| `src/components/ProductCard.tsx` | Add share icon |
+| `package.json` | Add `qrcode` package for QR generation |
 
