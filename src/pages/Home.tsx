@@ -345,10 +345,10 @@ const Home = () => {
         <PromoBannerCarousel />
 
         {/* Hero Section — Search-First */}
-        <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
+        <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat py-11" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
           <div className="absolute inset-0 bg-gradient-to-br from-orange-900/30 to-amber-900/15 backdrop-blur-[1px]"></div>
 
-          <div className="container mx-auto px-7 py-14 md:py-16 relative">
+          <div className="container mx-auto px-4 py-14 md:py-16 relative">
             <div className="max-w-3xl mx-auto text-center">
               {viewMode === 'all' && (
                 <button
