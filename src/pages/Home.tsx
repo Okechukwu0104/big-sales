@@ -345,7 +345,7 @@ const Home = () => {
         <PromoBannerCarousel />
 
         {/* Hero Section — Search-First */}
-        <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat py-40" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
+        <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat py-60" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
           <div className="absolute inset-0 bg-gradient-to-br from-orange-900/30 to-amber-900/15 backdrop-blur-[1px]"></div>
 
           <div className="container mx-auto px-4 py-14 md:py-16 relative">
