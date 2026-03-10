@@ -10,6 +10,8 @@ import { ProductSection } from '@/components/ProductSection';
 import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
 import { ContactUsPopup } from '@/components/ContactUsPopup';
+import { SocialProofStats } from '@/components/SocialProofStats';
+import { HowItWorks } from '@/components/HowItWorks';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
