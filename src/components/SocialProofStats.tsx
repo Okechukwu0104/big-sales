@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Users, ShoppingBag, Star, TruckIcon } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const useCountUp = (end: number, duration: number = 2000, start: boolean = false) => {
   const [count, setCount] = useState(0);
@@ -32,10 +34,37 @@ export const SocialProofStats = () => {
     return () => observer.disconnect();
   }, []);
 
-  const customers = useCountUp(2500, 2000, visible);
-  const orders = useCountUp(5000, 2000, visible);
-  const rating = useCountUp(49, 2000, visible);
-  const cities = useCountUp(36, 1500, visible);
+  // Fetch real stats from Supabase
+  const { data: statsData } = useQuery({
+    queryKey: ['social-proof-stats'],
+    queryFn: async () => {
+      const [ordersRes, reviewsRes] = await Promise.all([
+        supabase.from('orders').select('customer_email', { count: 'exact' }),
+        supabase.from('reviews').select('rating'),
+      ]);
+
+      const totalOrders = ordersRes.count || 0;
+      const uniqueCustomers = new Set(ordersRes.data?.map(o => o.customer_email) || []).size;
+      
+      const ratings = reviewsRes.data || [];
+      const avgRating = ratings.length > 0
+        ? Math.round((ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length) * 10)
+        : 49;
+
+      return {
+        customers: Math.max(uniqueCustomers, 1),
+        orders: Math.max(totalOrders, 1),
+        rating: avgRating,
+        cities: 5,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const customers = useCountUp(statsData?.customers || 1, 2000, visible);
+  const orders = useCountUp(statsData?.orders || 1, 2000, visible);
+  const rating = useCountUp(statsData?.rating || 49, 2000, visible);
+  const cities = useCountUp(statsData?.cities || 5, 1500, visible);
 
   const stats = [
     { icon: Users, value: `${customers.toLocaleString()}+`, label: 'Happy Customers', color: 'text-primary' },
