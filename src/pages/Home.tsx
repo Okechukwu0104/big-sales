@@ -397,7 +397,7 @@ const Home = () => {
                 </div>
                 <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <span className="text-xs sm:text-sm font-medium text-foreground">Pay on Delivery</span>
+                  <span className="text-xs sm:text-sm font-medium text-foreground">Best Prices Guaranteed</span>
                 </div>
               </div>
             </div>
