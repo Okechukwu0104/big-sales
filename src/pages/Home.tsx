@@ -17,10 +17,13 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, X, Sparkles, ArrowUp, HelpCircle, 
-  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye, Keyboard
+  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye, Keyboard,
+  SlidersHorizontal, ArrowDownWideNarrow, ArrowUpWideNarrow, Tag
 } from 'lucide-react';
 import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
 import { useToast } from '@/hooks/use-toast';
+
+type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-desc';
 
 const Home = () => {
   const { toast } = useToast();
@@ -34,11 +37,14 @@ const Home = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
   
   const faqSectionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
 
   const searchPlaceholders = [
     "Search for Air Fryer...",
@@ -63,6 +69,17 @@ const Home = () => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close sort dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target as Node)) {
+        setShowSortDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -189,6 +206,34 @@ const Home = () => {
     return filtered;
   }, [products, searchTerm, selectedCategory]);
 
+  // Sort products based on selected sort option
+  const sortedAndFilteredProducts = useMemo(() => {
+    if (!filteredProducts) return [];
+
+    const sorted = [...filteredProducts];
+
+    switch (sortBy) {
+      case 'newest':
+        // Assuming created_at exists, otherwise fallback to name
+        return sorted.sort((a, b) => {
+          if (a.created_at && b.created_at) {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          }
+          return 0;
+        });
+      case 'price-low':
+        return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+      case 'price-high':
+        return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+      case 'name-asc':
+        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'name-desc':
+        return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+      default:
+        return sorted;
+    }
+  }, [filteredProducts, sortBy]);
+
   // WhatsApp request function
   const requestProductViaWhatsApp = () => {
     if (!storeConfig?.whatsapp_number) {
@@ -239,6 +284,7 @@ const Home = () => {
     setViewMode('all');
     setSelectedCategory('All');
     setSearchTerm('');
+    setSortBy('newest');
     scrollToTop();
   };
 
@@ -277,6 +323,18 @@ const Home = () => {
 
   // Check if search has no results
   const hasNoSearchResults = searchTerm.trim() && filteredProducts.length === 0;
+
+  // Get sort button label
+  const getSortLabel = (option: SortOption) => {
+    switch (option) {
+      case 'newest': return 'Newest First';
+      case 'price-low': return 'Price: Low to High';
+      case 'price-high': return 'Price: High to Low';
+      case 'name-asc': return 'Name: A to Z';
+      case 'name-desc': return 'Name: Z to A';
+      default: return 'Sort By';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
@@ -366,15 +424,17 @@ const Home = () => {
                     )}
                   </div>
 
-                  {/* Instant Search Dropdown */}
+                  {/* Instant Search Dropdown - Fixed height with scrolling */}
                   {showSearchDropdown && searchTerm.trim() && (
-                    <InstantSearchDropdown
-                      searchTerm={searchTerm}
-                      products={filteredProducts}
-                      isLoading={isLoadingProducts}
-                      onClose={() => setShowSearchDropdown(false)}
-                      onRequestWhatsApp={requestProductViaWhatsApp}
-                    />
+                    <div className="absolute left-0 right-0 mt-2 z-50">
+                      <InstantSearchDropdown
+                        searchTerm={searchTerm}
+                        products={filteredProducts}
+                        isLoading={isLoadingProducts}
+                        onClose={() => setShowSearchDropdown(false)}
+                        onRequestWhatsApp={requestProductViaWhatsApp}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
@@ -456,7 +516,7 @@ const Home = () => {
           ) : (
             /* All Products View */
             <section className="py-8">
-              {/* Results Header */}
+              {/* Results Header with Sorting */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
@@ -466,23 +526,63 @@ const Home = () => {
                     {selectedCategory !== 'All' ? selectedCategory : 'All Products'}
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
+                    {sortedAndFilteredProducts.length} {sortedAndFilteredProducts.length === 1 ? 'product' : 'products'} found
                     {searchTerm && ` for "${searchTerm}"`}
                   </p>
                 </div>
                 
-                {(searchTerm || selectedCategory !== 'All') && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setSelectedCategory('All');
-                    }}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                    Clear filters
-                  </button>
-                )}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Sort Dropdown */}
+                  <div className="relative flex-1 sm:flex-none" ref={sortDropdownRef}>
+                    <button
+                      onClick={() => setShowSortDropdown(!showSortDropdown)}
+                      className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <ArrowDownWideNarrow className="h-4 w-4" />
+                        <span className="hidden sm:inline">Sort: {getSortLabel(sortBy)}</span>
+                        <span className="sm:hidden">Sort</span>
+                      </div>
+                      <SlidersHorizontal className="h-4 w-4 sm:hidden" />
+                    </button>
+
+                    {showSortDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                        <div className="py-1">
+                          {(['newest', 'price-low', 'price-high', 'name-asc', 'name-desc'] as SortOption[]).map((option) => (
+                            <button
+                              key={option}
+                              onClick={() => {
+                                setSortBy(option);
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                                sortBy === option ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700'
+                              }`}
+                            >
+                              {getSortLabel(option)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  {(searchTerm || selectedCategory !== 'All') && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedCategory('All');
+                        setSortBy('newest');
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="hidden sm:inline">Clear filters</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Category Filter Pills */}
@@ -514,9 +614,9 @@ const Home = () => {
                     </div>
                   ))}
                 </div>
-              ) : filteredProducts.length > 0 ? (
+              ) : sortedAndFilteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                  {filteredProducts.map((product) => (
+                  {sortedAndFilteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
