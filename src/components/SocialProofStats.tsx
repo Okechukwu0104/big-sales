@@ -39,22 +39,23 @@ export const SocialProofStats = () => {
 
   const stats = [
     { icon: Users, value: `${customers.toLocaleString()}+`, label: 'Happy Customers', color: 'text-primary' },
-    { icon: ShoppingBag, value: `${orders.toLocaleString()}+`, label: 'Orders Delivered', color: 'text-accent' },
-    { icon: Star, value: `${(rating / 10).toFixed(1)}/5`, label: 'Average Rating', color: 'text-yellow-500' },
-    { icon: TruckIcon, value: `${cities}+`, label: 'Cities Covered', color: 'text-secondary' },
+    { icon: ShoppingBag, value: `${orders.toLocaleString()}+`, label: 'Orders Delivered', color: 'text-primary' },
+    { icon: Star, value: `${(rating / 10).toFixed(1)}/5`, label: 'Average Rating', color: 'text-primary' },
+    { icon: TruckIcon, value: `${cities}+`, label: 'Cities Covered', color: 'text-primary' },
   ];
 
   return (
-    <section ref={ref} className="py-10 bg-card border-y border-border">
-      <div className="container mx-auto px-4">
+    <section ref={ref} className="py-12 relative overflow-hidden pattern-bg">
+      <div className="absolute inset-0 bg-secondary/90" />
+      <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {stats.map((stat, i) => (
             <div key={i} className="text-center">
-              <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-3`}>
-                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+              <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/20 mb-4`}>
+                <stat.icon className={`h-7 w-7 ${stat.color}`} />
               </div>
-              <div className="text-2xl sm:text-3xl font-bold text-foreground">{stat.value}</div>
-              <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+              <div className="text-3xl sm:text-4xl font-black text-white">{stat.value}</div>
+              <div className="text-sm text-white/60 mt-1 font-medium">{stat.label}</div>
             </div>
           ))}
         </div>

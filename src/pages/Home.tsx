@@ -12,12 +12,13 @@ import { PromoBannerCarousel } from '@/components/PromoBannerCarousel';
 import { ContactUsPopup } from '@/components/ContactUsPopup';
 import { SocialProofStats } from '@/components/SocialProofStats';
 import { HowItWorks } from '@/components/HowItWorks';
+import { Footer } from '@/components/Footer';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Search, X, Sparkles, ArrowUp, HelpCircle, 
-  Clock, Flame, Star, ArrowLeft, MessageCircle, Package, Eye, Keyboard,
+  Clock, Flame, Star, ArrowLeft, ArrowRight, MessageCircle, Package, Eye, Keyboard,
   SlidersHorizontal, ArrowDownWideNarrow, ArrowUpWideNarrow, Tag
 } from 'lucide-react';
 import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
@@ -28,23 +29,41 @@ type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-des
 const Home = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { recentlyViewedIds } = useRecentlyViewed();
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Initialize searchTerm from URL if present
+  const initialSearch = searchParams.get('q') || '';
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [viewMode, setViewMode] = useState<'home' | 'all'>('home');
+  const [viewMode, setViewMode] = useState<'home' | 'all'>(initialSearch ? 'all' : 'home');
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   
   const faqSectionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync state with URL params
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q !== null && q !== searchTerm) {
+      setSearchTerm(q);
+      setViewMode('all');
+    }
+  }, [searchParams]);
+
+  // Update URL when search cleared in 'all' view
+  useEffect(() => {
+    if (searchTerm === '' && searchParams.has('q')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('q');
+      setSearchParams(newParams);
+    }
+  }, [searchTerm, searchParams, setSearchParams]);
 
   const searchPlaceholders = [
     "Search for Air Fryer...",
@@ -54,26 +73,6 @@ const Home = () => {
     "Search for Smart Watch...",
     "Search for Perfume...",
   ];
-
-  // Rotate placeholder text
-  useEffect(() => {
-    if (isSearchFocused || searchTerm) return;
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isSearchFocused, searchTerm, searchPlaceholders.length]);
-
-  // Close search dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setShowSearchDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Close sort dropdown on click outside
   useEffect(() => {
@@ -337,132 +336,132 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <main className="pt-20">
         {/* Promotional Banner Carousel */}
         <PromoBannerCarousel />
 
-        {/* Hero Section — Search-First */}
-        <section className="relative overflow-hidden bg-cover bg-center bg-no-repeat py-60" style={{ backgroundImage: "url('/images/bg-pattern.avif')" }}>
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-900/30 to-amber-900/15 backdrop-blur-[1px]"></div>
+        {/* Hero Section — Bold, Dark, Pattern */}
+        {viewMode === 'home' && (
+          <section className="relative overflow-hidden pattern-bg pattern-overlay">
+            {/* Dark gradient overlay on pattern */}
+            <div className="absolute inset-0 gradient-dark opacity-85 z-0" />
+            {/* Orange glow blob */}
+            <div className="absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full blur-3xl opacity-25 z-0" style={{background: 'hsl(22 100% 52%)'}} />
+            <div className="absolute -bottom-16 -left-16 w-[300px] h-[300px] rounded-full blur-3xl opacity-20 z-0" style={{background: 'hsl(35 100% 52%)'}} />
 
-          <div className="container mx-auto px-4 py-14 md:py-16 relative">
-            <div className="max-w-3xl mx-auto text-center">
-              {viewMode === 'all' && (
-                <button
-                  onClick={() => {
-                    setViewMode('home');
-                    setSearchTerm('');
-                    setSelectedCategory('All');
-                    setShowSearchDropdown(false);
-                  }}
-                  className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground mb-4 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to Home
-                </button>
-              )}
+            <div className="container mx-auto px-4 py-16 sm:py-20 md:py-28 relative z-10">
+              <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
 
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold mb-3 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent drop-shadow-sm">
-                BIG SALES
-              </h1>
-
-              <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 leading-relaxed max-w-xl mx-auto">
-                🔍 What are you looking for today?
-              </p>
-
-              {/* Search Bar — The Hero */}
-              <div className="max-w-2xl mx-auto mb-4" ref={searchContainerRef}>
-                <div className={`relative transition-all duration-300 ${isSearchFocused ? 'scale-[1.02]' : ''}`}>
-                  {/* Animated glow ring */}
-                  <div className={`absolute -inset-[3px] rounded-[20px] bg-gradient-to-r from-orange-400 via-amber-400 to-orange-400 bg-[length:200%_100%] transition-opacity duration-300 ${isSearchFocused ? 'opacity-100 animate-[shimmer_2s_ease-in-out_infinite]' : 'opacity-40 animate-[shimmer_3s_ease-in-out_infinite]'}`} />
-                  
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                      <Search className={`h-6 w-6 transition-colors ${isSearchFocused ? 'text-primary' : 'text-muted-foreground'}`} />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={searchPlaceholders[placeholderIndex]}
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setShowSearchDropdown(true);
-                      }}
-                      onFocus={() => {
-                        setIsSearchFocused(true);
-                        if (searchTerm.trim()) setShowSearchDropdown(true);
-                      }}
-                      onBlur={() => setIsSearchFocused(false)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setShowSearchDropdown(false);
-                          (e.target as HTMLInputElement).blur();
-                        }
-                        if (e.key === 'Enter' && searchTerm.trim()) {
-                          setShowSearchDropdown(false);
-                          setViewMode('all');
-                        }
-                      }}
-                      className="w-full pl-14 pr-14 py-5 md:py-6 rounded-2xl focus:outline-none bg-card text-foreground text-lg shadow-2xl border-0 placeholder:text-muted-foreground/60"
-                    />
-                    {searchTerm && (
-                      <button
-                        onClick={() => {
-                          setSearchTerm('');
-                          setShowSearchDropdown(false);
-                          if (viewMode === 'all' && selectedCategory === 'All') {
-                            setViewMode('home');
-                          }
-                        }}
-                        className="absolute inset-y-0 right-0 pr-5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    )}
+                {/* Left: Text content */}
+                <div className="w-full md:w-1/2 text-center md:text-left">
+                  {/* Eyebrow badge */}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border border-white/20 bg-white/10 backdrop-blur-sm text-white/90">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-xs sm:text-sm font-bold tracking-wider uppercase">Nigeria's #1 Online Store</span>
                   </div>
 
-                  {/* Instant Search Dropdown - Fixed height with scrolling */}
-                  {showSearchDropdown && searchTerm.trim() && (
-                    <div className="absolute left-0 right-0 mt-2 z-50">
-                      <InstantSearchDropdown
-                        searchTerm={searchTerm}
-                        products={filteredProducts}
-                        isLoading={isLoadingProducts}
-                        onClose={() => setShowSearchDropdown(false)}
-                        onRequestWhatsApp={requestProductViaWhatsApp}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+                  {/* Main headline */}
+                  <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.02] mb-5 text-white">
+                    Shop Big.
+                    <span className="block hero-text mt-1">Save Bigger.</span>
+                  </h1>
 
-              {/* Hint text */}
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <Keyboard className="h-3.5 w-3.5 text-white/50" />
-                <span className="text-xs sm:text-sm text-white/60">Type to find any product instantly</span>
-              </div>
-              
-              {/* Trust Badges */}
-              <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
-                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-                  <span className="text-xs sm:text-sm font-medium text-foreground">100% Original</span>
+                  <p className="text-base sm:text-lg text-white/70 mb-8 leading-relaxed max-w-md mx-auto md:mx-0">
+                    Premium products. Unbeatable prices. Delivered to your door across all 36 states.
+                  </p>
+
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center md:justify-start">
+                    <button
+                      onClick={handleSeeAll}
+                      className="w-full sm:w-auto px-8 py-4 gradient-button text-white rounded-full text-base font-bold tracking-wide transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_hsl(22_100%_52%_/_0.5)] active:scale-95"
+                    >
+                      🛒 Shop Now
+                    </button>
+                    <button
+                      onClick={() => {
+                        document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="w-full sm:w-auto px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-base font-bold border border-white/25 hover:bg-white/20 transition-all active:scale-95"
+                    >
+                      Browse Categories
+                    </button>
+                  </div>
+
+                  {/* Trust row */}
+                  <div className="flex flex-wrap items-center gap-5 mt-10 justify-center md:justify-start">
+                    {[
+                      { icon: Package, label: 'Nationwide Delivery' },
+                      { icon: Star, label: '100% Original' },
+                      { icon: MessageCircle, label: 'WhatsApp Support' },
+                    ].map(({ icon: Icon, label }) => (
+                      <div key={label} className="flex items-center gap-2 text-white/70 text-sm font-medium">
+                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Icon className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        {label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <span className="text-xs sm:text-sm font-medium text-foreground">Nationwide Delivery</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-border shadow-sm">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <span className="text-xs sm:text-sm font-medium text-foreground">Pay on Delivery</span>
+
+                {/* Right: Featured product visual */}
+                <div className="w-full md:w-1/2 flex justify-center">
+                  <div className="relative w-full max-w-[400px]">
+                    {/* Glow behind card */}
+                    <div className="absolute -inset-6 rounded-3xl blur-2xl opacity-30 z-0" style={{background: 'hsl(22 100% 52%)'}} />
+                    <div className="relative z-10 aspect-[4/5] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
+                      {newArrivals.length > 0 && newArrivals[0].image_url ? (
+                        <img
+                          src={newArrivals[0].image_url}
+                          alt="Featured Product"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full pattern-bg flex items-center justify-center">
+                          <Sparkles className="w-16 h-16 text-primary/40" />
+                        </div>
+                      )}
+                      {/* Overlay floating badge */}
+                      <div className="absolute bottom-5 left-5 right-5 gradient-glass rounded-2xl p-4 shadow-xl">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground font-medium">Trending Now 🔥</p>
+                            <p className="text-sm font-black text-foreground truncate">
+                              {newArrivals[0]?.name || 'Premium Products'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={handleSeeAll}
+                            className="shrink-0 w-10 h-10 rounded-full gradient-button flex items-center justify-center shadow-md"
+                          >
+                            <ArrowRight className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+
+            {/* Marquee strip at bottom of hero */}
+            <div className="border-t border-white/10 bg-primary/90 backdrop-blur-sm py-3 marquee-wrap relative z-10">
+              <div className="marquee-track">
+                {Array.from({length: 2}).map((_, g) => (
+                  <span key={g} className="flex gap-0">
+                    {['🔥 Hot Deals', '  ·  ', '⚡ Fast Delivery', '  ·  ', '💯 Original Products', '  ·  ', '🛒 Shop & Save Big', '  ·  ', '❤️ Loved by Nigerians', '  ·  ', '📦 Nationwide Shipping', '  ·  '].map((t, i) => (
+                      <span key={i} className="text-white text-sm font-bold px-3 whitespace-nowrap">{t}</span>
+                    ))}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Main Content Container */}
         <div className="container mx-auto px-4">
@@ -519,13 +518,13 @@ const Home = () => {
               {/* Results Header with Sorting */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl text-orange-600">
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-xl text-primary">
                       <Package className="h-5 w-5" />
                     </div>
                     {selectedCategory !== 'All' ? selectedCategory : 'All Products'}
                   </h2>
-                  <p className="text-gray-600 mt-1">
+                  <p className="text-muted-foreground mt-1 text-sm">
                     {sortedAndFilteredProducts.length} {sortedAndFilteredProducts.length === 1 ? 'product' : 'products'} found
                     {searchTerm && ` for "${searchTerm}"`}
                   </p>
@@ -536,7 +535,7 @@ const Home = () => {
                   <div className="relative flex-1 sm:flex-none" ref={sortDropdownRef}>
                     <button
                       onClick={() => setShowSortDropdown(!showSortDropdown)}
-                      className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-2">
                         <ArrowDownWideNarrow className="h-4 w-4" />
@@ -547,7 +546,7 @@ const Home = () => {
                     </button>
 
                     {showSortDropdown && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
                         <div className="py-1">
                           {(['newest', 'price-low', 'price-high', 'name-asc', 'name-desc'] as SortOption[]).map((option) => (
                             <button
@@ -556,8 +555,8 @@ const Home = () => {
                                 setSortBy(option);
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                                sortBy === option ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700'
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${
+                                sortBy === option ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground'
                               }`}
                             >
                               {getSortLabel(option)}
@@ -623,30 +622,28 @@ const Home = () => {
               ) : (
                 /* No Results - WhatsApp Fallback */
                 <div className="text-center py-16">
-                  <div className="bg-white p-8 rounded-2xl max-w-md mx-auto border border-gray-200 shadow-sm">
+                  <div className="bg-card p-8 rounded-2xl max-w-md mx-auto border border-border shadow-sm">
                     <div className="text-6xl mb-4">🔍</div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-foreground mb-2">
                       Product not found
                     </h3>
-                    <p className="text-gray-600 mb-6">
-                      We couldn't find "{searchTerm}" in our catalog. Would you like to request this product?
+                    <p className="text-muted-foreground mb-6">
+                      We couldn't find &ldquo;{searchTerm}&rdquo; in our catalog. Would you like to request it?
                     </p>
-                    
                     {/* WhatsApp Request Button */}
                     <button
                       onClick={requestProductViaWhatsApp}
-                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-md hover:shadow-lg mb-4"
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors shadow-md hover:shadow-lg mb-4 font-bold"
                     >
                       <MessageCircle className="h-5 w-5" />
-                      <span className="font-medium">Request via WhatsApp</span>
+                      <span>Request via WhatsApp</span>
                     </button>
-
                     <button
                       onClick={() => {
                         setSearchTerm('');
                         setSelectedCategory('All');
                       }}
-                      className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       Or browse all products
                     </button>
@@ -685,7 +682,7 @@ const Home = () => {
         {/* Scroll to Top Button */}
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-300 hover:scale-110 ${
+          className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 gradient-button text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
             showScrollTop
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-10 pointer-events-none'
@@ -698,19 +695,21 @@ const Home = () => {
         {/* Floating FAQ Button */}
         <button
           onClick={scrollToFAQ}
-          className={`fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50 p-3 bg-white text-gray-700 rounded-full shadow-lg hover:bg-gray-50 transition-all duration-300 hover:scale-110 border border-gray-200 ${
+          className={`fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50 p-3 bg-card text-foreground rounded-full shadow-lg hover:bg-muted transition-all duration-300 hover:scale-110 border border-border ${
             showScrollTop 
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 translate-y-10 pointer-events-none'
           }`}
           aria-label="Go to FAQ section"
         >
-          <HelpCircle className="h-6 w-6 text-orange-600" />
+          <HelpCircle className="h-6 w-6 text-primary" />
         </button>
 
         {/* Contact Us Popup (WhatsApp) */}
         <ContactUsPopup />
       </main>
+
+      <Footer />
     </div>
   );
 };

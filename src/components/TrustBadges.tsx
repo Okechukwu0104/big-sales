@@ -37,15 +37,15 @@ export const TrustBadges = () => {
   return (
     <section className="py-12 bg-card border-y border-border">
       <div className="container mx-auto px-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2 text-foreground">Why Shop With Us?</h2>
-        <p className="text-center text-muted-foreground mb-8 text-sm">Thousands of Nigerians trust BIG SALES for quality and reliability</p>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-3 text-foreground tracking-tight">Why Shop With Us?</h2>
+        <p className="text-center text-muted-foreground mb-10 text-base max-w-2xl mx-auto">Thousands of customers trust BIG SALES for quality, reliability, and an exceptional shopping experience.</p>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {badges.map((badge, index) => (
-            <div key={index} className="flex flex-col items-center text-center p-4 rounded-xl bg-muted/40 border border-border/50 hover:shadow-md hover:border-primary/20 transition-all duration-300 group">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+            <div key={index} className="flex flex-col items-center text-center p-6 rounded-2xl bg-card border border-border/50 hover:shadow-lg hover:border-primary/20 transition-all duration-300 group">
+              <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-300">
                 <badge.icon className="h-7 w-7 text-primary" />
               </div>
-              <h3 className="font-semibold text-sm text-foreground mb-1">{badge.title}</h3>
+              <h3 className="font-bold text-base text-foreground mb-2">{badge.title}</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">{badge.description}</p>
             </div>
           ))}

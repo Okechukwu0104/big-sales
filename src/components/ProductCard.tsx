@@ -240,28 +240,28 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           
           {/* Badges - top left */}
-          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1">
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
             {isNew && (
-              <Badge className="badge-hot border-0 text-[10px] sm:text-xs px-1.5 py-0.5">
-                🔥 NEW
+              <Badge className="bg-foreground text-background hover:bg-foreground/90 border-0 text-[10px] sm:text-xs px-2 py-0.5 font-medium tracking-wide shadow-sm">
+                NEW
               </Badge>
             )}
             {product.featured && (
-              <Badge className="gradient-accent-button border-0 text-accent-foreground text-[10px] sm:text-xs px-1.5 py-0.5">
-                <Star className="w-3 h-3 mr-0.5" />
+              <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 border-0 text-[10px] sm:text-xs px-2 py-0.5 font-medium tracking-wide shadow-sm">
+                <Star className="w-3 h-3 mr-1 fill-current" />
                 Featured
               </Badge>
             )}
             {isPopular && (
-              <Badge className="bg-amber-500 text-white border-0 text-[10px] sm:text-xs px-1.5 py-0.5">
-                <TrendingUp className="w-3 h-3 mr-0.5" />
+              <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary/90 border-0 text-[10px] sm:text-xs px-2 py-0.5 font-medium tracking-wide shadow-sm">
+                <TrendingUp className="w-3 h-3 mr-1" />
                 Popular
               </Badge>
             )}
             {isLowStock && product.in_stock && (
-              <Badge variant="destructive" className="animate-pulse text-[10px] sm:text-xs px-1.5 py-0.5">
-                <Eye className="w-3 h-3 mr-0.5" />
-                {product.quantity} left!
+              <Badge variant="destructive" className="animate-pulse text-[10px] sm:text-xs px-2 py-0.5 font-medium tracking-wide shadow-sm">
+                <Eye className="w-3 h-3 mr-1" />
+                {product.quantity} left
               </Badge>
             )}
           </div>
@@ -322,23 +322,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         )}
 
         
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex items-center gap-2 flex-wrap">
             {product.original_price != null && product.discount_price != null ? (
-              <>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="text-base sm:text-lg font-bold text-foreground">
+                    {formatPrice(product.discount_price)}
+                  </span>
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-0 font-semibold">
+                    -{Math.round((1 - product.discount_price / product.original_price) * 100)}%
+                  </Badge>
+                </div>
                 <span className="line-through text-muted-foreground text-xs">
                   {formatPrice(product.original_price)}
                 </span>
-                <span className="text-base sm:text-lg font-extrabold naira-price">
-                  {formatPrice(product.discount_price)}
-                </span>
-                <Badge variant="destructive" className="text-[10px] px-1 py-0">
-                  {Math.round((1 - product.discount_price / product.original_price) * 100)}% OFF
-                </Badge>
-              </>
+              </div>
             ) : (
-              <span className="text-base sm:text-lg font-extrabold naira-price">
+              <span className="text-base sm:text-lg font-bold text-foreground">
                 {formatPrice(product.price)}
               </span>
             )}
@@ -366,9 +367,8 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <Button 
             onClick={handleQuickBuy}
             size="sm"
-            className="relative overflow-hidden gradient-accent-button text-accent-foreground text-xs sm:text-sm h-8 sm:h-9"
+            className="flex-1 relative overflow-hidden bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm h-8 sm:h-9 shadow-sm"
           >
-            <Zap className="h-3 w-3 mr-0.5" />
             <span>Buy Now</span>
           </Button>
         )}

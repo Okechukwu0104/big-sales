@@ -45,20 +45,20 @@ export const ProductSection = ({
   return (
     <section className="py-5 sm:py-8">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8 border-b border-border/50 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl text-orange-600">
+          <div className="p-2.5 bg-primary/5 rounded-xl border border-primary/10 text-primary">
             {icon}
           </div>
-          <h2 className="text-lg sm:text-2xl font-bold text-foreground">{title}</h2>
+          <h2 className="text-xl sm:text-3xl font-bold text-foreground tracking-tight">{title}</h2>
         </div>
         
         {showSeeAll && onSeeAll && (
           <button
             onClick={onSeeAll}
-            className="group flex items-center gap-2 text-sm font-medium text-orange-600 hover:text-orange-700 transition-colors"
+            className="group flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            See All Products
+            See All
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </button>
         )}
