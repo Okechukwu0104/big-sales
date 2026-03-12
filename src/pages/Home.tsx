@@ -434,41 +434,85 @@ const Home = () => {
                   </div>
                 </div>
 
-                {/* Right: Featured product visual */}
+                {/* Right: Trending products carousel */}
                 <div className="w-full md:w-1/2 flex justify-center">
                   <div className="relative w-full max-w-[400px]">
                     {/* Glow behind card */}
                     <div className="absolute -inset-6 rounded-3xl blur-2xl opacity-30 z-0" style={{background: 'hsl(22 100% 52%)'}} />
-                    <div className="relative z-10 aspect-[4/5] rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
-                      {newArrivals.length > 0 && newArrivals[0].image_url ? (
-                        <img
-                          src={newArrivals[0].image_url}
-                          alt="Featured Product"
-                          className="w-full h-full object-cover"
-                        />
+                    <div className="relative z-10 rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
+                      {trendingProducts.length > 0 ? (
+                        <div ref={heroEmblaRef} className="overflow-hidden">
+                          <div className="flex">
+                            {trendingProducts.map((product) => (
+                              <div key={product.id} className="flex-[0_0_100%] min-w-0 relative aspect-[4/5]">
+                                {product.video_url ? (
+                                  <video
+                                    src={product.video_url}
+                                    autoPlay
+                                    muted
+                                    loop
+                                    playsInline
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : product.image_url ? (
+                                  <img
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full pattern-bg flex items-center justify-center">
+                                    <Sparkles className="w-16 h-16 text-primary/40" />
+                                  </div>
+                                )}
+                                {/* Overlay floating badge */}
+                                <div className="absolute bottom-5 left-5 right-5 gradient-glass rounded-2xl p-4 shadow-xl">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                                        <Flame className="w-3 h-3 text-primary" /> Trending Now
+                                      </p>
+                                      <p className="text-sm font-black text-foreground truncate">
+                                        {product.name}
+                                      </p>
+                                      <p className="text-xs font-bold text-primary mt-0.5">
+                                        {formatPrice(product.discount_price || product.price)}
+                                      </p>
+                                    </div>
+                                    <button
+                                      onClick={() => navigate(`/product/${product.id}`)}
+                                      className="shrink-0 w-10 h-10 rounded-full gradient-button flex items-center justify-center shadow-md"
+                                    >
+                                      <ArrowRight className="w-4 h-4 text-white" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ) : (
-                        <div className="w-full h-full pattern-bg flex items-center justify-center">
+                        <div className="aspect-[4/5] pattern-bg flex items-center justify-center">
                           <Sparkles className="w-16 h-16 text-primary/40" />
                         </div>
                       )}
-                      {/* Overlay floating badge */}
-                      <div className="absolute bottom-5 left-5 right-5 gradient-glass rounded-2xl p-4 shadow-xl">
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-xs text-muted-foreground font-medium">Trending Now 🔥</p>
-                            <p className="text-sm font-black text-foreground truncate">
-                              {newArrivals[0]?.name || 'Premium Products'}
-                            </p>
-                          </div>
-                          <button
-                            onClick={handleSeeAll}
-                            className="shrink-0 w-10 h-10 rounded-full gradient-button flex items-center justify-center shadow-md"
-                          >
-                            <ArrowRight className="w-4 h-4 text-white" />
-                          </button>
-                        </div>
-                      </div>
                     </div>
+                    {/* Dot indicators */}
+                    {trendingProducts.length > 1 && (
+                      <div className="flex justify-center gap-2 mt-4 relative z-10">
+                        {trendingProducts.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => heroEmblaApi?.scrollTo(i)}
+                            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                              i === heroActiveSlide
+                                ? 'bg-primary w-7'
+                                : 'bg-white/30 hover:bg-white/50'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
