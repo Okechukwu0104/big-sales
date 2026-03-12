@@ -397,7 +397,7 @@ const Home = () => {
                   </h1>
 
                   <p className="text-sm sm:text-base md:text-lg text-white/70 mb-5 sm:mb-8 leading-relaxed max-w-md mx-auto md:mx-0">
-                    Premium products. Unbeatable prices. Delivered to you across 20+ states. We also help you find the cheapest and most affordable products For FREE!
+                    We help you find the cheapest and most affordable products For FREE! /n Premium products. Unbeatable prices. Delivered to you across 20+ states. 
                   </p>
 
                   {/* CTA Buttons */}
