@@ -1,72 +1,53 @@
 
 
-# Fix AI Descriptions + Product Share Button with QR Code
+# Trending Products Carousel in Hero Section
 
-## Part 1: Fix AI Description Quality
+## What Changes
 
-### Edge Function Update (`supabase/functions/ai-generate-product/index.ts`)
-The current prompt already asks for 4-5 sentences, but descriptions are still coming out thin. Strengthen with:
-- Add explicit **minimum word count** instruction: "Write AT LEAST 60 words"
-- Add example output in the system prompt so the AI sees what a good description looks like
-- Add to tool parameter: "MINIMUM 60 words. Must cover: 1) What the product is 2) Key specs/features 3) Material/build quality 4) Who it's for and use cases 5) Why buy it"
+Replace the current single featured product image on the right side of the hero with a **carousel of the top 3 most trending products** (sorted by `likes_count`). Each slide shows the product's image or auto-playing video, with a "Trending Now" overlay badge showing the product name and price. Clicking navigates to the product.
 
-### Fix Existing Descriptions (`src/pages/admin/Products.tsx`)
-The `handleFixDescriptions` threshold is 80 chars. Some poor descriptions might be longer but still bad (e.g. product pricing text pasted in). Update:
-- Increase threshold to 120 chars to catch more thin descriptions
-- Also fix descriptions containing raw price text (regex for "₦" or "naira" patterns)
-- Also fix names that still contain "IMG-" patterns by updating the name alongside the description
+## How
 
-## Part 2: Product Share Button with Branded QR Code
+### File: `src/pages/Home.tsx`
 
-### New Component: `src/components/ProductShare.tsx`
+**1. Compute trending products**
+- Add a `trendingProducts` memo that sorts all products by `likes_count` descending, takes the top 3
 
-A share button on the ProductDetail page and ProductCard that opens a dialog containing:
+**2. Replace the static featured image (lines 411-447) with a carousel**
+- Use Embla carousel (already installed) with `autoplay` loop, 4-second interval
+- Each slide renders:
+  - If `video_url` exists: `<video>` tag with `autoPlay`, `muted`, `loop`, `playsInline` — plays continuously
+  - If image only: `<img>` tag as before
+  - Bottom overlay badge: "Trending Now 🔥", product name, formatted price, arrow button linking to `/product/:id`
+- Add dot indicators below the carousel for the 3 slides
+- Keep the existing orange glow behind the card, rounded corners, and border styling
 
-1. **Branded QR Code Sticker** — a visually designed card with:
-   - Brown patterned background (using the existing `bg-pattern.avif`)
-   - BIG SALES logo centered above or below the QR code
-   - QR code generated using a lightweight canvas-based generator (no external library — use the native `qrcode` approach or a small inline QR encoder)
-   - Attractive text: "Scan to shop!" / product name / price
-   - Download button to save as image (using `html2canvas` pattern via canvas export)
+**3. Carousel animation**
+- Smooth fade/slide transition between products
+- On mobile, the carousel stacks below the text (existing responsive layout)
 
-2. **Social Media Share Links**:
-   - WhatsApp (with pre-filled message including product link, name, price)
-   - Facebook share
-   - Twitter/X share
-   - Copy link button
-   - Native share (Web Share API where supported)
-
-### QR Code Generation
-Use a lightweight inline QR code generator function (no npm dependency needed — there are well-known ~100-line canvas-based QR implementations). Alternatively, use a tiny library. I'll implement a canvas-based QR renderer to keep bundle size minimal and work offline.
-
-Actually, to keep it professional and reliable, I'll use the `qrcode` npm package (small, well-maintained) for generating QR as data URL, then composite it onto the branded sticker canvas.
-
-### Sticker Design (canvas-rendered, downloadable)
+### Visual Layout (same frame as reference image)
 ```text
 +----------------------------------+
-|  [brown patterned background]    |
-|                                  |
-|     🏷️ BIG SALES                |
-|     [QR CODE]                    |
-|                                  |
-|   "Kenwood Air Fryer 5L"        |
-|       ₦15,000                    |
-|   ✨ Scan to Shop Now! ✨        |
+| [orange glow behind]             |
+| ┌──────────────────────────────┐ |
+| │  product image / video       │ |
+| │  (auto-playing if video)     │ |
+| │                              │ |
+| │  ┌────────────────────────┐  │ |
+| │  │ Trending Now 🔥        │  │ |
+| │  │ Product Name     [→]  │  │ |
+| │  │ ₦15,000               │  │ |
+| │  └────────────────────────┘  │ |
+| └──────────────────────────────┘ |
+|         ● ○ ○  (dots)           |
 +----------------------------------+
 ```
 
-### Integration Points
-- **ProductDetail.tsx**: Add a Share button (Share2 icon) next to the Like button
-- **ProductCard.tsx**: Add a small share icon button in the card footer or overlay
-
-### Files to Create/Modify
+### Dependencies
+- No new packages needed — Embla carousel already installed
 
 | File | Changes |
 |------|---------|
-| `supabase/functions/ai-generate-product/index.ts` | Stronger description prompt with min word count + example |
-| `src/pages/admin/Products.tsx` | Increase fix threshold to 120 chars, also fix IMG- names |
-| `src/components/ProductShare.tsx` | New component: share dialog with QR sticker + social links |
-| `src/pages/ProductDetail.tsx` | Add Share button |
-| `src/components/ProductCard.tsx` | Add share icon |
-| `package.json` | Add `qrcode` package for QR generation |
+| `src/pages/Home.tsx` | Add `trendingProducts` memo, replace static hero image with Embla carousel of top 3 trending products with video/image support and dot navigation |
 
