@@ -520,12 +520,12 @@ const Home = () => {
             </div>
 
             {/* Marquee strip at bottom of hero */}
-            <div className="border-t border-white/10 bg-primary/90 backdrop-blur-sm py-3 marquee-wrap relative z-10">
+            <div className="border-t border-white/10 bg-primary/90 backdrop-blur-sm py-2 sm:py-3 marquee-wrap relative z-10">
               <div className="marquee-track">
                 {Array.from({length: 2}).map((_, g) => (
                   <span key={g} className="flex gap-0">
                     {['🔥 Hot Deals', '  ·  ', '⚡ Fast Delivery', '  ·  ', '💯 Original Products', '  ·  ', '🛒 Shop & Save Big', '  ·  ', '❤️ Loved by Nigerians', '  ·  ', '📦 Nationwide Shipping', '  ·  '].map((t, i) => (
-                      <span key={i} className="text-white text-sm font-bold px-3 whitespace-nowrap">{t}</span>
+                      <span key={i} className="text-white text-xs sm:text-sm font-bold px-2 sm:px-3 whitespace-nowrap">{t}</span>
                     ))}
                   </span>
                 ))}
