@@ -38,9 +38,9 @@ import { CSS } from '@dnd-kit/utilities';
 // Constants
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-const MAX_IMAGE_DIMENSION = 1200;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+const MAX_IMAGE_DIMENSION = 800;
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000;
 const MAX_BULK_FILES = 10;
 const BULK_UPLOAD_LIMIT = 2;
 const BULK_UPLOAD_STORAGE_KEY = 'bulk_upload_usage';

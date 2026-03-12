@@ -379,32 +379,32 @@ const Home = () => {
             <div className="absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full blur-3xl opacity-25 z-0" style={{background: 'hsl(22 100% 52%)'}} />
             <div className="absolute -bottom-16 -left-16 w-[300px] h-[300px] rounded-full blur-3xl opacity-20 z-0" style={{background: 'hsl(35 100% 52%)'}} />
 
-            <div className="container mx-auto px-4 py-16 sm:py-20 md:py-28 relative z-10">
-              <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+            <div className="container mx-auto px-4 py-10 sm:py-16 md:py-28 relative z-10">
+              <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-14">
 
                 {/* Left: Text content */}
                 <div className="w-full md:w-1/2 text-center md:text-left">
                   {/* Eyebrow badge */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border border-white/20 bg-white/10 backdrop-blur-sm text-white/90">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span className="text-xs sm:text-sm font-bold tracking-wider uppercase">Nigeria's #1 Online Store</span>
+                  <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-4 sm:mb-6 border border-white/20 bg-white/10 backdrop-blur-sm text-white/90">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                    <span className="text-[10px] sm:text-sm font-bold tracking-wider uppercase">Nigeria's #1 Online Store</span>
                   </div>
 
                   {/* Main headline */}
-                  <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.02] mb-5 text-white">
+                  <h1 className="text-[2rem] sm:text-5xl md:text-7xl font-black tracking-tight leading-[1.02] mb-4 sm:mb-5 text-white">
                     Shop Big.
                     <span className="block hero-text mt-1">Save Bigger.</span>
                   </h1>
 
-                  <p className="text-base sm:text-lg text-white/70 mb-8 leading-relaxed max-w-md mx-auto md:mx-0">
+                  <p className="text-sm sm:text-base md:text-lg text-white/70 mb-5 sm:mb-8 leading-relaxed max-w-md mx-auto md:mx-0">
                     Premium products. Unbeatable prices. Delivered to your door across all 36 states.
                   </p>
 
                   {/* CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center md:justify-start">
+                  <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-4 justify-center md:justify-start">
                     <button
                       onClick={handleSeeAll}
-                      className="w-full sm:w-auto px-8 py-4 gradient-button text-white rounded-full text-base font-bold tracking-wide transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_hsl(22_100%_52%_/_0.5)] active:scale-95"
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 gradient-button text-white rounded-full text-sm sm:text-base font-bold tracking-wide transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_hsl(22_100%_52%_/_0.5)] active:scale-95"
                     >
                       🛒 Shop Now
                     </button>
@@ -412,22 +412,22 @@ const Home = () => {
                       onClick={() => {
                         document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
                       }}
-                      className="w-full sm:w-auto px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-base font-bold border border-white/25 hover:bg-white/20 transition-all active:scale-95"
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm sm:text-base font-bold border border-white/25 hover:bg-white/20 transition-all active:scale-95"
                     >
                       Browse Categories
                     </button>
                   </div>
 
                   {/* Trust row */}
-                  <div className="flex flex-wrap items-center gap-5 mt-10 justify-center md:justify-start">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-5 mt-6 sm:mt-10 justify-center md:justify-start">
                     {[
                       { icon: Package, label: 'Nationwide Delivery' },
                       { icon: Star, label: '100% Original' },
                       { icon: MessageCircle, label: 'WhatsApp Support' },
                     ].map(({ icon: Icon, label }) => (
-                      <div key={label} className="flex items-center gap-2 text-white/70 text-sm font-medium">
-                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Icon className="w-3.5 h-3.5 text-primary" />
+                      <div key={label} className="flex items-center gap-1.5 sm:gap-2 text-white/70 text-xs sm:text-sm font-medium">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                         </div>
                         {label}
                       </div>
@@ -437,15 +437,15 @@ const Home = () => {
 
                 {/* Right: Trending products carousel */}
                 <div className="w-full md:w-1/2 flex justify-center">
-                  <div className="relative w-full max-w-[400px]">
+                  <div className="relative w-full max-w-[280px] sm:max-w-[340px] md:max-w-[400px]">
                     {/* Glow behind card */}
-                    <div className="absolute -inset-6 rounded-3xl blur-2xl opacity-30 z-0" style={{background: 'hsl(22 100% 52%)'}} />
-                    <div className="relative z-10 rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
+                    <div className="absolute -inset-4 sm:-inset-6 rounded-3xl blur-2xl opacity-30 z-0" style={{background: 'hsl(22 100% 52%)'}} />
+                    <div className="relative z-10 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
                       {trendingProducts.length > 0 ? (
                         <div ref={heroEmblaRef} className="overflow-hidden">
                           <div className="flex">
                             {trendingProducts.map((product) => (
-                              <div key={product.id} className="flex-[0_0_100%] min-w-0 relative aspect-[4/5]">
+                              <div key={product.id} className="flex-[0_0_100%] min-w-0 relative aspect-[3/4] sm:aspect-[4/5]">
                                 {product.video_url ? (
                                   <video
                                     src={product.video_url}
@@ -467,7 +467,7 @@ const Home = () => {
                                   </div>
                                 )}
                                 {/* Overlay floating badge */}
-                                <div className="absolute bottom-5 left-5 right-5 gradient-glass rounded-2xl p-4 shadow-xl">
+                                <div className="absolute bottom-3 left-3 right-3 sm:bottom-5 sm:left-5 sm:right-5 gradient-glass rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl">
                                   <div className="flex items-center justify-between gap-2">
                                     <div className="min-w-0">
                                       <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
@@ -520,12 +520,12 @@ const Home = () => {
             </div>
 
             {/* Marquee strip at bottom of hero */}
-            <div className="border-t border-white/10 bg-primary/90 backdrop-blur-sm py-3 marquee-wrap relative z-10">
+            <div className="border-t border-white/10 bg-primary/90 backdrop-blur-sm py-2 sm:py-3 marquee-wrap relative z-10">
               <div className="marquee-track">
                 {Array.from({length: 2}).map((_, g) => (
                   <span key={g} className="flex gap-0">
                     {['🔥 Hot Deals', '  ·  ', '⚡ Fast Delivery', '  ·  ', '💯 Original Products', '  ·  ', '🛒 Shop & Save Big', '  ·  ', '❤️ Loved by Nigerians', '  ·  ', '📦 Nationwide Shipping', '  ·  '].map((t, i) => (
-                      <span key={i} className="text-white text-sm font-bold px-3 whitespace-nowrap">{t}</span>
+                      <span key={i} className="text-white text-xs sm:text-sm font-bold px-2 sm:px-3 whitespace-nowrap">{t}</span>
                     ))}
                   </span>
                 ))}

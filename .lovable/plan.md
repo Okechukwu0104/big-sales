@@ -1,50 +1,72 @@
 
 
-# Mobile Optimization + Stats Update + Low-Network Upload Improvements
+# Fix AI Descriptions + Product Share Button with QR Code
 
-## 1. Update Social Proof Stats (`src/components/SocialProofStats.tsx`)
+## Part 1: Fix AI Description Quality
 
-Change the hardcoded counter values:
-- Happy Customers: 2500 → **500**
-- Orders Delivered: 5000 → **680**
-- Cities Covered: 36 → **20**
-- Add new stat: **Calendar icon, "2+ Years", "Years of Operation"**
-- Remove the Average Rating stat (replace with Years of Operation)
-- Make icons and text smaller on mobile: `w-10 h-10` icons instead of `w-14 h-14`, `text-2xl` instead of `text-3xl`, reduce padding to `py-8`
+### Edge Function Update (`supabase/functions/ai-generate-product/index.ts`)
+The current prompt already asks for 4-5 sentences, but descriptions are still coming out thin. Strengthen with:
+- Add explicit **minimum word count** instruction: "Write AT LEAST 60 words"
+- Add example output in the system prompt so the AI sees what a good description looks like
+- Add to tool parameter: "MINIMUM 60 words. Must cover: 1) What the product is 2) Key specs/features 3) Material/build quality 4) Who it's for and use cases 5) Why buy it"
 
-## 2. Make Hero Section Smaller on Mobile (`src/pages/Home.tsx`)
+### Fix Existing Descriptions (`src/pages/admin/Products.tsx`)
+The `handleFixDescriptions` threshold is 80 chars. Some poor descriptions might be longer but still bad (e.g. product pricing text pasted in). Update:
+- Increase threshold to 120 chars to catch more thin descriptions
+- Also fix descriptions containing raw price text (regex for "₦" or "naira" patterns)
+- Also fix names that still contain "IMG-" patterns by updating the name alongside the description
 
-- Reduce hero padding on mobile: `py-10 sm:py-16 md:py-28` (from `py-16`)
-- Make headline smaller on mobile: `text-[2rem]` (from `text-[2.6rem]`)
-- Reduce trending product card max width on mobile and aspect ratio
-- Reduce CTA button padding on mobile: `py-3` instead of `py-4`
-- Shrink trust row icons and text on mobile
-- Reduce marquee text size on mobile
+## Part 2: Product Share Button with Branded QR Code
 
-## 3. General Mobile Responsiveness Check
+### New Component: `src/components/ProductShare.tsx`
 
-- Ensure product sections, category browser, testimonials, FAQ, and footer all use appropriate mobile sizing
-- The existing code already has good mobile patterns (2-col grids, responsive text) — focus on the hero and stats sections which are the biggest offenders based on the screenshot
+A share button on the ProductDetail page and ProductCard that opens a dialog containing:
 
-## 4. Low-Network Product Upload Improvements (`src/pages/admin/Products.tsx`)
+1. **Branded QR Code Sticker** — a visually designed card with:
+   - Brown patterned background (using the existing `bg-pattern.avif`)
+   - BIG SALES logo centered above or below the QR code
+   - QR code generated using a lightweight canvas-based generator (no external library — use the native `qrcode` approach or a small inline QR encoder)
+   - Attractive text: "Scan to shop!" / product name / price
+   - Download button to save as image (using `html2canvas` pattern via canvas export)
 
-The current upload system already has:
-- Image compression (iterative canvas)
-- Retry with exponential backoff (3 retries)
-- Offline queue with IndexedDB
-- Online/offline detection
+2. **Social Media Share Links**:
+   - WhatsApp (with pre-filled message including product link, name, price)
+   - Facebook share
+   - Twitter/X share
+   - Copy link button
+   - Native share (Web Share API where supported)
 
-**Problem**: Line 437 throws immediately if `navigator.onLine` is false, but on very slow networks `navigator.onLine` may be `true` yet requests timeout. The retry mechanism handles this, but improvements needed:
+### QR Code Generation
+Use a lightweight inline QR code generator function (no npm dependency needed — there are well-known ~100-line canvas-based QR implementations). Alternatively, use a tiny library. I'll implement a canvas-based QR renderer to keep bundle size minimal and work offline.
 
-- Increase `MAX_RETRIES` from 3 to **5** for better resilience on slow networks
-- Increase initial `RETRY_DELAY` from 1000ms to **2000ms** to give slow networks more time
-- Add a longer timeout tolerance — wrap fetch calls with AbortController timeout of 60 seconds
-- Lower `MAX_IMAGE_DIMENSION` from 1200 to **800** to produce smaller files by default on slow networks
-- Show more granular progress messages during retries (e.g., "Retrying upload... attempt 2/5")
+Actually, to keep it professional and reliable, I'll use the `qrcode` npm package (small, well-maintained) for generating QR as data URL, then composite it onto the branded sticker canvas.
+
+### Sticker Design (canvas-rendered, downloadable)
+```text
++----------------------------------+
+|  [brown patterned background]    |
+|                                  |
+|     🏷️ BIG SALES                |
+|     [QR CODE]                    |
+|                                  |
+|   "Kenwood Air Fryer 5L"        |
+|       ₦15,000                    |
+|   ✨ Scan to Shop Now! ✨        |
++----------------------------------+
+```
+
+### Integration Points
+- **ProductDetail.tsx**: Add a Share button (Share2 icon) next to the Like button
+- **ProductCard.tsx**: Add a small share icon button in the card footer or overlay
+
+### Files to Create/Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/SocialProofStats.tsx` | Update stat values (500, 680, 20), replace rating with "2+ Years of Operation", reduce mobile sizing |
-| `src/pages/Home.tsx` | Reduce hero section padding, font sizes, card sizes on mobile |
-| `src/pages/admin/Products.tsx` | Increase retries to 5, increase retry delay, reduce default image dimension to 800, improve retry feedback messages |
+| `supabase/functions/ai-generate-product/index.ts` | Stronger description prompt with min word count + example |
+| `src/pages/admin/Products.tsx` | Increase fix threshold to 120 chars, also fix IMG- names |
+| `src/components/ProductShare.tsx` | New component: share dialog with QR sticker + social links |
+| `src/pages/ProductDetail.tsx` | Add Share button |
+| `src/components/ProductCard.tsx` | Add share icon |
+| `package.json` | Add `qrcode` package for QR generation |
 
