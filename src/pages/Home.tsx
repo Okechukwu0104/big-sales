@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, StoreConfig } from '@/types';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
+import { useCurrency } from '@/hooks/useCurrency';
 import { ProductCard } from '@/components/ProductCard';
 import { Header } from '@/components/Header';
 import { TrustBadges } from '@/components/TrustBadges';
