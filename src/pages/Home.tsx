@@ -437,15 +437,15 @@ const Home = () => {
 
                 {/* Right: Trending products carousel */}
                 <div className="w-full md:w-1/2 flex justify-center">
-                  <div className="relative w-full max-w-[400px]">
+                  <div className="relative w-full max-w-[280px] sm:max-w-[340px] md:max-w-[400px]">
                     {/* Glow behind card */}
-                    <div className="absolute -inset-6 rounded-3xl blur-2xl opacity-30 z-0" style={{background: 'hsl(22 100% 52%)'}} />
-                    <div className="relative z-10 rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
+                    <div className="absolute -inset-4 sm:-inset-6 rounded-3xl blur-2xl opacity-30 z-0" style={{background: 'hsl(22 100% 52%)'}} />
+                    <div className="relative z-10 rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-white/10 shadow-[0_32px_80px_hsl(0_0%_0%_/_0.4)]">
                       {trendingProducts.length > 0 ? (
                         <div ref={heroEmblaRef} className="overflow-hidden">
                           <div className="flex">
                             {trendingProducts.map((product) => (
-                              <div key={product.id} className="flex-[0_0_100%] min-w-0 relative aspect-[4/5]">
+                              <div key={product.id} className="flex-[0_0_100%] min-w-0 relative aspect-[3/4] sm:aspect-[4/5]">
                                 {product.video_url ? (
                                   <video
                                     src={product.video_url}
