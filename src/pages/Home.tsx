@@ -396,15 +396,15 @@ const Home = () => {
                     <span className="block hero-text mt-1">Save Bigger.</span>
                   </h1>
 
-                  <p className="text-base sm:text-lg text-white/70 mb-8 leading-relaxed max-w-md mx-auto md:mx-0">
+                  <p className="text-sm sm:text-base md:text-lg text-white/70 mb-5 sm:mb-8 leading-relaxed max-w-md mx-auto md:mx-0">
                     Premium products. Unbeatable prices. Delivered to your door across all 36 states.
                   </p>
 
                   {/* CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center md:justify-start">
+                  <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-4 justify-center md:justify-start">
                     <button
                       onClick={handleSeeAll}
-                      className="w-full sm:w-auto px-8 py-4 gradient-button text-white rounded-full text-base font-bold tracking-wide transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_hsl(22_100%_52%_/_0.5)] active:scale-95"
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 gradient-button text-white rounded-full text-sm sm:text-base font-bold tracking-wide transition-all hover:-translate-y-1 hover:shadow-[0_8px_32px_hsl(22_100%_52%_/_0.5)] active:scale-95"
                     >
                       🛒 Shop Now
                     </button>
@@ -412,22 +412,22 @@ const Home = () => {
                       onClick={() => {
                         document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
                       }}
-                      className="w-full sm:w-auto px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-base font-bold border border-white/25 hover:bg-white/20 transition-all active:scale-95"
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm sm:text-base font-bold border border-white/25 hover:bg-white/20 transition-all active:scale-95"
                     >
                       Browse Categories
                     </button>
                   </div>
 
                   {/* Trust row */}
-                  <div className="flex flex-wrap items-center gap-5 mt-10 justify-center md:justify-start">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-5 mt-6 sm:mt-10 justify-center md:justify-start">
                     {[
                       { icon: Package, label: 'Nationwide Delivery' },
                       { icon: Star, label: '100% Original' },
                       { icon: MessageCircle, label: 'WhatsApp Support' },
                     ].map(({ icon: Icon, label }) => (
-                      <div key={label} className="flex items-center gap-2 text-white/70 text-sm font-medium">
-                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Icon className="w-3.5 h-3.5 text-primary" />
+                      <div key={label} className="flex items-center gap-1.5 sm:gap-2 text-white/70 text-xs sm:text-sm font-medium">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                         </div>
                         {label}
                       </div>
