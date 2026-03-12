@@ -467,7 +467,7 @@ const Home = () => {
                                   </div>
                                 )}
                                 {/* Overlay floating badge */}
-                                <div className="absolute bottom-5 left-5 right-5 gradient-glass rounded-2xl p-4 shadow-xl">
+                                <div className="absolute bottom-3 left-3 right-3 sm:bottom-5 sm:left-5 sm:right-5 gradient-glass rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl">
                                   <div className="flex items-center justify-between gap-2">
                                     <div className="min-w-0">
                                       <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
