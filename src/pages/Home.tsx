@@ -169,6 +169,29 @@ const Home = () => {
     return products.filter(p => p.featured).slice(0, 8);
   }, [products]);
 
+  // Top 3 trending products by likes
+  const trendingProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return [...products]
+      .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
+      .slice(0, 3);
+  }, [products]);
+
+  // Embla carousel for trending hero
+  const [heroEmblaRef, heroEmblaApi] = useEmblaCarousel(
+    { loop: true, duration: 30 },
+    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+  );
+  const [heroActiveSlide, setHeroActiveSlide] = useState(0);
+
+  useEffect(() => {
+    if (!heroEmblaApi) return;
+    const onSelect = () => setHeroActiveSlide(heroEmblaApi.selectedScrollSnap());
+    heroEmblaApi.on('select', onSelect);
+    onSelect();
+    return () => { heroEmblaApi.off('select', onSelect); };
+  }, [heroEmblaApi]);
+
   // Recently viewed products
   const recentlyViewedProducts = useMemo(() => {
     if (!products || recentlyViewedIds.length === 0) return [];
