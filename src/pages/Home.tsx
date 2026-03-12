@@ -379,19 +379,19 @@ const Home = () => {
             <div className="absolute -top-24 -right-24 w-[420px] h-[420px] rounded-full blur-3xl opacity-25 z-0" style={{background: 'hsl(22 100% 52%)'}} />
             <div className="absolute -bottom-16 -left-16 w-[300px] h-[300px] rounded-full blur-3xl opacity-20 z-0" style={{background: 'hsl(35 100% 52%)'}} />
 
-            <div className="container mx-auto px-4 py-16 sm:py-20 md:py-28 relative z-10">
-              <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+            <div className="container mx-auto px-4 py-10 sm:py-16 md:py-28 relative z-10">
+              <div className="flex flex-col md:flex-row items-center gap-6 sm:gap-10 md:gap-14">
 
                 {/* Left: Text content */}
                 <div className="w-full md:w-1/2 text-center md:text-left">
                   {/* Eyebrow badge */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 border border-white/20 bg-white/10 backdrop-blur-sm text-white/90">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span className="text-xs sm:text-sm font-bold tracking-wider uppercase">Nigeria's #1 Online Store</span>
+                  <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-4 sm:mb-6 border border-white/20 bg-white/10 backdrop-blur-sm text-white/90">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                    <span className="text-[10px] sm:text-sm font-bold tracking-wider uppercase">Nigeria's #1 Online Store</span>
                   </div>
 
                   {/* Main headline */}
-                  <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl font-black tracking-tight leading-[1.02] mb-5 text-white">
+                  <h1 className="text-[2rem] sm:text-5xl md:text-7xl font-black tracking-tight leading-[1.02] mb-4 sm:mb-5 text-white">
                     Shop Big.
                     <span className="block hero-text mt-1">Save Bigger.</span>
                   </h1>
