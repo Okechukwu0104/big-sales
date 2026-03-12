@@ -31,6 +31,7 @@ type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-des
 
 const Home = () => {
   const { toast } = useToast();
+  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { recentlyViewedIds } = useRecentlyViewed();
