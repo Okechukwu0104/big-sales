@@ -8,7 +8,7 @@ import {
 const faqs = [
   {
     question: "How do I place an order?",
-    answer: "Simply browse our products, add items to your cart, and proceed to checkout. Fill in your shipping details and submit your order. You'll receive confirmation and payment instructions immediately."
+    answer: "Simply browse our products, add items to your cart, and proceed to checkout. Fill in your shipping details and submit your order. You'll receive order confirmation immediately."
   },
   {
     question: "What payment methods do you accept?",
