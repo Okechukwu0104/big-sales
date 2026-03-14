@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     question: "What payment methods do you accept?",
-    answer: "We accept bank transfers and mobile money payments. Payment details will be shown after you place your order, and you can send proof of payment via WhatsApp."
+    answer: "Payment details will be communicated via WhatsApp after you place your order. Our team will guide you through the process."
   },
   {
     question: "How long does delivery take?",
