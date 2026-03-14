@@ -73,7 +73,7 @@ const OrderSuccess = () => {
     ).join('%0A');
 
     const message = 
-      `Hello, I have placed an order and made payment.%0A%0A` +
+      `Hello, I have placed an order.%0A%0A` +
       `*Order Summary:*%0A${orderSummary}%0A%0A` +
       `*Customer:* ${orderData?.customerName || 'N/A'}%0A` +
       `*Phone:* ${orderData?.customerPhone || 'N/A'}%0A%0A` +
