@@ -51,7 +51,7 @@ const Checkout = () => {
 
       toast({
         title: "Order placed successfully!",
-        description: "Please make payment and contact us with proof of payment.",
+        description: "Your order has been placed successfully. We'll contact you shortly.",
       });
 
       // Save order items and total before clearing cart

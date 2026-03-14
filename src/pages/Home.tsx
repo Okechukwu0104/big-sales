@@ -578,10 +578,12 @@ const Home = () => {
               )}
 
               {/* Category Browser */}
-              <CategoryBrowser
-                onCategorySelect={handleCategorySelect}
-                selectedCategory={selectedCategory}
-              />
+              <div id="categories">
+                <CategoryBrowser
+                  onCategorySelect={handleCategorySelect}
+                  selectedCategory={selectedCategory}
+                />
+              </div>
             </>
           ) : (
             /* All Products View */

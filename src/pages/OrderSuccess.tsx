@@ -73,7 +73,7 @@ const OrderSuccess = () => {
     ).join('%0A');
 
     const message = 
-      `Hello, I have placed an order and made payment.%0A%0A` +
+      `Hello, I have placed an order.%0A%0A` +
       `*Order Summary:*%0A${orderSummary}%0A%0A` +
       `*Customer:* ${orderData?.customerName || 'N/A'}%0A` +
       `*Phone:* ${orderData?.customerPhone || 'N/A'}%0A%0A` +
@@ -157,9 +157,9 @@ const OrderSuccess = () => {
               <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2 text-blue-900">📦 What happens next?</h3>
                 <ol className="text-sm text-blue-800 space-y-2">
-                  <li>1. Make your payment using the details above</li>
-                  <li>2. We'll confirm your payment and process your order</li>
-                  <li>3. You'll receive delivery updates</li>
+                  <li>1. We'll review and confirm your order</li>
+                  <li>2. You'll receive delivery updates via WhatsApp</li>
+                  <li>3. Your order will be delivered to your doorstep</li>
                 </ol>
               </div>
 

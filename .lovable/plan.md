@@ -1,51 +1,72 @@
 
 
-# Product Detail Video Fix + Browse Categories Navigation + Remove "Pay on/before Delivery" References
+# Fix AI Descriptions + Product Share Button with QR Code
 
-## 1. Product Detail: Show Only Video When Video Exists (`src/pages/ProductDetail.tsx`)
+## Part 1: Fix AI Description Quality
 
-Currently when a product has both `image_url` and `video_url`, the page shows the image AND a separate video player below it. Change this so:
-- If `video_url` exists → show only the video (with controls, autoplay, loop)
-- If only `image_url` → show the image as before
-- Lines ~222-253: Replace the conditional to check `video_url` first, skip the image entirely when video exists
+### Edge Function Update (`supabase/functions/ai-generate-product/index.ts`)
+The current prompt already asks for 4-5 sentences, but descriptions are still coming out thin. Strengthen with:
+- Add explicit **minimum word count** instruction: "Write AT LEAST 60 words"
+- Add example output in the system prompt so the AI sees what a good description looks like
+- Add to tool parameter: "MINIMUM 60 words. Must cover: 1) What the product is 2) Key specs/features 3) Material/build quality 4) Who it's for and use cases 5) Why buy it"
 
-## 2. Browse Categories Scrolls to Category Section (`src/pages/Home.tsx`)
+### Fix Existing Descriptions (`src/pages/admin/Products.tsx`)
+The `handleFixDescriptions` threshold is 80 chars. Some poor descriptions might be longer but still bad (e.g. product pricing text pasted in). Update:
+- Increase threshold to 120 chars to catch more thin descriptions
+- Also fix descriptions containing raw price text (regex for "₦" or "naira" patterns)
+- Also fix names that still contain "IMG-" patterns by updating the name alongside the description
 
-The "Browse Categories" button already scrolls to `#categories` (line 413). Need to ensure the `CategoryBrowser` section has `id="categories"` on its wrapper.
-- Line ~580-584: Wrap `CategoryBrowser` in a `div` with `id="categories"` (or add it directly to the section element inside `CategoryBrowser.tsx`)
+## Part 2: Product Share Button with Branded QR Code
 
-## 3. Remove All "Pay on Delivery" / "Pay Before Delivery" References
+### New Component: `src/components/ProductShare.tsx`
 
-### `src/components/TrustBadges.tsx`
-- Remove the "Pay on Delivery" badge (lines 15-19) from the main badges array
+A share button on the ProductDetail page and ProductCard that opens a dialog containing:
 
-### `src/components/HowItWorks.tsx`
-- Change Step 4 title from "Receive & Pay" → "Receive Your Order"
-- Change description from "Get your order delivered and pay on delivery" → "Get your order delivered to your doorstep"
+1. **Branded QR Code Sticker** — a visually designed card with:
+   - Brown patterned background (using the existing `bg-pattern.avif`)
+   - BIG SALES logo centered above or below the QR code
+   - QR code generated using a lightweight canvas-based generator (no external library — use the native `qrcode` approach or a small inline QR encoder)
+   - Attractive text: "Scan to shop!" / product name / price
+   - Download button to save as image (using `html2canvas` pattern via canvas export)
 
-### `src/components/FAQ.tsx`
-- Update FAQ answers to remove payment-before-delivery language:
-  - Q1: Remove "payment instructions" wording → "You'll receive order confirmation immediately"
-  - Q2 (payment methods): Reword to say "Payment details will be communicated via WhatsApp after order placement"
-  - Q3: Remove "after your payment is confirmed" → "after your order is confirmed"
+2. **Social Media Share Links**:
+   - WhatsApp (with pre-filled message including product link, name, price)
+   - Facebook share
+   - Twitter/X share
+   - Copy link button
+   - Native share (Web Share API where supported)
 
-### `src/pages/Checkout.tsx`
-- Line 54: Change toast description from "Please make payment and contact us with proof of payment" → "Your order has been placed successfully. We'll contact you shortly."
+### QR Code Generation
+Use a lightweight inline QR code generator function (no npm dependency needed — there are well-known ~100-line canvas-based QR implementations). Alternatively, use a tiny library. I'll implement a canvas-based QR renderer to keep bundle size minimal and work offline.
 
-### `src/pages/OrderSuccess.tsx`
-- Lines 148-154: Keep the payment_details section (admin configurable, useful later) but update the "What happens next" steps (lines 157-163):
-  - "1. We'll review and confirm your order"
-  - "2. You'll receive delivery updates via WhatsApp"
-  - "3. Your order will be delivered to your doorstep"
-- Line 76: Update WhatsApp message from "made payment" → "placed an order"
+Actually, to keep it professional and reliable, I'll use the `qrcode` npm package (small, well-maintained) for generating QR as data URL, then composite it onto the branded sticker canvas.
+
+### Sticker Design (canvas-rendered, downloadable)
+```text
++----------------------------------+
+|  [brown patterned background]    |
+|                                  |
+|     🏷️ BIG SALES                |
+|     [QR CODE]                    |
+|                                  |
+|   "Kenwood Air Fryer 5L"        |
+|       ₦15,000                    |
+|   ✨ Scan to Shop Now! ✨        |
++----------------------------------+
+```
+
+### Integration Points
+- **ProductDetail.tsx**: Add a Share button (Share2 icon) next to the Like button
+- **ProductCard.tsx**: Add a small share icon button in the card footer or overlay
+
+### Files to Create/Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/ProductDetail.tsx` | Show video only (no image) when video_url exists |
-| `src/pages/Home.tsx` | Add `id="categories"` to CategoryBrowser wrapper |
-| `src/components/TrustBadges.tsx` | Remove "Pay on Delivery" badge |
-| `src/components/HowItWorks.tsx` | Update step 4 text to remove pay on delivery |
-| `src/components/FAQ.tsx` | Update FAQ answers to remove payment-first language |
-| `src/pages/Checkout.tsx` | Update success toast message |
-| `src/pages/OrderSuccess.tsx` | Update WhatsApp message and "what happens next" steps |
+| `supabase/functions/ai-generate-product/index.ts` | Stronger description prompt with min word count + example |
+| `src/pages/admin/Products.tsx` | Increase fix threshold to 120 chars, also fix IMG- names |
+| `src/components/ProductShare.tsx` | New component: share dialog with QR sticker + social links |
+| `src/pages/ProductDetail.tsx` | Add Share button |
+| `src/components/ProductCard.tsx` | Add share icon |
+| `package.json` | Add `qrcode` package for QR generation |
 

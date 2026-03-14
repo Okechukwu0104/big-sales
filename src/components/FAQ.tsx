@@ -8,15 +8,15 @@ import {
 const faqs = [
   {
     question: "How do I place an order?",
-    answer: "Simply browse our products, add items to your cart, and proceed to checkout. Fill in your shipping details and submit your order. You'll receive confirmation and payment instructions immediately."
+    answer: "Simply browse our products, add items to your cart, and proceed to checkout. Fill in your shipping details and submit your order. You'll receive order confirmation immediately."
   },
   {
     question: "What payment methods do you accept?",
-    answer: "We accept bank transfers and mobile money payments. Payment details will be shown after you place your order, and you can send proof of payment via WhatsApp."
+    answer: "Payment details will be communicated via WhatsApp after you place your order. Our team will guide you through the process."
   },
   {
     question: "How long does delivery take?",
-    answer: "Delivery typically takes 1-3 business days within the city and 3-7 business days for other areas. You'll receive tracking updates after your payment is confirmed."
+    answer: "Delivery typically takes 1-3 business days within the city and 3-7 business days for other areas. You'll receive tracking updates after your order is confirmed."
   },
   {
     question: "Can I track my order?",
