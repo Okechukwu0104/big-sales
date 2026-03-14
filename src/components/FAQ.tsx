@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     question: "How long does delivery take?",
-    answer: "Delivery typically takes 1-3 business days within the city and 3-7 business days for other areas. You'll receive tracking updates after your payment is confirmed."
+    answer: "Delivery typically takes 1-3 business days within the city and 3-7 business days for other areas. You'll receive tracking updates after your order is confirmed."
   },
   {
     question: "Can I track my order?",

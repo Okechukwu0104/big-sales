@@ -220,8 +220,23 @@ const ProductDetail = () => {
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
-              {product.image_url ? (
+            {product.video_url ? (
+              <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
+                <video
+                  src={product.video_url}
+                  controls
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  poster={product.image_url || undefined}
+                  className="w-full h-full object-contain rounded-lg"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            ) : product.image_url ? (
+              <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
                 <img
                   src={product.image_url}
                   alt={product.name}
@@ -230,25 +245,12 @@ const ProductDetail = () => {
                   height={600}
                   className="w-full h-full object-contain"
                 />
-              ) : (
+              </div>
+            ) : (
+              <div className="aspect-square overflow-hidden rounded-xl shadow-lg bg-card p-2 sm:p-4">
                 <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
                   <span className="text-muted-foreground text-lg">No image available</span>
                 </div>
-              )}
-            </div>
-            
-            {product.video_url && (
-              <div className="rounded-xl overflow-hidden shadow-lg bg-card">
-                <video
-                  src={product.video_url}
-                  controls
-                  preload="metadata"
-                  poster={product.image_url || undefined}
-                  className="w-full rounded-xl"
-                  playsInline
-                >
-                  Your browser does not support the video tag.
-                </video>
               </div>
             )}
           </div>
