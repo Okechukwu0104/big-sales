@@ -16,7 +16,9 @@ import { ContactUsPopup } from '@/components/ContactUsPopup';
 import { SocialProofStats } from '@/components/SocialProofStats';
 import { HowItWorks } from '@/components/HowItWorks';
 import { Footer } from '@/components/Footer';
+import { ProductSuggestionPopup } from '@/components/ProductSuggestionPopup';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { useCartContext } from '@/components/ui/cart-provider';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
@@ -31,6 +33,7 @@ type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-des
 
 const Home = () => {
   const { toast } = useToast();
+  const { getTotalPrice } = useCartContext();
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -45,6 +48,7 @@ const Home = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false);
   
   const faqSectionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -170,12 +174,20 @@ const Home = () => {
     return products.filter(p => p.featured).slice(0, 8);
   }, [products]);
 
-  // Top 3 trending products by likes
+  // Shuffle top trending products by likes using Fisher-Yates
   const trendingProducts = useMemo(() => {
     if (!products || products.length === 0) return [];
-    return [...products]
+
+    const topProducts = [...products]
       .sort((a, b) => (b.likes_count || 0) - (a.likes_count || 0))
       .slice(0, 3);
+
+    for (let i = topProducts.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [topProducts[i], topProducts[j]] = [topProducts[j], topProducts[i]];
+    }
+
+    return topProducts;
   }, [products]);
 
   // Embla carousel for trending hero
@@ -347,6 +359,32 @@ const Home = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileFilters]);
 
+  useEffect(() => {
+    const hasShownSessionPrompt = sessionStorage.getItem('flash-deals-shown');
+
+    if (hasShownSessionPrompt) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowProductSuggestions(true);
+      sessionStorage.setItem('flash-deals-shown', 'true');
+    }, 15000);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleSuggestionTrigger = () => {
+      if (getTotalPrice() < 10000) {
+        setShowProductSuggestions(true);
+      }
+    };
+
+    window.addEventListener('show-product-suggestions', handleSuggestionTrigger);
+    return () => window.removeEventListener('show-product-suggestions', handleSuggestionTrigger);
+  }, [getTotalPrice]);
+
   // Check if search has no results
   const hasNoSearchResults = searchTerm.trim() && filteredProducts.length === 0;
 
@@ -410,7 +448,10 @@ const Home = () => {
                     </button>
                     <button
                       onClick={() => {
-                        document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
+                        setViewMode('home');
+                        window.setTimeout(() => {
+                          document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 50);
                       }}
                       className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm sm:text-base font-bold border border-white/25 hover:bg-white/20 transition-all active:scale-95"
                     >
@@ -777,6 +818,12 @@ const Home = () => {
         >
           <HelpCircle className="h-6 w-6 text-primary" />
         </button>
+
+        <ProductSuggestionPopup
+          products={products || []}
+          open={showProductSuggestions}
+          onOpenChange={setShowProductSuggestions}
+        />
 
         {/* Contact Us Popup (WhatsApp) */}
         <ContactUsPopup />

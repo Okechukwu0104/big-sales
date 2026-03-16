@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,10 +8,40 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
 import { CartBenefits } from '@/components/TrustBadges';
+import { supabase } from '@/integrations/supabase/client';
+import { Product } from '@/types';
+
+const MINIMUM_ORDER = 10000;
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, getTotalPrice } = useCartContext();
+  const { cartItems, updateQuantity, removeFromCart, getTotalPrice, addToCart } = useCartContext();
   const { formatPrice } = useCurrency();
+
+  const totalPrice = getTotalPrice();
+  const amountRemaining = Math.max(MINIMUM_ORDER - totalPrice, 0);
+  const progressPercentage = Math.min((totalPrice / MINIMUM_ORDER) * 100, 100);
+  const canCheckout = totalPrice >= MINIMUM_ORDER;
+
+  const { data: discountedSuggestions } = useQuery({
+    queryKey: ['cart-discount-suggestions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('in_stock', true)
+        .not('discount_price', 'is', null)
+        .not('original_price', 'is', null)
+        .limit(12);
+
+      if (error) throw error;
+      return (data as Product[]) || [];
+    },
+  });
+
+  const suggestionProducts = useMemo(() => {
+    const available = discountedSuggestions || [];
+    return [...available].sort(() => Math.random() - 0.5).slice(0, 4);
+  }, [discountedSuggestions]);
 
   if (cartItems.length === 0) {
     return (
@@ -34,7 +66,7 @@ const Cart = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8 pt-24">
         <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 sm:mb-8">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -42,6 +74,26 @@ const Cart = () => {
         </Link>
 
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Shopping Cart</h1>
+
+        <Card className="mb-6 border-primary/20 bg-card/60">
+          <CardContent className="pt-6">
+            <div className="mb-3 flex items-center justify-between text-sm font-medium">
+              <span>Minimum order to checkout: {formatPrice(MINIMUM_ORDER)}</span>
+              <span>{Math.round(progressPercentage)}%</span>
+            </div>
+            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-500 to-green-500 transition-all duration-700"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm font-medium">
+              {canCheckout
+                ? "✓ You're ready to checkout! 🎉 Great job unlocking checkout."
+                : `Spend ${formatPrice(amountRemaining)} more to unlock checkout!`}
+            </p>
+          </CardContent>
+        </Card>
 
         <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           <div className="lg:col-span-2 space-y-4">
@@ -109,6 +161,30 @@ const Cart = () => {
                 </CardContent>
               </Card>
             ))}
+
+            {suggestionProducts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">You might also like</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 sm:grid-cols-2">
+                  {suggestionProducts.map((product) => (
+                    <div key={product.id} className="rounded-md border p-3">
+                      <p className="text-sm font-medium line-clamp-2">{product.name}</p>
+                      <div className="mt-1 text-sm">
+                        <span className="font-semibold text-primary">{formatPrice(product.discount_price || product.price)}</span>
+                        <span className="ml-2 text-xs text-muted-foreground line-through">
+                          {formatPrice(product.original_price || product.price)}
+                        </span>
+                      </div>
+                      <Button size="sm" variant="outline" className="mt-3" onClick={() => addToCart(product)}>
+                        Add deal
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="lg:col-span-1">
@@ -118,25 +194,38 @@ const Cart = () => {
               </CardHeader>
               <CardContent>
                 <CartBenefits />
-                
+
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>{formatPrice(getTotalPrice())}</span>
+                    <span>{formatPrice(totalPrice)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-lg border-t pt-2">
                     <span>Total</span>
-                    <span>{formatPrice(getTotalPrice())}</span>
+                    <span>{formatPrice(totalPrice)}</span>
                   </div>
                 </div>
+
+                {!canCheckout && (
+                  <p className="mt-3 text-sm text-amber-700 font-medium">
+                    Add {formatPrice(amountRemaining)} more to checkout.
+                  </p>
+                )}
               </CardContent>
               <CardFooter>
-                <Button asChild className="w-full" size="lg">
-                  <Link to="/checkout">
+                {canCheckout ? (
+                  <Button asChild className="w-full" size="lg">
+                    <Link to="/checkout">
+                      Proceed to Checkout
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button className="w-full" size="lg" disabled>
                     Proceed to Checkout
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           </div>

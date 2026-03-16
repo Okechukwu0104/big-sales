@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,12 +15,26 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { CheckoutTrustBadges } from '@/components/TrustBadges';
 
+const MINIMUM_ORDER = 10000;
+
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCartContext();
   const { formatPrice } = useCurrency();
   const { updateInventory } = useInventory();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (cartItems.length > 0 && getTotalPrice() < MINIMUM_ORDER) {
+      toast({
+        title: 'Minimum order not reached',
+        description: `Please add ${formatPrice(MINIMUM_ORDER - getTotalPrice())} more before checkout.`,
+        variant: 'destructive',
+      });
+      navigate('/cart');
+    }
+  }, [cartItems.length, getTotalPrice, navigate, toast, formatPrice]);
 
   const [formData, setFormData] = useState({
     customerName: '',
