@@ -18,7 +18,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart } = useCartContext();
+  const { addToCart, getTotalPrice } = useCartContext();
   const { toast } = useToast();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
@@ -155,6 +155,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
     });
+
+    const projectedTotal = getTotalPrice() + product.price;
+    if (projectedTotal < 10000) {
+      window.dispatchEvent(new CustomEvent('show-product-suggestions'));
+    }
   };
 
   const handleQuickBuy = (e: React.MouseEvent) => {
