@@ -1,71 +1,34 @@
 
 
-# Temu-Like Shopping Experience: Minimum Order, Shuffled Carousel, Product Suggestions
+# Fix Page Glitches + Mobile-Responsive Flash Deals
 
-## Overview
+## Issues Found
 
-Transform the shopping experience with Temu-inspired mechanics: enforce a minimum ₦10,000 cart value before checkout, shuffle the hero carousel products on each visit, fix the Browse Categories scroll, and add engaging product suggestion popups that create urgency and drive upsells.
+1. **Hero text glitch**: Line 438 in `Home.tsx` has literal `/n` instead of a line break — shows "For FREE! /n Premium products" on screen
+2. **Bundle pricing bug**: In `ProductSuggestionPopup.tsx` line 75, `bundlePrice = sumOfAllThree * 1.10` means the bundle costs MORE than buying items separately — this is the opposite of a deal. Should be `* 0.85` (15% discount)
+3. **Flash deals drawer not mobile-responsive**: The grid uses `grid gap-3 sm:grid-cols-2` which means single column on mobile, but the cards themselves are too wide/tall. The drawer also lacks `max-h` and scroll, so content can overflow off-screen
+4. **Bundle image z-index uses dynamic Tailwind classes** (`z-${10-i}`) which don't work with Tailwind's JIT compiler — images won't layer correctly
 
 ## Changes
 
-### 1. Fix Browse Categories Scroll
-The `id="categories"` div already exists at line 581 of Home.tsx. The scroll target works but is inside the `viewMode === 'home'` conditional — if the user has switched to "all" view, the element doesn't exist. We'll ensure it always scrolls correctly by keeping the categories section visible or switching viewMode first.
+### 1. Fix hero text (`src/pages/Home.tsx`, line 438)
+- Replace `/n` with `<br />` to create an actual line break, or just remove it and use two separate `<p>` tags
 
-**File: `src/pages/Home.tsx`**
-- In the Browse Categories button handler (line 412-414), set `viewMode` to `'home'` first, then use a `setTimeout` to scroll after render.
+### 2. Fix bundle pricing (`src/components/ProductSuggestionPopup.tsx`, line 75)
+- Change `Math.round(sumOfAllThree * 1.10)` → `Math.round(sumOfAllThree * 0.85)`
+- Update `percentageOff` to actually show `15` (since we're giving 15% off the bundle)
 
-### 2. Shuffle Hero Carousel Products
-**File: `src/pages/Home.tsx`**
-- Change `trendingProducts` memo (line 174-179) to shuffle the top products using Fisher-Yates shuffle instead of just taking top 3 sorted. Each page load/data refresh shows them in random order.
+### 3. Make flash deals mobile-responsive (`src/components/ProductSuggestionPopup.tsx`)
+- Add `max-h-[70vh] overflow-y-auto` to the drawer content wrapper so it scrolls on mobile
+- Make bundle cards more compact on mobile: smaller avatar images (`h-10 w-10`), tighter padding (`p-2`), smaller text
+- Fix dynamic z-index: replace `z-${10-i}` with inline `style={{ zIndex: 10-i }}`
+- Reduce "Bundle Offer!" text and description size on mobile
 
-### 3. Minimum Order Threshold (₦10,000)
-Temu requires a minimum purchase — we enforce ₦10,000.
-
-**File: `src/pages/Cart.tsx`**
-- Add a progress bar showing how close the user is to ₦10,000
-- Show "Add ₦X more to checkout" message when below threshold
-- Disable/grey out "Proceed to Checkout" button when under ₦10,000
-- Add a "You might also like" section below with random discounted products to encourage adding more
-
-**File: `src/pages/Checkout.tsx`**
-- Add a guard: if `getTotalPrice() < 10000`, redirect back to cart with a toast
-
-### 4. Product Suggestion Popup (Temu-style "Flash Deals")
-A popup that appears after the user has been browsing for 15 seconds, or when they add an item to cart — showing 3-4 discounted products with urgency text like "Limited Time Deal" and fake countdown timers.
-
-**New File: `src/components/ProductSuggestionPopup.tsx`**
-- Modal/drawer that slides up from bottom on mobile, centered modal on desktop
-- Shows 3-4 products that have `discount_price` set (actual discounts from DB)
-- Each card shows: image, name, original price crossed out, discount price, % off badge
-- "Add to Cart" button on each
-- Triggers: 
-  - 15 seconds after page load (once per session via sessionStorage flag)
-  - After adding an item to cart (if cart total is still under ₦10,000, to encourage reaching threshold)
-- Dismissable with X button
-- Header: "🔥 Flash Deals — Don't Miss Out!"
-
-**File: `src/pages/Home.tsx`**
-- Import and render `ProductSuggestionPopup`
-- Pass products list and a trigger state
-
-**File: `src/components/ProductCard.tsx`**
-- After `addToCart` call, dispatch a custom event or use a callback to trigger the suggestion popup if cart < ₦10,000
-
-### 5. Cart Progress Bar Component
-**Embedded in `src/pages/Cart.tsx`**
-- Animated gradient progress bar (orange→green)
-- Text: "Spend ₦X more to unlock checkout!" or "✓ You're ready to checkout!"
-- When threshold met, confetti-style celebration text
-
-## Technical Details
+### 4. Fix any other z-index/Tailwind JIT issues
+- The dynamic class pattern `z-${10-i}` won't be in the safelist — switch to inline styles
 
 | File | Changes |
 |------|---------|
-| `src/pages/Home.tsx` | Fix Browse Categories scroll handler, shuffle trending products, render ProductSuggestionPopup |
-| `src/pages/Cart.tsx` | Add min-order progress bar, disable checkout below ₦10,000, add "You might also like" section |
-| `src/pages/Checkout.tsx` | Add ₦10,000 minimum guard with redirect |
-| `src/components/ProductSuggestionPopup.tsx` | New — Temu-style flash deals popup with discounted products |
-| `src/components/ProductCard.tsx` | Trigger suggestion popup after add-to-cart when cart < ₦10,000 |
-
-No database changes needed — all logic uses existing product data (`discount_price`, `original_price` fields).
+| `src/pages/Home.tsx` | Fix `/n` → `<br />` in hero description text |
+| `src/components/ProductSuggestionPopup.tsx` | Fix bundle price (0.85x not 1.10x), add percentageOff calc, mobile scroll/compact layout, fix dynamic z-index |
 
