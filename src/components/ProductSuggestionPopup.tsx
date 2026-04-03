@@ -18,7 +18,6 @@ import {
   DrawerDescription,
 } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Plus } from 'lucide-react';
 
 interface ProductSuggestionPopupProps {
   products: Product[];
@@ -35,27 +34,23 @@ interface BundleDeal {
   percentageOff: number;
 }
 
+const BUNDLE_DISCOUNT = 0.85; // 15% off
+
 const generateAutoBundles = (products: Product[], seed: number): BundleDeal[] => {
   const available = products.filter(p => p.in_stock && p.price > 0);
   if (available.length < 2) return [];
 
-  // Simple string hasher for pseudo-randomness
   const getHash = (str: string) => str.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
-  // Sort logically: first by a randomized category order, then by randomized items within category
   const shuffled = [...available].sort((a, b) => {
     const catA = a.category || 'misc';
     const catB = b.category || 'misc';
-    
-    // 1. Group by category (with random order of categories)
     if (catA !== catB) {
       const catValA = (getHash(catA) + seed * 7) % 100;
       const catValB = (getHash(catB) + seed * 7) % 100;
       if (catValA !== catValB) return catValA - catValB;
-      return catA.localeCompare(catB); // tie breaker
+      return catA.localeCompare(catB);
     }
-    
-    // 2. Randomize items within the same category
     const idValA = (getHash(a.id) + seed * 13) % 100;
     const idValB = (getHash(b.id) + seed * 13) % 100;
     if (idValA !== idValB) return idValA - idValB;
@@ -63,8 +58,7 @@ const generateAutoBundles = (products: Product[], seed: number): BundleDeal[] =>
   });
 
   const bundles: BundleDeal[] = [];
-  
-  // Create up to 2 bundles
+
   for (let i = 0; i < Math.min(2, Math.floor(shuffled.length / 3) || 1); i++) {
     const group = [
       shuffled[i * 3],
@@ -74,14 +68,13 @@ const generateAutoBundles = (products: Product[], seed: number): BundleDeal[] =>
 
     if (group.length < 2) break;
 
-    // The most expensive item becomes the primary product
     group.sort((a, b) => b.price - a.price);
-    
+
     const mainProduct = group[0];
     const additions = group.slice(1);
-
     const sumOfAllThree = group.reduce((sum, p) => sum + p.price, 0);
-    const bundlePrice = Math.round(sumOfAllThree * 1.10);
+    const bundlePrice = Math.round(sumOfAllThree * BUNDLE_DISCOUNT);
+    const percentageOff = Math.round((1 - BUNDLE_DISCOUNT) * 100);
 
     bundles.push({
       id: `bundle-${mainProduct.id}-${seed}`,
@@ -89,7 +82,7 @@ const generateAutoBundles = (products: Product[], seed: number): BundleDeal[] =>
       additions,
       bundlePrice,
       originalValue: sumOfAllThree,
-      percentageOff: 0
+      percentageOff
     });
   }
 
@@ -116,21 +109,19 @@ export const ProductSuggestionPopup = ({
     );
 
     if (discountedProducts.length > 0) {
-       return {
-         manualDeals: [...discountedProducts].sort(() => Math.random() - 0.5).slice(0, 4),
-         autoBundles: []
-       };
+      return {
+        manualDeals: [...discountedProducts].sort(() => Math.random() - 0.5).slice(0, 4),
+        autoBundles: []
+      };
     }
 
     return {
-       manualDeals: [],
-       autoBundles: generateAutoBundles(products, seed).slice(0, 4)
+      manualDeals: [],
+      autoBundles: generateAutoBundles(products, seed).slice(0, 4)
     };
   }, [products, seed]);
 
-  const refreshDeals = () => {
-    setSeed((prev) => prev + 1);
-  };
+  const refreshDeals = () => setSeed((prev) => prev + 1);
 
   const handleAddManualToCart = (product: Product) => {
     addToCart(product);
@@ -148,15 +139,15 @@ export const ProductSuggestionPopup = ({
   const hasDeals = manualDeals.length > 0 || autoBundles.length > 0;
 
   const content = (
-    <div className="space-y-4 pb-2">
+    <div className="space-y-3 pb-2 max-h-[70vh] overflow-y-auto">
       <div className="space-y-1 px-1">
-        <h3 className="text-base font-semibold">🔥 Flash Deals — Don't Miss Out!</h3>
-        <p className="text-sm text-muted-foreground">
+        <h3 className="text-sm sm:text-base font-semibold">🔥 Flash Deals — Don't Miss Out!</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Limited Time Deal! These prices can disappear soon.
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2">
         {manualDeals.map((product) => {
           const percentageOff = Math.round(
             (((product.original_price || 0) - (product.discount_price || 0)) /
@@ -165,35 +156,35 @@ export const ProductSuggestionPopup = ({
           );
 
           return (
-            <div key={product.id} className="rounded-lg border p-3">
-              <div className="flex gap-3">
+            <div key={product.id} className="rounded-lg border p-2 sm:p-3">
+              <div className="flex gap-2 sm:gap-3">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="h-16 w-16 rounded-md object-cover"
+                    className="h-12 w-12 sm:h-16 sm:w-16 rounded-md object-cover"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-md bg-muted" />
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-md bg-muted" />
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-medium">{product.name}</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground line-through">
+                  <p className="line-clamp-2 text-xs sm:text-sm font-medium">{product.name}</p>
+                  <div className="mt-1 flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-[10px] sm:text-xs text-muted-foreground line-through">
                       {formatPrice(product.original_price || product.price)}
                     </span>
-                    <span className="text-sm font-semibold text-primary">
+                    <span className="text-xs sm:text-sm font-semibold text-primary">
                       {formatPrice(product.discount_price || product.price)}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs font-semibold text-orange-600">{percentageOff}% OFF</p>
+                  <p className="mt-0.5 text-[10px] sm:text-xs font-semibold text-orange-600">{percentageOff}% OFF</p>
                 </div>
               </div>
 
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <p className="text-xs text-destructive font-medium">⏰ Ends in 09:59</p>
-                <Button size="sm" onClick={() => handleAddManualToCart(product)}>
+              <div className="mt-2 sm:mt-3 flex items-center justify-between gap-2">
+                <p className="text-[10px] sm:text-xs text-destructive font-medium">⏰ Ends in 09:59</p>
+                <Button size="sm" className="h-7 text-xs sm:h-8 sm:text-sm" onClick={() => handleAddManualToCart(product)}>
                   Add to Cart
                 </Button>
               </div>
@@ -202,63 +193,71 @@ export const ProductSuggestionPopup = ({
         })}
 
         {autoBundles.map((bundle) => (
-          <div key={bundle.id} className="rounded-lg border p-3 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+          <div key={bundle.id} className="rounded-lg border p-2 sm:p-3 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex -space-x-3 overflow-hidden">
-                  <img src={bundle.mainProduct.image_url || '/placeholder.svg'} alt="" className="inline-block h-12 w-12 rounded-full ring-2 ring-background object-cover bg-muted z-20" />
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <div className="flex -space-x-2 sm:-space-x-3 overflow-hidden">
+                  <img
+                    src={bundle.mainProduct.image_url || '/placeholder.svg'}
+                    alt=""
+                    className="inline-block h-9 w-9 sm:h-12 sm:w-12 rounded-full ring-2 ring-background object-cover bg-muted"
+                    style={{ zIndex: 20 }}
+                  />
                   {bundle.additions.map((p, i) => (
-                    <img key={i} src={p.image_url || '/placeholder.svg'} alt="" className={`inline-block h-12 w-12 rounded-full ring-2 ring-background object-cover bg-muted z-${10 - i}`} />
+                    <img
+                      key={i}
+                      src={p.image_url || '/placeholder.svg'}
+                      alt=""
+                      className="inline-block h-9 w-9 sm:h-12 sm:w-12 rounded-full ring-2 ring-background object-cover bg-muted"
+                      style={{ zIndex: 10 - i }}
+                    />
                   ))}
                 </div>
-                <div className="min-w-0 flex-1 pl-2">
-                  <p className="text-sm font-bold text-primary leading-tight">Bundle Offer!</p>
-                  <p className="mt-0.5 text-xs font-semibold text-green-600 bg-green-50 rounded-full px-2 py-0.5 inline-block">+{bundle.additions.length} Items FREE</p>
+                <div className="min-w-0 flex-1 pl-1 sm:pl-2">
+                  <p className="text-xs sm:text-sm font-bold text-primary leading-tight">Bundle Offer!</p>
+                  <p className="mt-0.5 text-[10px] sm:text-xs font-semibold text-green-600 bg-green-50 rounded-full px-1.5 sm:px-2 py-0.5 inline-block">+{bundle.additions.length} Items FREE</p>
                 </div>
               </div>
 
-              <div className="min-w-0 flex-1 mb-3 bg-muted/30 p-2 rounded-md border border-border/50">
-                 <p className="line-clamp-2 text-xs text-muted-foreground leading-relaxed">
-                   Buy <span className="font-semibold text-foreground">{bundle.mainProduct.name}</span>, get 
-                   {bundle.additions.map((a, i) => <span key={i} className="font-semibold text-foreground"> {a.name}{i === 0 && bundle.additions.length > 1 ? ' & ' : ''}</span>)} FREE!
-                 </p>
+              <div className="min-w-0 flex-1 mb-2 sm:mb-3 bg-muted/30 p-1.5 sm:p-2 rounded-md border border-border/50">
+                <p className="line-clamp-2 text-[10px] sm:text-xs text-muted-foreground leading-relaxed">
+                  Buy <span className="font-semibold text-foreground">{bundle.mainProduct.name}</span>, get
+                  {bundle.additions.map((a, i) => <span key={i} className="font-semibold text-foreground"> {a.name}{i === 0 && bundle.additions.length > 1 ? ' & ' : ''}</span>)} FREE!
+                </p>
               </div>
 
-              <div className="mt-1 flex items-center gap-2">
-                {bundle.originalValue > bundle.bundlePrice && (
-                  <span className="text-xs text-muted-foreground line-through">
-                    {formatPrice(bundle.originalValue)}
-                  </span>
-                )}
-                <span className="text-sm font-bold text-foreground">
+              <div className="mt-1 flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[10px] sm:text-xs text-muted-foreground line-through">
+                  {formatPrice(bundle.originalValue)}
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-foreground">
                   {formatPrice(bundle.bundlePrice)}
                 </span>
                 {bundle.percentageOff > 0 && (
-                  <span className="ml-auto text-[10px] font-bold bg-orange-100 text-orange-600 px-2 py-1 rounded-full uppercase tracking-wider">Save {bundle.percentageOff}%</span>
+                  <span className="ml-auto text-[9px] sm:text-[10px] font-bold bg-orange-100 text-orange-600 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full uppercase tracking-wider">Save {bundle.percentageOff}%</span>
                 )}
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3">
-              <p className="text-xs text-destructive font-medium flex items-center gap-1">
+            <div className="mt-2 sm:mt-4 flex items-center justify-between gap-2 border-t pt-2 sm:pt-3">
+              <p className="text-[10px] sm:text-xs text-destructive font-medium flex items-center gap-1">
                 ⏰ <span className="pt-0.5">09:59</span>
               </p>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => handleAddBundleToCart(bundle)}>
+              <Button size="sm" className="h-7 text-xs sm:h-8 sm:text-sm bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={() => handleAddBundleToCart(bundle)}>
                 Add Bundle
               </Button>
             </div>
           </div>
         ))}
-
       </div>
 
       {!hasDeals && (
-        <p className="text-sm text-muted-foreground">No flash deals available right now.</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">No flash deals available right now.</p>
       )}
 
       {hasDeals && (
-        <div className="flex justify-end pt-2">
-          <Button variant="ghost" size="sm" onClick={refreshDeals}>
+        <div className="flex justify-end pt-1 sm:pt-2">
+          <Button variant="ghost" size="sm" className="text-xs sm:text-sm" onClick={refreshDeals}>
             Show other deals
           </Button>
         </div>
@@ -270,11 +269,11 @@ export const ProductSuggestionPopup = ({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>Recommended for you</DrawerTitle>
-            <DrawerDescription>Quick deals to boost your cart value.</DrawerDescription>
+          <DrawerHeader className="pb-2">
+            <DrawerTitle className="text-sm">Recommended for you</DrawerTitle>
+            <DrawerDescription className="text-xs">Quick deals to boost your cart value.</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4">{content}</div>
+          <div className="px-3 pb-4">{content}</div>
         </DrawerContent>
       </Drawer>
     );
@@ -283,7 +282,7 @@ export const ProductSuggestionPopup = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
-         <DialogHeader>
+        <DialogHeader>
           <DialogTitle>Recommended for you</DialogTitle>
           <DialogDescription>Quick deals to boost your cart value.</DialogDescription>
         </DialogHeader>
