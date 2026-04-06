@@ -1,34 +1,91 @@
 
+Permanent mobile fix plan
 
-# Fix Page Glitches + Mobile-Responsive Flash Deals
+What I found
+- The biggest likely source of “glitches” is the fixed header: on mobile it is taller because it has the extra search row, but page spacing is inconsistent across routes.
+  - `Home.tsx` uses `pt-20`
+  - `Cart.tsx` / `ProductDetail.tsx` use larger top padding
+  - `Checkout.tsx`, `OrderSuccess.tsx`, and `TrackOrder.tsx` have little or no header offset
+  This can cause content to sit under the header, jump, or feel broken on mobile.
+- There are also a few layout-overflow risks on mobile:
+  - carousel/category arrow buttons are positioned partly outside containers
+  - the footer newsletter form stays in one row with a fixed-width button
+  - multiple floating buttons can compete for space with the flash-deals drawer
+- The flash deals popup is improved already, but not fully “permanent” yet because the drawer shell itself still needs stricter mobile height/overflow handling.
+- The “Browse Categories” action still relies on a short timeout, which can be unreliable on slower/mobile devices.
 
-## Issues Found
+What I will change
+1. Create one shared mobile-safe page offset system
+- Add a reusable top-spacing utility in `src/index.css` for all pages that use the fixed `Header`.
+- Apply the same safe header offset to:
+  - `src/pages/Home.tsx`
+  - `src/pages/Cart.tsx`
+  - `src/pages/Checkout.tsx`
+  - `src/pages/OrderSuccess.tsx`
+  - `src/pages/TrackOrder.tsx`
+  - `src/pages/ProductDetail.tsx`
+- This removes header overlap and inconsistent page jumps permanently.
 
-1. **Hero text glitch**: Line 438 in `Home.tsx` has literal `/n` instead of a line break — shows "For FREE! /n Premium products" on screen
-2. **Bundle pricing bug**: In `ProductSuggestionPopup.tsx` line 75, `bundlePrice = sumOfAllThree * 1.10` means the bundle costs MORE than buying items separately — this is the opposite of a deal. Should be `* 0.85` (15% discount)
-3. **Flash deals drawer not mobile-responsive**: The grid uses `grid gap-3 sm:grid-cols-2` which means single column on mobile, but the cards themselves are too wide/tall. The drawer also lacks `max-h` and scroll, so content can overflow off-screen
-4. **Bundle image z-index uses dynamic Tailwind classes** (`z-${10-i}`) which don't work with Tailwind's JIT compiler — images won't layer correctly
+2. Remove horizontal overflow sources
+- Hide side arrow controls on small screens in:
+  - `src/components/ProductSection.tsx`
+  - `src/components/CategoryBrowser.tsx`
+  Touch swipe will remain the mobile interaction.
+- Keep desktop arrows visible but move them fully inside the container.
+- Add a final overflow safeguard on the main app/page wrapper so tiny translated elements cannot create sideways scrolling.
 
-## Changes
+3. Make flash deals truly mobile-safe
+- Tighten the mobile drawer behavior in:
+  - `src/components/ui/drawer.tsx`
+  - `src/components/ProductSuggestionPopup.tsx`
+- Changes:
+  - cap drawer height to viewport
+  - make header/body areas scroll correctly
+  - add safe bottom padding
+  - keep card content smaller and wrap-proof on narrow screens
+  - prevent CTA rows and price badges from forcing width overflow
 
-### 1. Fix hero text (`src/pages/Home.tsx`, line 438)
-- Replace `/n` with `<br />` to create an actual line break, or just remove it and use two separate `<p>` tags
+4. Stabilize floating mobile actions
+- Review the three fixed mobile actions:
+  - scroll-to-top
+  - FAQ/help
+  - WhatsApp contact
+- Reposition or reduce them on small screens so they never clash with each other or with the flash-deals drawer.
 
-### 2. Fix bundle pricing (`src/components/ProductSuggestionPopup.tsx`, line 75)
-- Change `Math.round(sumOfAllThree * 1.10)` → `Math.round(sumOfAllThree * 0.85)`
-- Update `percentageOff` to actually show `15` (since we're giving 15% off the bundle)
+5. Make “Browse Categories” reliable
+- Replace the timeout-based scroll in `src/pages/Home.tsx` with a more reliable ref/effect-based scroll after the home view is active.
+- This ensures tapping “Browse Categories” always lands on the `Browse by Category` section, including on slower phones.
 
-### 3. Make flash deals mobile-responsive (`src/components/ProductSuggestionPopup.tsx`)
-- Add `max-h-[70vh] overflow-y-auto` to the drawer content wrapper so it scrolls on mobile
-- Make bundle cards more compact on mobile: smaller avatar images (`h-10 w-10`), tighter padding (`p-2`), smaller text
-- Fix dynamic z-index: replace `z-${10-i}` with inline `style={{ zIndex: 10-i }}`
-- Reduce "Bundle Offer!" text and description size on mobile
+6. Reduce mobile layout shifts in the header
+- In `src/components/Header.tsx`, reserve stable space for the support/help action so the header does not shift when store config finishes loading.
+- Keep the mobile search row compact and consistent.
 
-### 4. Fix any other z-index/Tailwind JIT issues
-- The dynamic class pattern `z-${10-i}` won't be in the safelist — switch to inline styles
+7. Fix remaining obvious mobile offenders
+- `src/components/Footer.tsx`: stack the newsletter input/button vertically on mobile and remove the forced button width there.
+- Do a small responsive cleanup pass on:
+  - `src/components/TrustBadges.tsx`
+  - `src/components/TestimonialCarousel.tsx`
+  - `src/components/HowItWorks.tsx`
+  so text blocks/cards feel tighter and cleaner on mobile.
 
-| File | Changes |
-|------|---------|
-| `src/pages/Home.tsx` | Fix `/n` → `<br />` in hero description text |
-| `src/components/ProductSuggestionPopup.tsx` | Fix bundle price (0.85x not 1.10x), add percentageOff calc, mobile scroll/compact layout, fix dynamic z-index |
+Technical approach
+- Prefer shared utilities over page-by-page padding hacks.
+- Prefer hiding decorative desktop controls on mobile instead of squeezing them.
+- Use viewport-safe sizing (`dvh`/max-height) for drawers and overlays.
+- Replace timer-based navigation with state/ref-driven scrolling.
+- Keep the fixes structural so the same bugs do not reappear when sections change later.
 
+Files likely involved
+- `src/index.css`
+- `src/components/Header.tsx`
+- `src/components/ui/drawer.tsx`
+- `src/components/ProductSuggestionPopup.tsx`
+- `src/components/ProductSection.tsx`
+- `src/components/CategoryBrowser.tsx`
+- `src/components/Footer.tsx`
+- `src/pages/Home.tsx`
+- `src/pages/Cart.tsx`
+- `src/pages/Checkout.tsx`
+- `src/pages/OrderSuccess.tsx`
+- `src/pages/TrackOrder.tsx`
+- `src/pages/ProductDetail.tsx`
