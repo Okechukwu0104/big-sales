@@ -196,7 +196,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     <Card className="group overflow-hidden card-modern hover-glow">
       <Link to={`/product/${product.id}`}>
         <div 
-          className="aspect-square overflow-hidden relative"
+          className="aspect-square overflow-hidden relative bg-muted/30"
           onMouseEnter={hasVideo ? handleVideoHover : undefined}
           onMouseLeave={hasVideo ? handleVideoLeave : undefined}
         >
@@ -302,8 +302,9 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </h3>
         </Link>
         
-        {reviews && reviews.length > 0 && (
-          <div className="flex items-center gap-0.5 mb-1.5">
+        <div className="flex items-center gap-0.5 mb-1.5 min-h-[16px]">
+          {reviews && reviews.length > 0 ? (
+            <>
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
@@ -317,11 +318,14 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <span className="text-xs text-muted-foreground ml-0.5">
               ({reviews.length})
             </span>
-          </div>
-        )}
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">No reviews yet</span>
+          )}
+        </div>
         
         {product.description && (
-          <p className="text-muted-foreground text-xs mb-2 line-clamp-1 leading-relaxed hidden sm:block">
+          <p className="text-muted-foreground text-xs mb-2 line-clamp-1 leading-relaxed hidden sm:block min-h-[16px]">
             {product.description.slice(0, 20)}
           </p>
         )}
