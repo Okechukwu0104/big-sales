@@ -24,7 +24,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Search, X, Sparkles, ArrowUp, HelpCircle, 
   Clock, Flame, Star, ArrowLeft, ArrowRight, MessageCircle, Package, Eye, Keyboard,
-  SlidersHorizontal, ArrowDownWideNarrow, ArrowUpWideNarrow, Tag
+  SlidersHorizontal, ArrowDownWideNarrow, ArrowUpWideNarrow, Tag, ShoppingCart
 } from 'lucide-react';
 import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
 import { useToast } from '@/hooks/use-toast';
@@ -33,7 +33,7 @@ type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-des
 
 const Home = () => {
   const { toast } = useToast();
-  const { getTotalPrice } = useCartContext();
+  const { getTotalPrice, addToCart } = useCartContext();
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -297,6 +297,19 @@ const Home = () => {
     setTimeout(() => {
       window.open(webLink, '_blank');
     }, 500);
+  };
+
+  const handleAddToCartFromGrid = (product: Product) => {
+    addToCart(product);
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+    });
+
+    const projectedTotal = getTotalPrice() + product.price;
+    if (projectedTotal < 10000) {
+      window.dispatchEvent(new CustomEvent('show-product-suggestions'));
+    }
   };
 
   // Scroll to FAQ section
@@ -730,7 +743,66 @@ const Home = () => {
               ) : sortedAndFilteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                   {sortedAndFilteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <article
+                      key={product.id}
+                      className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm"
+                    >
+                      <button
+                        onClick={() => navigate(`/product/${product.id}`)}
+                        className="w-full text-left"
+                      >
+                        <div className="aspect-square bg-muted">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                              No image
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-3">
+                          <h3 className="font-bold text-base line-clamp-1 mb-1">
+                            {product.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-2">No reviews yet</p>
+                          <p className="text-2xl font-black text-foreground">
+                            {formatPrice(product.discount_price || product.price)}
+                          </p>
+                          {product.original_price && product.discount_price && (
+                            <p className="text-xs text-muted-foreground line-through mt-0.5">
+                              {formatPrice(product.original_price)}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+
+                      <div className="p-3 pt-0 grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => handleAddToCartFromGrid(product)}
+                          disabled={!product.in_stock}
+                          className="h-10 rounded-xl border border-border bg-background text-foreground text-sm font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-1"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                          Add
+                        </button>
+                        <button
+                          onClick={() => {
+                            addToCart(product);
+                            navigate('/checkout');
+                          }}
+                          disabled={!product.in_stock}
+                          className="h-10 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50"
+                        >
+                          Buy Now
+                        </button>
+                      </div>
+                    </article>
                   ))}
                 </div>
               ) : (
