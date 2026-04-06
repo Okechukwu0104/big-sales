@@ -209,7 +209,7 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pt-20">
+      <main className="container mx-auto px-4 py-8 page-offset">
         <Link 
           to="/" 
           className="inline-flex items-center text-primary hover:text-primary/80 mb-6 sm:mb-8 transition-colors font-medium"
