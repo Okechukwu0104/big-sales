@@ -100,10 +100,10 @@ export const ContactUsPopup = () => {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <button
-          className="fixed bottom-24 right-4 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+          className="fixed bottom-20 right-4 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-green-500 text-white shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
           aria-label="Contact us via WhatsApp"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-5 w-5" />
         </button>
       </SheetTrigger>
 

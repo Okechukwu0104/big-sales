@@ -77,22 +77,22 @@ export const CategoryBrowser = ({ onCategorySelect, selectedCategory }: Category
       </div>
 
       <div className="relative group">
-        {/* Left Arrow */}
+        {/* Left Arrow — hidden on mobile */}
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110 -translate-x-1/2"
+          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110 items-center justify-center"
           aria-label="Scroll left"
         >
-          <ChevronLeft className="h-5 w-5 text-gray-700" />
+          <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
 
-        {/* Right Arrow */}
+        {/* Right Arrow — hidden on mobile */}
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110 translate-x-1/2"
+          className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110 items-center justify-center"
           aria-label="Scroll right"
         >
-          <ChevronRight className="h-5 w-5 text-gray-700" />
+          <ChevronRight className="h-5 w-5 text-foreground" />
         </button>
 
         {/* Scrollable Container */}

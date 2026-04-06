@@ -126,6 +126,18 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+  }
+
+  /* Consistent header offset for all pages with fixed header */
+  .page-offset {
+    padding-top: 6.5rem; /* ~104px for mobile (header + search row) */
+  }
+
+  @media (min-width: 640px) {
+    .page-offset {
+      padding-top: 5rem; /* ~80px for desktop */
+    }
   }
 }
 

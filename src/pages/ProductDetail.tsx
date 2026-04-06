@@ -168,7 +168,7 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="container mx-auto px-4 py-8 page-offset">
           <div className="animate-pulse">
             <div className="bg-muted h-8 w-32 rounded mb-8"></div>
             <div className="grid md:grid-cols-2 gap-8">
@@ -190,7 +190,7 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="container mx-auto px-4 py-8 page-offset">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
             <Link to="/">
@@ -209,7 +209,7 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8 pt-20">
+      <main className="container mx-auto px-4 py-8 page-offset">
         <Link 
           to="/" 
           className="inline-flex items-center text-primary hover:text-primary/80 mb-6 sm:mb-8 transition-colors font-medium"

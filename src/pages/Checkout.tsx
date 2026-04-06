@@ -112,7 +112,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 page-offset">
           <div className="text-center">
             <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
             <Link to="/">
@@ -131,7 +131,7 @@ const Checkout = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 page-offset">
         <Link to="/cart" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Cart
