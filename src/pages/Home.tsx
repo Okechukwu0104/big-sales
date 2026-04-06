@@ -796,27 +796,27 @@ const Home = () => {
         {/* Scroll to Top Button */}
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 gradient-button text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+          className={`fixed bottom-6 right-4 z-40 p-3 gradient-button text-white rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
             showScrollTop
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-10 pointer-events-none'
           }`}
           aria-label="Scroll to top"
         >
-          <ArrowUp className="h-6 w-6" />
+          <ArrowUp className="h-5 w-5" />
         </button>
 
         {/* Floating FAQ Button */}
         <button
           onClick={scrollToFAQ}
-          className={`fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-50 p-3 bg-card text-foreground rounded-full shadow-lg hover:bg-muted transition-all duration-300 hover:scale-110 border border-border ${
+          className={`fixed bottom-6 left-4 z-40 p-3 bg-card text-foreground rounded-full shadow-lg hover:bg-muted transition-all duration-300 hover:scale-110 border border-border ${
             showScrollTop 
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 translate-y-10 pointer-events-none'
           }`}
           aria-label="Go to FAQ section"
         >
-          <HelpCircle className="h-6 w-6 text-primary" />
+          <HelpCircle className="h-5 w-5 text-primary" />
         </button>
 
         <ProductSuggestionPopup

@@ -26,7 +26,7 @@ export const Footer = () => {
             <p className="text-muted-foreground mb-6 max-w-md">
               Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.
             </p>
-            <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 max-w-md">
               <input
                 type="email"
                 value={email}
@@ -37,7 +37,7 @@ export const Footer = () => {
               />
               <button
                 type="submit"
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-all shadow-sm flex items-center justify-center min-w-[120px]"
+                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-all shadow-sm flex items-center justify-center"
               >
                 Subscribe
               </button>
