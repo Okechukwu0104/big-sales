@@ -66,10 +66,10 @@ export const ProductSection = ({
 
       {/* Products Carousel */}
       <div className="relative group">
-        {/* Left Arrow */}
+        {/* Left Arrow — hidden on mobile */}
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur-sm border border-border rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white disabled:opacity-0"
+          className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur-sm border border-border rounded-full shadow-lg items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
           aria-label="Scroll left"
         >
           <ChevronLeft className="h-5 w-5 text-foreground" />
