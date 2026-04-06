@@ -67,7 +67,7 @@ const Cart = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8 pt-24">
+      <main className="container mx-auto px-4 py-8 page-offset">
         <Link to="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 sm:mb-8">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Continue Shopping

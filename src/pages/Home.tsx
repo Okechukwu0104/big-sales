@@ -404,7 +404,7 @@ const Home = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="pt-20">
+      <main className="page-offset">
         {/* Promotional Banner Carousel */}
         <PromoBannerCarousel />
 
