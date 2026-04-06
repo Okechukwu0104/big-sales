@@ -201,6 +201,21 @@
     border: 1px solid hsl(var(--border) / 0.3);
   }
 
+
+  .header-surface {
+    background-color: hsl(var(--background) / 0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .header-surface {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background-color: hsl(var(--background) / 0.99);
+    }
+  }
+
   /* Pattern background */
   .pattern-bg {
     background-image: url('/images/bg-pattern.avif');

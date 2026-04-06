@@ -145,7 +145,7 @@ export const Header = () => {
       {/* Nigerian flag stripe */}
       <div className="flag-stripe" />
       
-      <div className="bg-background/97 backdrop-blur-md border-b border-border">
+      <div className="header-surface border-b border-border">
         <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
           <div className="flex items-center justify-between gap-3">
             {/* Logo */}
