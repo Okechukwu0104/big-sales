@@ -193,10 +193,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const hasVideo = !!product.video_url;
 
   return (
-    <Card className="group overflow-hidden card-modern hover-glow">
+    <Card className="group overflow-hidden card-modern hover-glow h-full flex flex-col">
       <Link to={`/product/${product.id}`}>
         <div 
-          className="aspect-square overflow-hidden relative"
+          className="aspect-square overflow-hidden relative bg-muted/30"
           onMouseEnter={hasVideo ? handleVideoHover : undefined}
           onMouseLeave={hasVideo ? handleVideoLeave : undefined}
         >
@@ -295,15 +295,16 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </div>
       </Link>
       
-      <CardContent className="p-2.5 sm:p-4">
+      <CardContent className="p-2.5 sm:p-4 flex-1 flex flex-col">
         <Link to={`/product/${product.id}`}>
           <h3 className="font-bold text-sm sm:text-base group-hover:text-primary transition-colors duration-300 line-clamp-1 mb-1">
             {product.name}
           </h3>
         </Link>
         
-        {reviews && reviews.length > 0 && (
-          <div className="flex items-center gap-0.5 mb-1.5">
+        <div className="flex items-center gap-0.5 mb-1.5 min-h-[16px]">
+          {reviews && reviews.length > 0 ? (
+            <>
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
@@ -317,17 +318,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <span className="text-xs text-muted-foreground ml-0.5">
               ({reviews.length})
             </span>
-          </div>
-        )}
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">No reviews yet</span>
+          )}
+        </div>
         
-        {product.description && (
-          <p className="text-muted-foreground text-xs mb-2 line-clamp-1 leading-relaxed hidden sm:block">
-            {product.description.slice(0, 20)}
-          </p>
-        )}
+        <p className="text-muted-foreground text-xs mb-2 line-clamp-1 leading-relaxed hidden sm:block min-h-[16px]">
+          {product.description ? product.description.slice(0, 20) : '\u00A0'}
+        </p>
 
         
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-auto pt-1">
           <div className="flex items-center gap-2 flex-wrap">
             {product.original_price != null && product.discount_price != null ? (
               <div className="flex flex-col">
