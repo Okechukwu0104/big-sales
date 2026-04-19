@@ -15,6 +15,7 @@ import OrderSuccess from "./pages/OrderSuccess";
 import TrackOrder from "./pages/TrackOrder";
 import Auth from "./pages/Auth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute } from "./components/AdminRoute";
 import NotFound from "./pages/NotFound";
 
 // Lazy load admin routes for smaller initial bundle
@@ -89,14 +90,14 @@ const App = () => (
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/admin/products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
-              <Route path="/admin/categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
-              <Route path="/admin/collections" element={<ProtectedRoute><AdminCollections /></ProtectedRoute>} />
-              <Route path="/admin/orders" element={<ProtectedRoute><AdminOrders /></ProtectedRoute>} />
-              <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
-              <Route path="/admin/balance" element={<ProtectedRoute><AdminBalance /></ProtectedRoute>} />
-              <Route path="/admin/reviews" element={<ProtectedRoute><AdminReviews /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+              <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+              <Route path="/admin/collections" element={<AdminRoute><AdminCollections /></AdminRoute>} />
+              <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+              <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+              <Route path="/admin/balance" element={<AdminRoute><AdminBalance /></AdminRoute>} />
+              <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

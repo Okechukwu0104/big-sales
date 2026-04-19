@@ -365,12 +365,19 @@ const AdminProducts = () => {
         if (item.selectedCategories.length > 0) {
           await supabase.from('product_categories').insert(item.selectedCategories.map(catId => ({ product_id: newProduct.id, category_id: catId })));
         }
-        supabase.functions.invoke('categorize-product', { body: { productName: item.name, productDescription: item.description } })
-          .then(({ data: categoryData }) => {
-            if (categoryData?.category && categoryData.category !== 'Uncategorized') {
-              supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id);
-            }
-          }).catch(() => {});
+        supabase.auth.getSession().then(({ data: sessionData }) => {
+          const token = sessionData?.session?.access_token;
+          if (!token) return;
+          supabase.functions.invoke('categorize-product', {
+            body: { productName: item.name, productDescription: item.description },
+            headers: { Authorization: `Bearer ${token}` },
+          })
+            .then(({ data: categoryData }) => {
+              if (categoryData?.category && categoryData.category !== 'Uncategorized') {
+                supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id);
+              }
+            }).catch(() => {});
+        });
         await removeFromQueue(item.id);
         synced++;
       } catch (err) {
@@ -481,12 +488,19 @@ const AdminProducts = () => {
         });
       }
       setUploadProgress('Product saved! AI categorizing in background...'); setProgressValue(100);
-      supabase.functions.invoke('categorize-product', { body: { productName: productData.name, productDescription: productData.description } })
-        .then(({ data: categoryData }) => {
-          if (categoryData?.category && categoryData.category !== 'Uncategorized') {
-            supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id).then(() => { queryClient.invalidateQueries({ queryKey: ['admin-products'] }); });
-          }
-        }).catch(() => {});
+      supabase.auth.getSession().then(({ data: sessionData }) => {
+        const token = sessionData?.session?.access_token;
+        if (!token) return;
+        supabase.functions.invoke('categorize-product', {
+          body: { productName: productData.name, productDescription: productData.description },
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then(({ data: categoryData }) => {
+            if (categoryData?.category && categoryData.category !== 'Uncategorized') {
+              supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id).then(() => { queryClient.invalidateQueries({ queryKey: ['admin-products'] }); });
+            }
+          }).catch(() => {});
+      });
       return newProduct;
     },
     onSuccess: () => {
