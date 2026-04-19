@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ReviewsList } from '@/components/ReviewsList';
 import { ReviewForm } from '@/components/ReviewForm';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { Helmet } from 'react-helmet-async';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -207,6 +208,23 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{product.name} | BIG SALES</title>
+        <meta name="description" content={product.description || `Buy ${product.name} at a great price on BIG SALES!`} />
+        
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={`${product.name} | BIG SALES`} />
+        <meta property="og:description" content={product.description || `Buy ${product.name} at a great price on BIG SALES!`} />
+        <meta property="og:url" content={window.location.href} />
+        {product.image_url && <meta property="og:image" content={product.image_url} />}
+        {product.image_url && <meta property="og:image:secure_url" content={product.image_url} />}
+        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${product.name} | BIG SALES`} />
+        <meta name="twitter:description" content={product.description || `Buy ${product.name} at a great price on BIG SALES!`} />
+        {product.image_url && <meta name="twitter:image" content={product.image_url} />}
+      </Helmet>
+
       <Header />
       
       <main className="container mx-auto px-4 py-8 page-offset">

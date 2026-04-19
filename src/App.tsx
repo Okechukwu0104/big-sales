@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/components/ui/cart-provider";
+import { HelmetProvider } from "react-helmet-async";
 
 import { WifiOff } from "lucide-react";
 import Home from "./pages/Home";
@@ -74,38 +75,40 @@ const OfflineBanner = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <CartProvider>
-      <TooltipProvider>
-        <OfflineBanner />
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-success" element={<OrderSuccess />} />
-              <Route path="/track-order" element={<TrackOrder />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-              <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
-              <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
-              <Route path="/admin/collections" element={<AdminRoute><AdminCollections /></AdminRoute>} />
-              <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
-              <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-              <Route path="/admin/balance" element={<AdminRoute><AdminBalance /></AdminRoute>} />
-              <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
-    </CartProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <CartProvider>
+        <TooltipProvider>
+          <OfflineBanner />
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/track-order" element={<TrackOrder />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+                <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+                <Route path="/admin/collections" element={<AdminRoute><AdminCollections /></AdminRoute>} />
+                <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+                <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+                <Route path="/admin/balance" element={<AdminRoute><AdminBalance /></AdminRoute>} />
+                <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CartProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
