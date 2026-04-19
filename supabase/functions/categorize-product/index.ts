@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,20 +10,72 @@ const corsHeaders = {
 // Timeout for AI API call (10 seconds)
 const AI_TIMEOUT_MS = 10000;
 
+// Simple in-memory rate limiter (per user, per cold start)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 30;
+const WINDOW_MS = 60_000;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { productName, productDescription } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    // ---- AUTH: validate JWT in code (verify_jwt=false in config) ----
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: authError } = await supabase.auth.getClaims(token);
+    if (authError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Invalid authentication' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const userId = claimsData.claims.sub as string;
+
+    // ---- Rate limiting per user ----
+    const now = Date.now();
+    const entry = rateLimitMap.get(userId);
+    if (entry && now < entry.resetAt) {
+      if (entry.count >= RATE_LIMIT) {
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      entry.count++;
+    } else {
+      rateLimitMap.set(userId, { count: 1, resetAt: now + WINDOW_MS });
+    }
+
+    const { productName, productDescription } = await req.json();
+
+    // Basic input validation
+    if (typeof productName !== 'string' || productName.length === 0 || productName.length > 500) {
+      return new Response(JSON.stringify({ error: 'Invalid productName' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Create abort controller with timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 
@@ -67,7 +120,7 @@ serve(async (req) => {
         const errorText = await response.text();
         console.error("AI gateway error:", response.status, errorText);
         return new Response(JSON.stringify({ error: "AI gateway error", category: "Uncategorized" }), {
-          status: 200, // Return 200 with fallback category so product creation succeeds
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -75,36 +128,29 @@ serve(async (req) => {
       const data = await response.json();
       const category = data.choices?.[0]?.message?.content?.trim() || "Uncategorized";
 
-      console.log(`Categorized product "${productName}" as: ${category}`);
-
       return new Response(JSON.stringify({ category }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (fetchError) {
       clearTimeout(timeoutId);
-      
-      // Handle timeout/abort specifically
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.log(`AI categorization timed out for product "${productName}", using default category`);
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
           category: "Uncategorized",
-          message: "AI categorization timed out, using default category"
+          message: "AI categorization timed out, using default category",
         }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      
       throw fetchError;
     }
   } catch (error) {
     console.error("Error in categorize-product function:", error);
-    // Return Uncategorized instead of error to not block product creation
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       category: "Uncategorized",
-      error: error instanceof Error ? error.message : "Unknown error" 
+      error: error instanceof Error ? error.message : "Unknown error",
     }), {
-      status: 200, // Return 200 so the calling code gets a valid response
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

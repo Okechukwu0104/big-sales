@@ -46,8 +46,6 @@ const AdminBalance = () => {
         throw error;
       }
       
-      console.log('Fetched orders:', data);
-      
       const totalIncome = data.reduce((sum, order) => sum + Number(order.total_amount), 0);
       return { orders: data, totalIncome };
     },
