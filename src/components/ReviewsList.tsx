@@ -108,9 +108,11 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
                     </Badge>
                   )}
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {format(new Date(review.created_at), 'MMM d, yyyy')}
-                </span>
+                {review.created_at && !isNaN(new Date(review.created_at).getTime()) && (
+                  <span className="text-sm text-muted-foreground">
+                    {format(new Date(review.created_at), 'MMM d, yyyy')}
+                  </span>
+                )}
               </div>
               {review.review_text && (
                 <p className="text-foreground">{review.review_text}</p>
