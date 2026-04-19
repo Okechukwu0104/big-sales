@@ -46,7 +46,9 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
   const sortedReviews = reviews?.slice().sort((a, b) => {
     if (a.is_verified_purchase && !b.is_verified_purchase) return -1;
     if (!a.is_verified_purchase && b.is_verified_purchase) return 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    const tA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const tB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return (isNaN(tB) ? 0 : tB) - (isNaN(tA) ? 0 : tA);
   });
 
   const averageRating = reviews?.length
@@ -108,9 +110,11 @@ export const ReviewsList = ({ productId }: ReviewsListProps) => {
                     </Badge>
                   )}
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {format(new Date(review.created_at), 'MMM d, yyyy')}
-                </span>
+                {review.created_at && !isNaN(new Date(review.created_at).getTime()) && (
+                  <span className="text-sm text-muted-foreground">
+                    {format(new Date(review.created_at), 'MMM d, yyyy')}
+                  </span>
+                )}
               </div>
               {review.review_text && (
                 <p className="text-foreground">{review.review_text}</p>
