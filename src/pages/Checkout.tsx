@@ -103,7 +103,7 @@ const Checkout = () => {
     if (!result.success) {
       toast({
         title: 'Please fix the form',
-        description: result.error.errors[0]?.message ?? 'Invalid input',
+        description: result.error.issues[0]?.message ?? 'Invalid input',
         variant: 'destructive',
       });
       return;

@@ -152,7 +152,7 @@ export const ReviewForm = ({ productId }: ReviewFormProps) => {
     });
 
     if (!result.success) {
-      const firstError = result.error.errors[0];
+      const firstError = result.error.issues[0];
       toast({
         title: 'Invalid input',
         description: firstError?.message ?? 'Please check your entries.',
