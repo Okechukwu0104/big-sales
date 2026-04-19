@@ -33,6 +33,13 @@ export const ProductShare = ({
   const [stickerReady, setStickerReady] = useState(false);
 
   const productUrl = `${window.location.origin}/product/${productId}`;
+  // Share URL points to the edge function so social platforms (WhatsApp, FB, X, iMessage)
+  // can scrape product-specific Open Graph tags (image / video) for rich previews.
+  // Real users hitting this URL are auto-redirected to the SPA product page.
+  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const shareUrl = SUPABASE_PROJECT_ID
+    ? `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/product-meta?id=${productId}`
+    : productUrl;
   const displayPrice = discountPrice ?? productPrice;
   const shareText = `Check out ${productName} for ${formatPrice(displayPrice)} on BIG SALES!`;
 
@@ -237,7 +244,7 @@ export const ProductShare = ({
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(productUrl);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast({ title: 'Link copied!' });
       setTimeout(() => setCopied(false), 2000);
@@ -249,14 +256,14 @@ export const ProductShare = ({
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: productName, text: shareText, url: productUrl });
+        await navigator.share({ title: productName, text: shareText, url: shareUrl });
       } catch {}
     }
   };
 
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${productUrl}`)}`;
-  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(productUrl)}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
