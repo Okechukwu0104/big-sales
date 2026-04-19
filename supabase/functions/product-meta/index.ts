@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const productUrl = `${SITE_ORIGIN}/product/${productId}`;
+    const shareUrl = url.toString();
 
     if (error || !product) {
       return Response.redirect(productUrl, 302);
@@ -62,7 +63,8 @@ Deno.serve(async (req) => {
       ? escapeHtml(product.image_url)
       : "https://storage.googleapis.com/gpt-engineer-file-uploads/SzyuKHeCsvOLqYpVYDT63Kyszti2/social-images/social-1764254953842-ChatGPT%20Image%20Nov%2027,%202025,%2002_47_20%20PM.png";
     const video = product.video_url ? escapeHtml(product.video_url) : null;
-    const canonical = escapeHtml(productUrl);
+    const canonical = escapeHtml(shareUrl);
+    const redirectTarget = escapeHtml(productUrl);
 
     // Detect social media crawlers — they get pure HTML, no redirect.
     // Real browsers get an instant JS redirect to the SPA.
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
     const redirectScript = isCrawler
       ? ""
       : `<script>window.location.replace(${JSON.stringify(productUrl)});</script>
-    <meta http-equiv="refresh" content="0;url=${canonical}" />`;
+    <meta http-equiv="refresh" content="0;url=${redirectTarget}" />`;
 
     const videoTags = video
       ? `
@@ -114,11 +116,12 @@ Deno.serve(async (req) => {
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
     <meta name="twitter:image" content="${image}" />
+    <meta name="twitter:url" content="${canonical}" />
 
     ${redirectScript}
 </head>
 <body>
-    <p>Redirecting to <a href="${canonical}">${title}</a>…</p>
+    <p>Redirecting to <a href="${redirectTarget}">${title}</a>…</p>
 </body>
 </html>`;
 
