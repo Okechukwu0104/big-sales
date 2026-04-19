@@ -1,91 +1,66 @@
 
-Permanent mobile fix plan
 
-What I found
-- The biggest likely source of “glitches” is the fixed header: on mobile it is taller because it has the extra search row, but page spacing is inconsistent across routes.
-  - `Home.tsx` uses `pt-20`
-  - `Cart.tsx` / `ProductDetail.tsx` use larger top padding
-  - `Checkout.tsx`, `OrderSuccess.tsx`, and `TrackOrder.tsx` have little or no header offset
-  This can cause content to sit under the header, jump, or feel broken on mobile.
-- There are also a few layout-overflow risks on mobile:
-  - carousel/category arrow buttons are positioned partly outside containers
-  - the footer newsletter form stays in one row with a fixed-width button
-  - multiple floating buttons can compete for space with the flash-deals drawer
-- The flash deals popup is improved already, but not fully “permanent” yet because the drawer shell itself still needs stricter mobile height/overflow handling.
-- The “Browse Categories” action still relies on a short timeout, which can be unreliable on slower/mobile devices.
+## Goal
+When users share a product link (via WhatsApp, Facebook, Twitter, iMessage, etc.), the link preview should show the product image (or video thumbnail) alongside the existing description — instead of a generic site preview.
 
-What I will change
-1. Create one shared mobile-safe page offset system
-- Add a reusable top-spacing utility in `src/index.css` for all pages that use the fixed `Header`.
-- Apply the same safe header offset to:
-  - `src/pages/Home.tsx`
-  - `src/pages/Cart.tsx`
-  - `src/pages/Checkout.tsx`
-  - `src/pages/OrderSuccess.tsx`
-  - `src/pages/TrackOrder.tsx`
-  - `src/pages/ProductDetail.tsx`
-- This removes header overlap and inconsistent page jumps permanently.
+## How Link Previews Work
+Social platforms scrape the page's `<meta>` tags (Open Graph + Twitter Card) when a link is pasted. They look for:
+- `og:image` → preview image
+- `og:title`, `og:description` → text
+- `og:video` → video preview (supported by Facebook, WhatsApp partial)
+- `twitter:card`, `twitter:image` → Twitter/X preview
 
-2. Remove horizontal overflow sources
-- Hide side arrow controls on small screens in:
-  - `src/components/ProductSection.tsx`
-  - `src/components/CategoryBrowser.tsx`
-  Touch swipe will remain the mobile interaction.
-- Keep desktop arrows visible but move them fully inside the container.
-- Add a final overflow safeguard on the main app/page wrapper so tiny translated elements cannot create sideways scrolling.
+**The Challenge:** This is a React SPA (client-side rendered). The `index.html` has static meta tags that apply to ALL pages. When a scraper visits `/product/abc123`, it only sees the generic homepage tags — not the product's image.
 
-3. Make flash deals truly mobile-safe
-- Tighten the mobile drawer behavior in:
-  - `src/components/ui/drawer.tsx`
-  - `src/components/ProductSuggestionPopup.tsx`
-- Changes:
-  - cap drawer height to viewport
-  - make header/body areas scroll correctly
-  - add safe bottom padding
-  - keep card content smaller and wrap-proof on narrow screens
-  - prevent CTA rows and price badges from forcing width overflow
+## Solution: Supabase Edge Function for SSR Meta Tags
 
-4. Stabilize floating mobile actions
-- Review the three fixed mobile actions:
-  - scroll-to-top
-  - FAQ/help
-  - WhatsApp contact
-- Reposition or reduce them on small screens so they never clash with each other or with the flash-deals drawer.
+Create an edge function that detects social media crawlers and serves a minimal HTML page with product-specific Open Graph tags. Regular users continue to get the React app as normal.
 
-5. Make “Browse Categories” reliable
-- Replace the timeout-based scroll in `src/pages/Home.tsx` with a more reliable ref/effect-based scroll after the home view is active.
-- This ensures tapping “Browse Categories” always lands on the `Browse by Category` section, including on slower phones.
+### Architecture
+```text
+User clicks link → Browser → React app (normal)
+WhatsApp/FB scraper → Edge function → Static HTML with og:image/og:video
+```
 
-6. Reduce mobile layout shifts in the header
-- In `src/components/Header.tsx`, reserve stable space for the support/help action so the header does not shift when store config finishes loading.
-- Keep the mobile search row compact and consistent.
+### Implementation
 
-7. Fix remaining obvious mobile offenders
-- `src/components/Footer.tsx`: stack the newsletter input/button vertically on mobile and remove the forced button width there.
-- Do a small responsive cleanup pass on:
-  - `src/components/TrustBadges.tsx`
-  - `src/components/TestimonialCarousel.tsx`
-  - `src/components/HowItWorks.tsx`
-  so text blocks/cards feel tighter and cleaner on mobile.
+**1. New edge function: `supabase/functions/product-meta/index.ts`**
+- Accepts `?id=<product-id>` query param
+- Fetches product from Supabase (name, description, image_url, video_url, price)
+- Returns HTML with full Open Graph + Twitter Card tags including:
+  - `og:image` = product.image_url (or video thumbnail if only video exists)
+  - `og:video` = product.video_url (if present)
+  - `og:title` = product name
+  - `og:description` = product description (or auto-generated from name + price)
+  - `og:url` = canonical product URL
+  - `twitter:card` = "summary_large_image"
+- Includes a `<meta http-equiv="refresh">` redirect so if a real user lands here, they're sent to the SPA
 
-Technical approach
-- Prefer shared utilities over page-by-page padding hacks.
-- Prefer hiding decorative desktop controls on mobile instead of squeezing them.
-- Use viewport-safe sizing (`dvh`/max-height) for drawers and overlays.
-- Replace timer-based navigation with state/ref-driven scrolling.
-- Keep the fixes structural so the same bugs do not reappear when sections change later.
+**2. Update `vercel`/hosting routing — but since this is Lovable-hosted, use a different approach:**
 
-Files likely involved
-- `src/index.css`
-- `src/components/Header.tsx`
-- `src/components/ui/drawer.tsx`
-- `src/components/ProductSuggestionPopup.tsx`
-- `src/components/ProductSection.tsx`
-- `src/components/CategoryBrowser.tsx`
-- `src/components/Footer.tsx`
-- `src/pages/Home.tsx`
-- `src/pages/Cart.tsx`
-- `src/pages/Checkout.tsx`
-- `src/pages/OrderSuccess.tsx`
-- `src/pages/TrackOrder.tsx`
-- `src/pages/ProductDetail.tsx`
+Since we can't intercept routes at the edge for the Lovable-hosted SPA, we'll instead:
+- Update `ProductShare.tsx` to use a special share URL format: `https://<supabase-project>.supabase.co/functions/v1/product-meta?id=<id>` for the **shared link**
+- That edge function URL serves OG tags to scrapers AND redirects real users to `/product/:id` on the main site
+- Update copy/share buttons (WhatsApp, Facebook, Twitter, native share) to use this share URL instead of the direct product URL
+
+**3. Update `src/components/ProductShare.tsx`**
+- Build `shareUrl` pointing to the edge function endpoint
+- Use `shareUrl` for: WhatsApp, Facebook, Twitter, native share, and copy-link
+- Keep the QR code and on-page logic unchanged (QR can still point to the direct product URL since it's scanned by humans)
+
+**4. Update `index.html` defaults** — improve fallback OG tags for the homepage
+
+### Files
+
+| File | Changes |
+|------|---------|
+| `supabase/functions/product-meta/index.ts` | NEW: serves product-specific OG/Twitter meta HTML, redirects browsers to SPA |
+| `supabase/config.toml` | Register `product-meta` function as public (no JWT verification) |
+| `src/components/ProductShare.tsx` | Use edge function URL for shared links so previews work on WhatsApp/FB/X |
+| `index.html` | Polish default OG tags as fallback |
+
+### Notes
+- WhatsApp/Facebook cache previews aggressively — first share may take a moment; re-shares show instantly
+- Video previews work on Facebook/Twitter; WhatsApp shows the image thumbnail instead
+- This requires no database changes
+
