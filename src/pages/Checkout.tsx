@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { z } from 'zod';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,13 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { CheckoutTrustBadges } from '@/components/TrustBadges';
+
+const checkoutSchema = z.object({
+  customerName: z.string().trim().min(1, 'Full name is required').max(200),
+  customerEmail: z.string().trim().email('Invalid email address').max(255),
+  customerPhone: z.string().trim().min(5, 'Phone number is too short').max(50, 'Phone number is too long'),
+  shippingAddress: z.string().trim().min(5, 'Shipping address is too short').max(500, 'Shipping address is too long'),
+});
 
 const MINIMUM_ORDER = 10000;
 
@@ -91,10 +99,12 @@ const Checkout = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.customerName || !formData.customerEmail || !formData.customerPhone || !formData.shippingAddress) {
+    const result = checkoutSchema.safeParse(formData);
+    if (!result.success) {
       toast({
-        title: "Please fill in all fields",
-        variant: "destructive",
+        title: 'Please fix the form',
+        description: result.error.errors[0]?.message ?? 'Invalid input',
+        variant: 'destructive',
       });
       return;
     }

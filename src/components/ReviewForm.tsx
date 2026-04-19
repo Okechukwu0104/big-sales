@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,13 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Star, ImagePlus, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+
+const reviewSchema = z.object({
+  reviewerName: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer'),
+  reviewText: z.string().trim().max(2000, 'Review must be 2000 characters or fewer').optional().or(z.literal('')),
+  reviewerEmail: z.string().trim().max(255).email('Invalid email').optional().or(z.literal('')),
+  rating: z.number().int().min(1).max(5),
+});
 
 interface ReviewFormProps {
   productId: string;
@@ -135,20 +143,19 @@ export const ReviewForm = ({ productId }: ReviewFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (rating === 0) {
-      toast({
-        title: 'Rating required',
-        description: 'Please select a star rating.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
-    if (!reviewerName.trim()) {
+    const result = reviewSchema.safeParse({
+      reviewerName,
+      reviewText,
+      reviewerEmail,
+      rating,
+    });
+
+    if (!result.success) {
+      const firstError = result.error.errors[0];
       toast({
-        title: 'Name required',
-        description: 'Please enter your name.',
+        title: 'Invalid input',
+        description: firstError?.message ?? 'Please check your entries.',
         variant: 'destructive',
       });
       return;
