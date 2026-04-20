@@ -1,0 +1,20 @@
+{
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/product/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|crawler|spider|whatsapp|facebookexternalhit|twitterbot|pinterest|slackbot|telegrambot|linkedinbot|discordbot|googlebot).*"
+        }
+      ],
+      "destination": "https://zbgwqticmneytinkijjd.supabase.co/functions/v1/product-meta?id=:id"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

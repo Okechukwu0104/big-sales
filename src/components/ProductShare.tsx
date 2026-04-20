@@ -36,10 +36,8 @@ export const ProductShare = ({
   // Share URL points to the edge function so social platforms (WhatsApp, FB, X, iMessage)
   // can scrape product-specific Open Graph tags (image / video) for rich previews.
   // Real users hitting this URL are auto-redirected to the SPA product page.
-  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const shareUrl = SUPABASE_PROJECT_ID
-    ? `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/product-meta?id=${productId}`
-    : productUrl;
+  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || "zbgwqticmneytinkijjd";
+  const shareUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/product-meta?id=${productId}`;
   const displayPrice = discountPrice ?? productPrice;
   const shareText = `Check out ${productName} for ${formatPrice(displayPrice)} on BIG SALES!`;
 

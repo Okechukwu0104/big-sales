@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Black Croc-Embossed Monk Strap Shoes | BIG SALES</title>
+    <link rel="canonical" href="http://zbgwqticmneytinkijjd.supabase.co/product-meta?id=7dd4aacd-9dc3-471e-a5c1-7ffa1ffa00ec" />
+    <meta name="description" content="Step out in sophisticated style with these striking black croc-embossed monk strap shoes. Designed for the modern individual, these shoes feature a luxurious crocodile texture that adds a touch of high fashion to any outfit. The double monk strap design with a gleaming gold-tone buckle ensures a secure and adjustable fit, while the sturdy, lugged sole provides excellent traction and durability, making them suitable for various terrains and weather conditions. Crafted from high-quality synthetic leather, these shoes offer both comfort and resilience. They are perfect for fashion-forward men and women seeking to elevate their formal or smart-casual attire. Invest in these shoes for a timeless addition to your footwear collection that promises to turn heads and provide lasting wear." />
+
+    <meta property="og:type" content="product" />
+    <meta property="og:site_name" content="BIG SALES" />
+    <meta property="og:title" content="Black Croc-Embossed Monk Strap Shoes" />
+    <meta property="og:description" content="Step out in sophisticated style with these striking black croc-embossed monk strap shoes. Designed for the modern individual, these shoes feature a luxurious crocodile texture that adds a touch of high fashion to any outfit. The double monk strap design with a gleaming gold-tone buckle ensures a secure and adjustable fit, while the sturdy, lugged sole provides excellent traction and durability, making them suitable for various terrains and weather conditions. Crafted from high-quality synthetic leather, these shoes offer both comfort and resilience. They are perfect for fashion-forward men and women seeking to elevate their formal or smart-casual attire. Invest in these shoes for a timeless addition to your footwear collection that promises to turn heads and provide lasting wear." />
+    <meta property="og:url" content="http://zbgwqticmneytinkijjd.supabase.co/product-meta?id=7dd4aacd-9dc3-471e-a5c1-7ffa1ffa00ec" />
+    <meta property="og:image" content="https://zbgwqticmneytinkijjd.supabase.co/storage/v1/object/public/product-images/0.8534928509878997.jpg" />
+    <meta property="og:image:secure_url" content="https://zbgwqticmneytinkijjd.supabase.co/storage/v1/object/public/product-images/0.8534928509878997.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="1200" />
+    <meta property="og:image:alt" content="Black Croc-Embossed Monk Strap Shoes" />
+    <meta property="product:price:amount" content="50000" />
+    <meta property="product:price:currency" content="NGN" />
+    
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Black Croc-Embossed Monk Strap Shoes" />
+    <meta name="twitter:description" content="Step out in sophisticated style with these striking black croc-embossed monk strap shoes. Designed for the modern individual, these shoes feature a luxurious crocodile texture that adds a touch of high fashion to any outfit. The double monk strap design with a gleaming gold-tone buckle ensures a secure and adjustable fit, while the sturdy, lugged sole provides excellent traction and durability, making them suitable for various terrains and weather conditions. Crafted from high-quality synthetic leather, these shoes offer both comfort and resilience. They are perfect for fashion-forward men and women seeking to elevate their formal or smart-casual attire. Invest in these shoes for a timeless addition to your footwear collection that promises to turn heads and provide lasting wear." />
+    <meta name="twitter:image" content="https://zbgwqticmneytinkijjd.supabase.co/storage/v1/object/public/product-images/0.8534928509878997.jpg" />
+    <meta name="twitter:url" content="http://zbgwqticmneytinkijjd.supabase.co/product-meta?id=7dd4aacd-9dc3-471e-a5c1-7ffa1ffa00ec" />
+
+    <script>window.location.replace("https://big-sales.lovable.app/product/7dd4aacd-9dc3-471e-a5c1-7ffa1ffa00ec");</script>
+    <meta http-equiv="refresh" content="0;url=https://big-sales.lovable.app/product/7dd4aacd-9dc3-471e-a5c1-7ffa1ffa00ec" />
+</head>
+<body>
+    <p>Redirecting to <a href="https://big-sales.lovable.app/product/7dd4aacd-9dc3-471e-a5c1-7ffa1ffa00ec">Black Croc-Embossed Monk Strap Shoes</a>…</p>
+</body>
+</html>
