@@ -33,11 +33,9 @@ export const ProductShare = ({
   const [stickerReady, setStickerReady] = useState(false);
 
   const productUrl = `${window.location.origin}/product/${productId}`;
-  // Share URL points to the edge function so social platforms (WhatsApp, FB, X, iMessage)
-  // can scrape product-specific Open Graph tags (image / video) for rich previews.
-  // Real users hitting this URL are auto-redirected to the SPA product page.
-  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || "zbgwqticmneytinkijjd";
-  const shareUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/product-meta?id=${productId}`;
+  // Now that Vercel intercepts bot traffic dynamically via routing rules,
+  // we can simply use the direct product URL for sharing!
+  const shareUrl = productUrl;
   const displayPrice = discountPrice ?? productPrice;
   const shareText = `Check out ${productName} for ${formatPrice(displayPrice)} on BIG SALES!`;
 
