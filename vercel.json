@@ -2,12 +2,16 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "https://zbgwqticmneytinkijjd.supabase.co/functions/v1/sitemap-xml"
+    },
+    {
       "source": "/product/:id",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i).*(bot|crawler|spider|whatsapp|facebookexternalhit|twitterbot|pinterest|slackbot|telegrambot|linkedinbot|discordbot|googlebot).*"
+          "value": "(?i).*(bot|crawler|spider|whatsapp|facebookexternalhit|twitterbot|pinterest|slackbot|telegrambot|linkedinbot|discordbot|googlebot|bingbot|applebot|duckduckbot|yandexbot|baiduspider|gptbot|oai-searchbot|chatgpt-user|claudebot|claude-web|perplexitybot|perplexity-user|google-extended|anthropic-ai|ccbot|bytespider|amazonbot|mistralai|cohere-ai|youbot|diffbot|semrushbot|ahrefsbot).*"
         }
       ],
       "destination": "https://zbgwqticmneytinkijjd.supabase.co/functions/v1/product-meta?id=:id"
