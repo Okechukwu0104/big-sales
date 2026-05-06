@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
 import { useToast } from '@/hooks/use-toast';
+import { Helmet } from 'react-helmet-async';
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-desc';
 
