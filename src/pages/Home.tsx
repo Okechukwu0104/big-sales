@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { InstantSearchDropdown } from '@/components/InstantSearchDropdown';
 import { useToast } from '@/hooks/use-toast';
+import { Helmet } from 'react-helmet-async';
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'name-asc' | 'name-desc';
 
@@ -415,6 +416,11 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>BIG SALES — Shop Online in Nigeria | Fast Nationwide Delivery</title>
+        <meta name="description" content="Shop quality electronics, fashion, home & more on BIG SALES Nigeria. Unbeatable prices, fast nationwide delivery, and verified products. Order now!" />
+        <link rel="canonical" href="https://bigsales.ng/" />
+      </Helmet>
       <Header />
 
       <main className="page-offset">

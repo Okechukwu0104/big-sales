@@ -209,20 +209,53 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>{product.name} | BIG SALES</title>
-        <meta name="description" content={product.description || `Buy ${product.name} at a great price on BIG SALES!`} />
-        
+        <title>{product.name} – ₦{Number(product.discount_price ?? product.price).toLocaleString()} | BIG SALES Nigeria</title>
+        <meta name="description" content={(product.description?.trim() || `Buy ${product.name} on BIG SALES Nigeria for ₦${Number(product.discount_price ?? product.price).toLocaleString()}. Fast nationwide delivery.`).slice(0, 160)} />
+        <link rel="canonical" href={`https://bigsales.ng/product/${product.id}`} />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
         <meta property="og:type" content="product" />
         <meta property="og:title" content={`${product.name} | BIG SALES`} />
-        <meta property="og:description" content={product.description || `Buy ${product.name} at a great price on BIG SALES!`} />
-        <meta property="og:url" content={window.location.href} />
+        <meta property="og:description" content={(product.description?.trim() || `Buy ${product.name} on BIG SALES Nigeria!`).slice(0, 160)} />
+        <meta property="og:url" content={`https://bigsales.ng/product/${product.id}`} />
         {product.image_url && <meta property="og:image" content={product.image_url} />}
         {product.image_url && <meta property="og:image:secure_url" content={product.image_url} />}
-        
+        <meta property="product:price:amount" content={String(product.discount_price ?? product.price)} />
+        <meta property="product:price:currency" content="NGN" />
+
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={`${product.name} | BIG SALES`} />
-        <meta name="twitter:description" content={product.description || `Buy ${product.name} at a great price on BIG SALES!`} />
+        <meta name="twitter:description" content={(product.description?.trim() || `Buy ${product.name} on BIG SALES Nigeria!`).slice(0, 160)} />
         {product.image_url && <meta name="twitter:image" content={product.image_url} />}
+
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org/",
+          "@type": "Product",
+          name: product.name,
+          image: product.image_url ? [product.image_url] : [],
+          description: product.description || `${product.name} on BIG SALES Nigeria`,
+          sku: product.id,
+          brand: { "@type": "Brand", name: "BIG SALES" },
+          offers: {
+            "@type": "Offer",
+            url: `https://bigsales.ng/product/${product.id}`,
+            priceCurrency: "NGN",
+            price: String(product.discount_price ?? product.price),
+            availability: (product.in_stock !== false && (product.quantity ?? 0) > 0)
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            itemCondition: "https://schema.org/NewCondition",
+          },
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://bigsales.ng/" },
+            { "@type": "ListItem", position: 2, name: "Products", item: "https://bigsales.ng/" },
+            { "@type": "ListItem", position: 3, name: product.name, item: `https://bigsales.ng/product/${product.id}` },
+          ],
+        })}</script>
       </Helmet>
 
       <Header />
