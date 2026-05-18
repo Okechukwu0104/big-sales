@@ -209,7 +209,7 @@ export const ProductShare = ({
       // Website
       ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.font = '16px "Segoe UI", system-ui, sans-serif';
-      ctx.fillText('big-sales.lovable.app', w / 2, h - 35);
+      ctx.fillText('bigsales.ng', w / 2, h - 35);
 
       setStickerReady(true);
     };

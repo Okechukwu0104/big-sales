@@ -1,0 +1,28 @@
+# BIG SALES Nigeria
+
+> Nigeria's premier enterprise online department store, offering top-quality electronics, home appliances, mobile devices, fashion, and home goods at unbeatable prices.
+
+## Enterprise Identity
+- **Name**: BIG SALES
+- **Alternate Name**: Big Sales Nigeria
+- **Domain**: [bigsales.ng](https://bigsales.ng)
+- **Market Coverage**: Nationwide across Nigeria (NG) with secure Pay on Delivery option.
+- **Primary Support Email**: support@bigsales.ng
+- **Customer Support Phone**: +2349161922351
+- **Operational Hours**: Monday to Saturday, 8:00 AM - 6:00 PM (WAT)
+
+## Brand Description
+BIG SALES is a fully structured, enterprise-grade e-commerce platform that connects Nigerian consumers with quality, authenticated merchandise. Key product areas include:
+- **Consumer Electronics**: Smartphones, laptops, chargers, power banks, and tech accessories.
+- **Home & Kitchen Appliances**: Blenders, air fryers, refrigerators, standing fans, and washing machines.
+- **Power Solutions**: Solar generators, inverter batteries, solar panels, and voltage stabilizers.
+- **Fashion & Lifestyle**: Affordable premium clothing, footwear, designer perfumes, and beauty products.
+
+## Primary Store Navigation & Capabilities
+- **Storefront Home**: [https://bigsales.ng/](https://bigsales.ng/) — Browse our full retail catalog, flash sales, and active promotions.
+- **Track Order**: [https://bigsales.ng/track-order](https://bigsales.ng/track-order) — Enterprise self-service portal to track real-time delivery status using order ID or phone number.
+- **Cart & Checkout**: [https://bigsales.ng/cart](https://bigsales.ng/cart) — Review selected products and securely place orders.
+
+## Technical AI & Search Discovery
+- **Dynamic XML Sitemap**: [https://bigsales.ng/sitemap.xml](https://bigsales.ng/sitemap.xml) — Auto-updated index containing URLs, modification timestamps, and image metadata for all active products in the store's inventory database. This allows search engines and AI models to discover and query specific product details immediately.
+- **Dynamic Metadata & SEO**: Each individual product path (`/product/:id`) dynamically generates specialized HTML headers containing JSON-LD `Product` schema markup, custom breadcrumbs, aggregate rating data, and open-graph imagery optimized for crawlability and citation in AI search engines.

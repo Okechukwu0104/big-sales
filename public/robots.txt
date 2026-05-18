@@ -1,5 +1,6 @@
 # BIG SALES Nigeria — robots.txt
 # Allow search engines and AI assistants to discover and reference our products.
+# We also provide a structured guide for AI models at: https://bigsales.ng/llms.txt
 
 User-agent: Googlebot
 Allow: /

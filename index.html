@@ -24,21 +24,53 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "OnlineStore",
+    "@id": "https://bigsales.ng/#organization",
     "name": "BIG SALES",
     "alternateName": "Big Sales Nigeria",
     "url": "https://bigsales.ng/",
-    "logo": "https://storage.googleapis.com/gpt-engineer-file-uploads/SzyuKHeCsvOLqYpVYDT63Kyszti2/uploads/1761858193744-big sales.png",
-    "description": "BIG SALES is Nigeria's online store for quality products at unbeatable prices with fast nationwide delivery.",
-    "areaServed": "NG"
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://storage.googleapis.com/gpt-engineer-file-uploads/SzyuKHeCsvOLqYpVYDT63Kyszti2/uploads/1761858193744-big sales.png",
+      "width": "512",
+      "height": "512"
+    },
+    "image": "https://storage.googleapis.com/gpt-engineer-file-uploads/SzyuKHeCsvOLqYpVYDT63Kyszti2/social-images/social-1764254953842-ChatGPT Image Nov 27, 2025, 02_47_20 PM.png",
+    "description": "BIG SALES is Nigeria's premier enterprise online department store, offering top-quality electronics, home appliances, mobile devices, fashion, and home goods at unbeatable prices with secure nationwide pay-on-delivery services.",
+    "email": "support@bigsales.ng",
+    "telephone": "+2349161922351",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Lagos",
+      "addressRegion": "Lagos State",
+      "addressCountry": "NG"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+2349161922351",
+      "contactType": "Customer Support",
+      "email": "support@bigsales.ng",
+      "availableLanguage": ["English"],
+      "areaServed": "NG"
+    },
+    "sameAs": [
+      "https://facebook.com/bigsalesng",
+      "https://instagram.com/bigsalesng",
+      "https://twitter.com/bigsalesng"
+    ],
+    "priceRange": "₦₦"
   }
   </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": "https://bigsales.ng/#website",
     "name": "BIG SALES",
     "url": "https://bigsales.ng/",
+    "publisher": {
+      "@id": "https://bigsales.ng/#organization"
+    },
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://bigsales.ng/?q={search_term_string}",
