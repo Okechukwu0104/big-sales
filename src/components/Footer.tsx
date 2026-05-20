@@ -82,12 +82,89 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* SEO Text Section — indexed by Google for keyword relevance */}
+        <div className="border-t border-border/30 pt-10 pb-6 space-y-4">
+          <div className="max-w-4xl">
+            <h2 className="text-sm font-semibold text-foreground mb-3">About BIG SALES Nigeria</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              BIG SALES is Nigeria's most trusted online marketplace for electronics, fashion, home appliances, and
+              lifestyle products. Buy phones, laptops, power banks, air fryers, generators, solar panels, wigs,
+              sneakers, or the latest Ankara styles — all at unbeatable prices with pay on delivery across Lagos,
+              Abuja, Port Harcourt, Kano, Ibadan, Enugu and 20+ states nationwide. Every product is 100% original
+              and authenticated. BIG SALES is the best affordable alternative to Jumia and Konga in Nigeria.
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              <strong className="text-foreground/60">Electronics &amp; Gadgets:</strong>{' '}
+              Buy smartphones Nigeria — Samsung Galaxy, Tecno Camon, Infinix Hot, iPhone 13, iPhone 14, iPhone 15,
+              refurbished iPhones, Android phones, cheap phones Lagos. Shop laptops Nigeria — HP, Dell, Lenovo,
+              Asus gaming laptops, MacBook Air, tokunbo laptops, UK-used laptops. Buy power banks, Airpods,
+              Bluetooth earphones, Samsung earbuds, JBL speakers, ring lights, DSLR cameras, action cameras,
+              smart TVs (32", 43", 55"), gaming consoles, PS5, Xbox, gaming keyboards and headsets — all with
+              fast delivery across Nigeria.
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              <strong className="text-foreground/60">Home Appliances &amp; Kitchen:</strong>{' '}
+              Air fryers Nigeria, blenders, rice cookers, pressure cookers, electric kettles, toasters, ovens,
+              sandwich makers, food processors, hand mixers, deep fryers, induction cookers, non-stick pots,
+              cookware sets, dinner sets, juice extractors, smoothie makers. Buy refrigerators Nigeria —
+              Hisense, LG, Thermocool, chest freezers. Washing machines Nigeria — LG, Samsung, Nexus.
+              Gas cookers, 4-burner cookers, table-top cookers. Buy standing fans, ceiling fans, rechargeable
+              fans, solar fans, wall fans. Split AC, portable AC Nigeria at the best prices.
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              <strong className="text-foreground/60">Power Solutions:</strong>{' '}
+              Solar generators Nigeria, solar panels, 200Ah inverter batteries, Luminous batteries, Sukam batteries,
+              Firman generators, Honda generators, cheap generators Nigeria, rechargeable power stations, EcoFlow,
+              voltage stabilizers, rechargeable fans, solar fans — everything you need to power your home and
+              business amid power outages across Nigeria.
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              <strong className="text-foreground/60">Fashion, Wigs &amp; Beauty:</strong>{' '}
+              Buy human hair wigs Lagos — bone-straight, closure wigs, frontal wigs, 360 wigs, glueless wigs,
+              synthetic wigs, braiding hair, crochet hair, hair extensions. Ankara styles Nigeria, Adire fabric,
+              Aso-oke, lace fabric, George fabric, ready-to-wear Ankara, native wear, Agbada, Kaftan, Senator wear,
+              gowns, jumpsuits, maxi dresses, mini dresses, polo shirts, hoodies, tracksuits, plus-size clothing,
+              maternity wear, kids clothing, sneakers, football boots, running shoes, ladies handbags, backpacks,
+              school bags, travel bags, wallets, sunglasses, earrings, necklaces, bracelets.
+              Skincare Nigeria — Vitamin C serum, Retinol serum, sunscreen, face cream, body lotion, toning cream.
+              Makeup Nigeria — foundation, concealer, eyeshadow palette, mascara, lip balm, blush, highlighter,
+              contour kits, makeup brush sets. Perfumes, cologne, body mist, deodorant, hair cream, edge control.
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+              <strong className="text-foreground/60">Health, Fitness &amp; Baby:</strong>{' '}
+              Treadmills, exercise bikes, dumbbells, yoga mats, resistance bands, gym gloves, protein supplements,
+              blood pressure monitors, glucose meters, thermometers, pulse oximeters, first aid kits.
+              Baby products Nigeria — baby cots, prams, diapers, Pampers, baby wipes, kids shoes, school supplies,
+              toys Nigeria, kids toys online.
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+              <strong className="text-foreground/60">Popular Searches on BIG SALES:</strong>{' '}
+              Smartphones Nigeria &middot; Laptops Nigeria &middot; Power Banks &middot; Bluetooth Earphones &middot;
+              Air Fryers &middot; Blenders &middot; Generators &middot; Solar Panels &middot; Inverter Batteries &middot;
+              Fashion &amp; Ankara &middot; Wigs &amp; Hair &middot; Skincare &middot; Perfumes &middot; Sneakers &middot;
+              Home Appliances &middot; Smart Watches &middot; Baby Products &middot; Gym Equipment &middot;
+              Office Chairs &middot; CCTV Cameras &middot; Printers &middot; Gaming Consoles &middot; Smart TVs
+            </p>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Shop with confidence. We offer awoof prices, flash sales, promo deals, and fast delivery to your
+              doorstep — pay on delivery when your order arrives. No scam. 100% original products. BIG SALES
+              is your go-to online market in Nigeria for cheap, quality, and correct items.
+            </p>
+          </div>
+        </div>
+
+        <div className="pt-6 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Big Sales. All rights reserved.
+            &copy; {new Date().getFullYear()} Big Sales Nigeria. All rights reserved.
           </p>
           <div className="flex gap-2 items-center">
-            {/* Payment Method Icons (Placeholder divs for a clean look) */}
             <div className="w-10 h-6 bg-muted rounded border border-border/50"></div>
             <div className="w-10 h-6 bg-muted rounded border border-border/50"></div>
             <div className="w-10 h-6 bg-muted rounded border border-border/50"></div>

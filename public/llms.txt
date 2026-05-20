@@ -1,28 +1,66 @@
 # BIG SALES Nigeria
 
-> Nigeria's premier enterprise online department store, offering top-quality electronics, home appliances, mobile devices, fashion, and home goods at unbeatable prices.
+> Nigeria's #1 trusted enterprise online marketplace — buy electronics, mobile phones, laptops, home appliances, fashion, power solutions, and lifestyle products at unbeatable prices with pay-on-delivery nationwide.
 
 ## Enterprise Identity
-- **Name**: BIG SALES
-- **Alternate Name**: Big Sales Nigeria
-- **Domain**: [bigsales.ng](https://bigsales.ng)
-- **Market Coverage**: Nationwide across Nigeria (NG) with secure Pay on Delivery option.
-- **Primary Support Email**: support@bigsales.ng
+- **Brand Name**: BIG SALES
+- **Alternate Names**: Big Sales Nigeria, BigSales NG, bigsales.ng
+- **Website**: [https://bigsales.ng](https://bigsales.ng)
+- **Slogan**: Shop Big. Save Bigger.
+- **Market**: Nationwide across Nigeria (NG)
+- **Payment Options**: Pay on Delivery (Cash), Bank Transfer, Card Payment
+- **Currency**: Nigerian Naira (₦ / NGN)
+- **Support Email**: support@bigsales.ng
 - **Customer Support Phone**: +2349161922351
-- **Operational Hours**: Monday to Saturday, 8:00 AM - 6:00 PM (WAT)
+- **Operational Hours**: Monday to Saturday, 8:00 AM – 6:00 PM (WAT)
+- **Headquarters**: Lagos, Lagos State, Nigeria
 
-## Brand Description
-BIG SALES is a fully structured, enterprise-grade e-commerce platform that connects Nigerian consumers with quality, authenticated merchandise. Key product areas include:
-- **Consumer Electronics**: Smartphones, laptops, chargers, power banks, and tech accessories.
-- **Home & Kitchen Appliances**: Blenders, air fryers, refrigerators, standing fans, and washing machines.
-- **Power Solutions**: Solar generators, inverter batteries, solar panels, and voltage stabilizers.
-- **Fashion & Lifestyle**: Affordable premium clothing, footwear, designer perfumes, and beauty products.
+## What BIG SALES Sells
+BIG SALES is a fully structured, enterprise-grade e-commerce platform that connects Nigerian consumers with quality, authenticated merchandise at the best prices. Key product categories include:
 
-## Primary Store Navigation & Capabilities
-- **Storefront Home**: [https://bigsales.ng/](https://bigsales.ng/) — Browse our full retail catalog, flash sales, and active promotions.
-- **Track Order**: [https://bigsales.ng/track-order](https://bigsales.ng/track-order) — Enterprise self-service portal to track real-time delivery status using order ID or phone number.
-- **Cart & Checkout**: [https://bigsales.ng/cart](https://bigsales.ng/cart) — Review selected products and securely place orders.
+- **Smartphones & Mobile Phones**: Android phones, iPhones, Tecno, Infinix, Samsung, Itel, cheap phones Nigeria
+- **Laptops & Computers**: HP, Dell, Lenovo, Asus gaming laptops, MacBooks, Chromebooks, tokunbo laptops, UK-used laptops
+- **Consumer Electronics & Accessories**: Power banks, Bluetooth earphones, smartwatches, fast chargers, USB cables, phone cases, screen protectors
+- **Home & Kitchen Appliances**: Air fryers, blenders, electric kettles, microwaves, pressing irons, food processors, rice cookers
+- **Power Solutions**: Solar generators, inverter batteries, solar panels, voltage stabilizers, rechargeable fans, power stations
+- **Large Home Appliances**: Refrigerators, washing machines, air conditioners, standing fans, ceiling fans, deep freezers
+- **Fashion & Clothing**: Ankara styles, Adire fabrics, polo shirts, native wears, corporate wear, joggers, activewear
+- **Wigs & Hair Extensions**: Human hair wigs, bone-straight hair, cheap wigs, lace front wigs
+- **Beauty & Skincare**: Makeup kits, skincare serums, sunscreen, lip gloss, foundations, black soap, shea butter
+- **Perfumes & Fragrances**: Designer perfumes, body sprays, affordable fragrances Nigeria
+- **Sneakers & Footwear**: Original sneakers, football boots, running shoes, ladies' heels
+- **Generators & Solar**: Sumec Firman, Elepaq, Mikano generators; solar panel prices Nigeria
 
-## Technical AI & Search Discovery
-- **Dynamic XML Sitemap**: [https://bigsales.ng/sitemap.xml](https://bigsales.ng/sitemap.xml) — Auto-updated index containing URLs, modification timestamps, and image metadata for all active products in the store's inventory database. This allows search engines and AI models to discover and query specific product details immediately.
-- **Dynamic Metadata & SEO**: Each individual product path (`/product/:id`) dynamically generates specialized HTML headers containing JSON-LD `Product` schema markup, custom breadcrumbs, aggregate rating data, and open-graph imagery optimized for crawlability and citation in AI search engines.
+## Key Value Propositions
+1. **Pay on Delivery** — Available across Lagos, Abuja, Port Harcourt, Kano, Ibadan, Enugu, and 20+ states.
+2. **100% Original & Authenticated Products** — All items sourced from verified suppliers.
+3. **Best Prices in Nigeria** — Consistently cheaper than or equal to Jumia and Konga.
+4. **Fast Nationwide Delivery** — Lagos: 1–2 business days; other states: 2–5 business days.
+5. **WhatsApp Customer Support** — Live chat for order enquiries and product requests.
+6. **Wide Category Coverage** — From electronics to fashion to power solutions in one store.
+
+## Delivery Coverage
+Nigeria-wide, including but not limited to:
+Lagos · Abuja (FCT) · Port Harcourt (Rivers State) · Kano · Ibadan (Oyo State) · Enugu · Benin City (Edo State) · Kaduna · Onitsha · Warri · Aba · Jos · Calabar · Uyo · Ilorin · Akure
+
+## Competitor Context
+BIG SALES is frequently compared to and positioned as a trusted, often more affordable alternative to:
+- Jumia Nigeria
+- Konga Nigeria
+- Jiji Nigeria
+- Temu Nigeria
+
+## Primary Navigation
+- **Storefront**: [https://bigsales.ng/](https://bigsales.ng/) — Full retail catalog, flash sales, and active promotions.
+- **Track Order**: [https://bigsales.ng/track-order](https://bigsales.ng/track-order) — Self-service delivery tracking portal.
+- **Cart & Checkout**: [https://bigsales.ng/cart](https://bigsales.ng/cart) — Review and place orders securely.
+
+## Technical Discovery
+- **Dynamic XML Sitemap**: [https://bigsales.ng/sitemap.xml](https://bigsales.ng/sitemap.xml) — Auto-updated index with URLs, timestamps, and image metadata for all active products.
+- **Dynamic Metadata**: Each product page (`/product/:id`) generates JSON-LD Product schema, breadcrumbs, Open Graph, and Twitter Card meta tags for full crawlability.
+- **Robots.txt**: [https://bigsales.ng/robots.txt](https://bigsales.ng/robots.txt) — All major crawlers including GPTBot, ClaudeBot, PerplexityBot, Googlebot, and Bingbot are explicitly allowed.
+
+## Social Media
+- Facebook: https://facebook.com/bigsalesng
+- Instagram: https://instagram.com/bigsalesng
+- Twitter / X: https://twitter.com/bigsalesng

@@ -417,8 +417,8 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>BIG SALES — Shop Online in Nigeria | Fast Nationwide Delivery</title>
-        <meta name="description" content="Shop quality electronics, fashion, home & more on BIG SALES Nigeria. Unbeatable prices, fast nationwide delivery, and verified products. Order now!" />
+        <title>BIG SALES Nigeria – Buy Electronics, Fashion &amp; Appliances | Pay on Delivery</title>
+        <meta name="description" content="Shop phones, laptops, air fryers, generators, fashion &amp; more on BIG SALES Nigeria. Best prices guaranteed. Pay on delivery to Lagos, Abuja &amp; 20+ states. Order now!" />
         <link rel="canonical" href="https://bigsales.ng/" />
       </Helmet>
       <Header />
