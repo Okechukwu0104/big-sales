@@ -166,6 +166,66 @@ export type Database = {
           },
         ]
       }
+      channel_ai_settings: {
+        Row: {
+          channel_url: string
+          enabled: boolean
+          id: string
+          recipient_email: string
+          updated_at: string
+        }
+        Insert: {
+          channel_url?: string
+          enabled?: boolean
+          id?: string
+          recipient_email?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_url?: string
+          enabled?: boolean
+          id?: string
+          recipient_email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      channel_posts: {
+        Row: {
+          caption: string
+          created_at: string
+          generated_for_date: string
+          id: string
+          image_url: string | null
+          post_type: Database["public"]["Enums"]["channel_post_type"]
+          product_id: string | null
+          product_link: string | null
+          sent_at: string | null
+        }
+        Insert: {
+          caption: string
+          created_at?: string
+          generated_for_date?: string
+          id?: string
+          image_url?: string | null
+          post_type: Database["public"]["Enums"]["channel_post_type"]
+          product_id?: string | null
+          product_link?: string | null
+          sent_at?: string | null
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          generated_for_date?: string
+          id?: string
+          image_url?: string | null
+          post_type?: Database["public"]["Enums"]["channel_post_type"]
+          product_id?: string | null
+          product_link?: string | null
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
       collections: {
         Row: {
           created_at: string
@@ -727,6 +787,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      channel_post_type: "promo" | "product" | "engagement"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -855,6 +916,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      channel_post_type: ["promo", "product", "engagement"],
     },
   },
 } as const
