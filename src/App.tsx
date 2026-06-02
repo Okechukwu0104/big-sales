@@ -28,6 +28,7 @@ const AdminBalance = lazy(() => import("./pages/admin/Balance"));
 const AdminReviews = lazy(() => import("./pages/admin/Reviews"));
 const AdminCategories = lazy(() => import("./pages/admin/Categories"));
 const AdminCollections = lazy(() => import("./pages/admin/Collections"));
+const AdminChannelAI = lazy(() => import("./pages/admin/ChannelAI"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -100,6 +101,7 @@ const App = () => (
                 <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
                 <Route path="/admin/balance" element={<AdminRoute><AdminBalance /></AdminRoute>} />
                 <Route path="/admin/reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
+                <Route path="/admin/channel-ai" element={<AdminRoute><AdminChannelAI /></AdminRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
