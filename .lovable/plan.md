@@ -1,68 +1,117 @@
-## Goal
-Make BIGSALES.ng (and every product page) fully discoverable by Google, Bing, and AI crawlers (ChatGPT, Perplexity, Claude, Gemini), so searches like the product name surface the BIG SALES product page.
+## AI WhatsApp Channel Content Assistant
 
-## Why current setup is weak
-- `sitemap.xml` is static — only lists `/`, `/cart`, `/checkout`. No products = nothing for Google to index.
-- Product pages are client-rendered React. Crawlers that don't run JS (GPTBot, ClaudeBot, PerplexityBot, plus partial Googlebot) see an empty shell.
-- `product-meta` edge function only serves rich previews to social crawlers (WhatsApp/FB). Search-engine crawlers fall through to the SPA via `vercel.json`.
-- Canonical URLs point to `big-sales.lovable.app`, not `BIGSALES.ng`.
-- No JSON-LD structured data (no Product schema → no rich results, no price/stock badges in Google).
-- `robots.txt` doesn't whitelist AI crawlers and points sitemap to wrong host.
+An automated daily content pack for the BIG SALES WhatsApp Channel. The AI generates 3 ready-to-publish posts every morning at 8 AM WAT (West Africa Time) following the **40% promo / 40% product / 20% engagement** mix, and emails them to **joyadaeze845@gmail.com** for one-tap copy & paste into the Channel.
 
-## Plan
+### Why this approach
 
-### 1. Switch canonical domain to `https://bigsales.ng`
-- Update `SITE_ORIGIN` in `supabase/functions/product-meta/index.ts`.
-- Update `public/robots.txt` sitemap URL.
-- Update `index.html` OG tags.
-- Add `<link rel="canonical">` via Helmet on Home and ProductDetail.
-- Note: user must connect `bigsales.ng` in Project Settings → Domains for this to resolve.
+WhatsApp Channels have no public posting API — Meta restricts publishing to the in-app admin UI only. Browser automation against web.whatsapp.com is banned and breaks frequently. The only safe, sustainable pattern is: **AI generates → admin pastes**. The email delivery is designed to make pasting take under 10 seconds per post.
 
-### 2. Dynamic sitemap edge function (`sitemap-xml`)
-New public edge function that queries all in-stock products and returns a fresh XML sitemap:
-- `/` (priority 1.0)
-- `/track-order`, `/cart` (0.6)
-- `/product/{id}` for every active product (priority 0.8, `lastmod` = `updated_at`, includes `<image:image>` block with product image for Google Image search)
-- Cached `s-maxage=3600`.
-- Add `vercel.json` rewrite: `/sitemap.xml` → edge function. Remove the static `public/sitemap.xml` (or leave as fallback).
+### What gets built
 
-### 3. Server-rendered product page for ALL crawlers (not just social)
-Extend `product-meta` to also serve search-engine + AI crawlers with full HTML:
-- Detect crawler UA list expanded to: `googlebot, bingbot, duckduckbot, yandexbot, baiduspider, applebot, gptbot, oai-searchbot, chatgpt-user, claudebot, claude-web, perplexitybot, perplexity-user, google-extended, anthropic-ai, ccbot, bytespider, amazonbot, mistralai-user, cohere-ai`.
-- Render full crawlable HTML body (not just meta): `<h1>` product name, price, description, image, breadcrumbs, related links — so AI assistants can summarize and cite the page.
-- Inject **JSON-LD `Product` schema** with name, image, description, sku, brand, offers (price, priceCurrency NGN, availability, url), aggregateRating if reviews exist.
-- Real users keep the JS redirect to the SPA.
-- Update `vercel.json` `/product/:id` rewrite to match the expanded crawler regex.
+```text
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  pg_cron 8AM    │───▶│  Edge Function   │───▶│  Email to admin │
+│  (daily WAT)    │    │ generate-channel │    │  (3 posts, copy │
+│                 │    │     -posts       │    │   buttons, link │
+└─────────────────┘    └──────────────────┘    │   to Channel)   │
+                              │                 └─────────────────┘
+                              ▼
+                       ┌──────────────────┐
+                       │ Lovable AI       │
+                       │ (Gemini 2.5)     │
+                       │ + products table │
+                       └──────────────────┘
+                              │
+                              ▼
+                       ┌──────────────────┐
+                       │ channel_posts    │
+                       │ history table    │
+                       │ (anti-repeat)    │
+                       └──────────────────┘
+```
 
-### 4. JSON-LD on the SPA too (defense in depth)
-- Add `Organization` + `WebSite` + `SearchAction` JSON-LD in `index.html`.
-- Add `Product` JSON-LD via Helmet inside `ProductDetail.tsx` for crawlers that do execute JS (modern Googlebot).
-- Add `BreadcrumbList` JSON-LD on product pages.
+### Content mix (40/40/20)
 
-### 5. Per-page meta with Helmet
-- `Home.tsx`: title "BIG SALES — Shop Online in Nigeria | Fast Delivery", description, canonical `https://bigsales.ng/`.
-- `ProductDetail.tsx`: dynamic `<title>{product.name} – ₦{price} | BIG SALES</title>`, description from product, OG tags, canonical `https://bigsales.ng/product/{id}`.
+Every daily pack contains exactly:
+- **1 PROMO post (40%)** — flash deal / discount call-out using real products that have `discount_price` set, or store-wide messaging ("Free delivery in Lagos this week"). Bold Naira pricing, urgency words.
+- **1 PRODUCT showcase (40%)** — features a random in-stock featured/high-likes product. Pulls real name, price, description, image. Drives traffic to the product page.
+- **1 ENGAGEMENT post (20%)** — poll, question, lifestyle tip, or "this or that" using 2 random products. Builds community without selling.
 
-### 6. robots.txt
-Rewrite to explicitly allow AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc.), point sitemap to `https://bigsales.ng/sitemap.xml`.
+Daily rotation rule: never reuse the same product within 7 days (enforced via `channel_posts` history table).
 
-### 7. Submission checklist (manual, after deploy)
-After publish I'll give the user steps to:
-- Verify domain in Google Search Console + Bing Webmaster Tools.
-- Submit `https://bigsales.ng/sitemap.xml`.
-- Request indexing for the homepage.
+### Admin email format
 
-## Files to change / create
-- `supabase/functions/product-meta/index.ts` — expand crawler detection, add full body HTML + JSON-LD.
-- `supabase/functions/sitemap-xml/index.ts` — **new**, dynamic sitemap.
-- `supabase/config.toml` — register `sitemap-xml` with `verify_jwt = false`.
-- `vercel.json` — add `/sitemap.xml` rewrite, expand crawler UA regex on `/product/:id`.
-- `public/robots.txt` — AI crawler whitelist + correct sitemap URL.
-- `public/sitemap.xml` — delete (replaced by edge function) or keep as static fallback.
-- `index.html` — global JSON-LD (Organization/WebSite), update OG URL.
-- `src/pages/Home.tsx` — Helmet meta + canonical.
-- `src/pages/ProductDetail.tsx` — Helmet dynamic meta + Product JSON-LD + Breadcrumb JSON-LD.
+Each morning's email contains:
+- Header: "Your 3 WhatsApp Channel posts for [date]"
+- Big green button: **"Open WhatsApp Channel"** → links to `https://whatsapp.com/channel/0029VbCiW8yKAwEjEeodvb0X`
+- For each of the 3 posts:
+  - Post type badge (PROMO / PRODUCT / ENGAGEMENT)
+  - Product image (if any) — right-click → Save, then paste in Channel
+  - Caption preview with emojis/formatting
+  - **"Copy caption"** button (mailto-friendly fallback: caption is also in selectable plain text)
+  - Product link (if any) — `https://bigsales.ng/product/{id}`
 
-## Out of scope / user action required
-- Connecting `bigsales.ng` DNS in Project Settings → Domains.
-- Google Search Console + Bing Webmaster verification + sitemap submission (I'll provide instructions).
+### Admin dashboard page
+
+New route: **/admin/channel-ai** with:
+- **Today's pack** — preview the 3 posts that were sent (or "Generate now" if not yet sent)
+- **"Send to my email now"** button — re-send today's pack on demand
+- **History** — last 30 days of generated posts with type, status, and timestamp
+- **Settings** — toggle the daily schedule on/off, change recipient email (default: joyadaeze845@gmail.com)
+
+### Technical details
+
+**Database (one migration):**
+- `channel_posts` table: `id`, `post_type` (promo/product/engagement), `caption`, `image_url`, `product_id` (nullable FK reference), `sent_at`, `generated_for_date`, `created_at`. RLS: admin-only via `has_role(auth.uid(), 'admin')`. GRANTs to `authenticated` + `service_role`.
+- `channel_ai_settings` table: `id`, `enabled` (bool, default true), `recipient_email` (default 'joyadaeze845@gmail.com'), `channel_url`, `updated_at`. RLS: admin-only.
+
+**Email infrastructure:**
+- Trigger the Lovable Emails setup dialog (`<presentation-open-email-setup>`). User picks a sender subdomain on `bigsales.ng` (e.g. `notify.bigsales.ng`).
+- After domain setup, scaffold transactional emails. Create one React Email template: `channel-daily-pack.tsx` (branded green/gold header, product cards, copy-friendly captions).
+- Register in `TEMPLATES` map, deploy.
+
+**Edge function `generate-channel-posts`:**
+1. Read settings; abort if `enabled = false`.
+2. Pull pools: discounted products, featured/in-stock products, all in-stock products.
+3. Exclude products used in `channel_posts` in the last 7 days.
+4. Call Lovable AI (Gemini 2.5 Flash via existing `LOVABLE_API_KEY`) with structured-output tool calling to generate 3 captions (one per bucket) using selected products as context. Prompts enforce: Naira pricing with `₦`, Nigerian English tone, emojis, NEVER mention "Pay on Delivery", strong CTA, 280–600 char captions sized for WhatsApp.
+5. Insert 3 rows into `channel_posts`.
+6. Invoke `send-transactional-email` with template `channel-daily-pack` and `templateData = { date, posts: [...] }`. Idempotency key: `channel-pack-${YYYY-MM-DD}` (prevents duplicate sends if cron retries).
+
+**Scheduling:**
+- Enable `pg_cron` + `pg_net` extensions.
+- Insert cron job (via Supabase insert tool, not migration — contains anon key): runs daily at `0 7 * * *` UTC (= 8 AM WAT, Nigeria is UTC+1). Calls the edge function via `net.http_post` with anon key.
+
+**Frontend:**
+- New page `src/pages/admin/ChannelAI.tsx` (uses existing admin layout/styling, green/gold tokens).
+- Add nav entry in admin sidebar.
+- Wire "Generate now" and "Send to my email" buttons to invoke the edge function with override flags.
+- All wrapped in existing `AdminRoute` guard.
+
+### Files
+
+**Created**
+- `supabase/migrations/<ts>_channel_ai.sql` (tables + RLS + GRANTs)
+- `supabase/functions/generate-channel-posts/index.ts`
+- `supabase/functions/_shared/transactional-email-templates/channel-daily-pack.tsx`
+- `src/pages/admin/ChannelAI.tsx`
+
+**Edited**
+- `supabase/config.toml` (register `generate-channel-posts` with `verify_jwt = false`)
+- `supabase/functions/_shared/transactional-email-templates/registry.ts` (add template)
+- `src/App.tsx` (add `/admin/channel-ai` route)
+- `src/pages/admin/Dashboard.tsx` or admin sidebar (add nav link)
+
+### Out of scope (will NOT do)
+
+- Auto-posting to the WhatsApp Channel itself (no API exists — would get the admin number banned).
+- Twilio / WhatsApp Business API (you chose email delivery).
+- Marketing email blasts to customers (Lovable Email is strictly transactional).
+- Generating product images — uses existing product photos from the database.
+
+### What you'll need to do once
+
+1. Approve the plan.
+2. Complete the one-click email domain setup dialog when it pops up (verifies `notify.bigsales.ng` via DNS — automatic).
+3. Wait one morning to receive the first 8 AM pack at joyadaeze845@gmail.com.
+4. Copy → paste → publish on the Channel (≈90 seconds per day).
