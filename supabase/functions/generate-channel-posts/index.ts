@@ -10,7 +10,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
-const SITE = "https://big-sales.lovable.app";
+const SITE = "https://bigsales.ng";
 
 type PostType = "promo" | "product" | "engagement";
 
