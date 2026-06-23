@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types';
 import { Header } from '@/components/Header';
@@ -59,7 +60,14 @@ const TrackOrder = () => {
 
   return (
     <div className="min-h-screen gradient-hero">
+      <Helmet>
+        <title>Track Your Order | BIG SALES Nigeria</title>
+        <meta name="description" content="Track your BIG SALES Nigeria order in real time. Enter your order ID or email to see delivery status." />
+        <meta name="robots" content="noindex, follow" />
+        <link rel="canonical" href="https://bigsales.ng/track-order" />
+      </Helmet>
       <Header />
+      
       
       <main className="container mx-auto px-4 py-8 page-offset">
         <div className="max-w-3xl mx-auto">
