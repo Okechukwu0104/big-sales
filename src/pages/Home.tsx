@@ -417,9 +417,26 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>BIG SALES Nigeria – Buy Electronics, Fashion &amp; Appliances | Pay on Delivery</title>
-        <meta name="description" content="Shop phones, laptops, air fryers, generators, fashion &amp; more on BIG SALES Nigeria. Best prices guaranteed. Pay on delivery to Lagos, Abuja &amp; 20+ states. Order now!" />
+        <title>BIG SALES Nigeria – Buy Electronics, Fashion &amp; Appliances | Fast Nationwide Delivery</title>
+        <meta name="description" content="Shop phones, laptops, air fryers, generators, fashion &amp; more on BIG SALES Nigeria. Best prices guaranteed. Secure checkout and fast delivery to Lagos, Abuja &amp; 20+ states." />
         <link rel="canonical" href="https://bigsales.ng/" />
+        {featuredProducts.length > 0 && (
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: "Featured Products on BIG SALES Nigeria",
+            url: "https://bigsales.ng/",
+            mainEntity: {
+              "@type": "ItemList",
+              itemListElement: featuredProducts.slice(0, 12).map((p: any, i: number) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                url: `https://bigsales.ng/product/${p.id}`,
+                name: p.name,
+              })),
+            },
+          })}</script>
+        )}
       </Helmet>
       <Header />
 
