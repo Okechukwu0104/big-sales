@@ -255,16 +255,53 @@ const ProductDetail = () => {
           image: product.image_url ? [product.image_url] : [],
           description: product.description || `${product.name} on BIG SALES Nigeria`,
           sku: product.id,
-          brand: { "@type": "Brand", name: "BIG SALES" },
+          brand: { "@type": "Brand", name: (product as any).brand || "BIG SALES" },
+          ...(reviewAggregate && reviewAggregate.count > 0
+            ? {
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: String(reviewAggregate.avg),
+                  reviewCount: String(reviewAggregate.count),
+                  bestRating: "5",
+                  worstRating: "1",
+                },
+                review: reviewAggregate.top.map((r: any) => ({
+                  "@type": "Review",
+                  reviewRating: { "@type": "Rating", ratingValue: String(r.rating), bestRating: "5" },
+                  author: { "@type": "Person", name: r.reviewer_name || "Verified Buyer" },
+                  reviewBody: r.review_text || "",
+                  datePublished: r.created_at,
+                })),
+              }
+            : {}),
           offers: {
             "@type": "Offer",
             url: `https://bigsales.ng/product/${product.id}`,
             priceCurrency: "NGN",
             price: String(product.discount_price ?? product.price),
+            priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
             availability: (product.in_stock !== false && (product.quantity ?? 0) > 0)
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
             itemCondition: "https://schema.org/NewCondition",
+            seller: { "@type": "Organization", name: "BIG SALES Nigeria" },
+            hasMerchantReturnPolicy: {
+              "@type": "MerchantReturnPolicy",
+              applicableCountry: "NG",
+              returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+              merchantReturnDays: 7,
+              returnMethod: "https://schema.org/ReturnByMail",
+              returnFees: "https://schema.org/FreeReturn",
+            },
+            shippingDetails: {
+              "@type": "OfferShippingDetails",
+              shippingDestination: { "@type": "DefinedRegion", addressCountry: "NG" },
+              deliveryTime: {
+                "@type": "ShippingDeliveryTime",
+                handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+                transitTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 5, unitCode: "DAY" },
+              },
+            },
           },
         })}</script>
         <script type="application/ld+json">{JSON.stringify({
