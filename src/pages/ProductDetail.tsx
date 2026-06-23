@@ -53,6 +53,26 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
+  // Aggregate ratings for richer Product JSON-LD (rich results)
+  const { data: reviewAggregate } = useQuery({
+    queryKey: ['product-reviews-aggregate', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('rating, review_text, reviewer_name, created_at')
+        .eq('product_id', id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      const ratings = (data || []).map((r: any) => Number(r.rating)).filter((n) => n > 0);
+      if (ratings.length === 0) return { count: 0, avg: 0, top: [] as any[] };
+      const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+      return { count: ratings.length, avg: Math.round(avg * 10) / 10, top: (data || []).slice(0, 3) };
+    },
+    enabled: !!id,
+  });
+
   const { data: isLiked } = useQuery({
     queryKey: ['product-like', id, user?.id],
     queryFn: async () => {
