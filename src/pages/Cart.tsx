@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Helmet } from 'react-helmet-async';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,15 @@ import { ArrowLeft, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
 import { CartBenefits } from '@/components/TrustBadges';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
+
+const CartHelmet = () => (
+  <Helmet>
+    <title>Your Cart | BIG SALES Nigeria</title>
+    <meta name="description" content="Review the items in your BIG SALES cart and proceed to secure checkout." />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://bigsales.ng/cart" />
+  </Helmet>
+);
 
 const MINIMUM_ORDER = 10000;
 
@@ -46,6 +56,7 @@ const Cart = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
+        <CartHelmet />
         <Header />
         <div className="container mx-auto px-4 py-8 page-offset">
           <div className="text-center">
@@ -65,6 +76,7 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <CartHelmet />
       <Header />
 
       <main className="container mx-auto px-4 py-8 page-offset">

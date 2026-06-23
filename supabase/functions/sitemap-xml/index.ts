@@ -27,7 +27,8 @@ Deno.serve(async (req) => {
 
     const { data: products } = await supabase
       .from("products")
-      .select("id, name, image_url, updated_at, in_stock")
+      .select("id, name, image_url, updated_at, in_stock, quantity")
+      .or("in_stock.eq.true,quantity.gt.0")
       .order("updated_at", { ascending: false })
       .limit(5000);
 

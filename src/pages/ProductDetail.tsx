@@ -53,6 +53,26 @@ const ProductDetail = () => {
     enabled: !!id,
   });
 
+  // Aggregate ratings for richer Product JSON-LD (rich results)
+  const { data: reviewAggregate } = useQuery({
+    queryKey: ['product-reviews-aggregate', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('rating, review_text, reviewer_name, created_at')
+        .eq('product_id', id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      const ratings = (data || []).map((r: any) => Number(r.rating)).filter((n) => n > 0);
+      if (ratings.length === 0) return { count: 0, avg: 0, top: [] as any[] };
+      const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+      return { count: ratings.length, avg: Math.round(avg * 10) / 10, top: (data || []).slice(0, 3) };
+    },
+    enabled: !!id,
+  });
+
   const { data: isLiked } = useQuery({
     queryKey: ['product-like', id, user?.id],
     queryFn: async () => {
@@ -235,16 +255,53 @@ const ProductDetail = () => {
           image: product.image_url ? [product.image_url] : [],
           description: product.description || `${product.name} on BIG SALES Nigeria`,
           sku: product.id,
-          brand: { "@type": "Brand", name: "BIG SALES" },
+          brand: { "@type": "Brand", name: (product as any).brand || "BIG SALES" },
+          ...(reviewAggregate && reviewAggregate.count > 0
+            ? {
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: String(reviewAggregate.avg),
+                  reviewCount: String(reviewAggregate.count),
+                  bestRating: "5",
+                  worstRating: "1",
+                },
+                review: reviewAggregate.top.map((r: any) => ({
+                  "@type": "Review",
+                  reviewRating: { "@type": "Rating", ratingValue: String(r.rating), bestRating: "5" },
+                  author: { "@type": "Person", name: r.reviewer_name || "Verified Buyer" },
+                  reviewBody: r.review_text || "",
+                  datePublished: r.created_at,
+                })),
+              }
+            : {}),
           offers: {
             "@type": "Offer",
             url: `https://bigsales.ng/product/${product.id}`,
             priceCurrency: "NGN",
             price: String(product.discount_price ?? product.price),
+            priceValidUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
             availability: (product.in_stock !== false && (product.quantity ?? 0) > 0)
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
             itemCondition: "https://schema.org/NewCondition",
+            seller: { "@type": "Organization", name: "BIG SALES Nigeria" },
+            hasMerchantReturnPolicy: {
+              "@type": "MerchantReturnPolicy",
+              applicableCountry: "NG",
+              returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+              merchantReturnDays: 7,
+              returnMethod: "https://schema.org/ReturnByMail",
+              returnFees: "https://schema.org/FreeReturn",
+            },
+            shippingDetails: {
+              "@type": "OfferShippingDetails",
+              shippingDestination: { "@type": "DefinedRegion", addressCountry: "NG" },
+              deliveryTime: {
+                "@type": "ShippingDeliveryTime",
+                handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+                transitTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 5, unitCode: "DAY" },
+              },
+            },
           },
         })}</script>
         <script type="application/ld+json">{JSON.stringify({

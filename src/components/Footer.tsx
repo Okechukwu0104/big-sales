@@ -89,7 +89,7 @@ export const Footer = () => {
             <p className="text-xs text-muted-foreground leading-relaxed mb-3">
               BIG SALES is Nigeria's most trusted online marketplace for electronics, fashion, home appliances, and
               lifestyle products. Buy phones, laptops, power banks, air fryers, generators, solar panels, wigs,
-              sneakers, or the latest Ankara styles — all at unbeatable prices with pay on delivery across Lagos,
+              sneakers, or the latest Ankara styles — all at unbeatable prices with fast nationwide delivery to Lagos,
               Abuja, Port Harcourt, Kano, Ibadan, Enugu and 20+ states nationwide. Every product is 100% original
               and authenticated. BIG SALES is the best affordable alternative to Jumia and Konga in Nigeria.
             </p>
@@ -154,7 +154,7 @@ export const Footer = () => {
 
             <p className="text-xs text-muted-foreground leading-relaxed">
               Shop with confidence. We offer awoof prices, flash sales, promo deals, and fast delivery to your
-              doorstep — pay on delivery when your order arrives. No scam. 100% original products. BIG SALES
+              doorstep with secure checkout. No scam. 100% original products. BIG SALES
               is your go-to online market in Nigeria for cheap, quality, and correct items.
             </p>
           </div>
