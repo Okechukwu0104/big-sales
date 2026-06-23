@@ -8,7 +8,7 @@
 - **Website**: [https://bigsales.ng](https://bigsales.ng)
 - **Slogan**: Shop Big. Save Bigger.
 - **Market**: Nationwide across Nigeria (NG)
-- **Payment Options**: Pay on Delivery (Cash), Bank Transfer, Card Payment
+- **Payment Options**: Bank Transfer, Card Payment (secure checkout confirmed via WhatsApp)
 - **Currency**: Nigerian Naira (₦ / NGN)
 - **Support Email**: support@bigsales.ng
 - **Customer Support Phone**: +2349161922351
@@ -32,7 +32,7 @@ BIG SALES is a fully structured, enterprise-grade e-commerce platform that conne
 - **Generators & Solar**: Sumec Firman, Elepaq, Mikano generators; solar panel prices Nigeria
 
 ## Key Value Propositions
-1. **Pay on Delivery** — Available across Lagos, Abuja, Port Harcourt, Kano, Ibadan, Enugu, and 20+ states.
+1. **Secure Checkout** — Place orders online with confirmation via WhatsApp before dispatch. Available nationwide across Lagos, Abuja, Port Harcourt, Kano, Ibadan, Enugu, and 20+ states.
 2. **100% Original & Authenticated Products** — All items sourced from verified suppliers.
 3. **Best Prices in Nigeria** — Consistently cheaper than or equal to Jumia and Konga.
 4. **Fast Nationwide Delivery** — Lagos: 1–2 business days; other states: 2–5 business days.
