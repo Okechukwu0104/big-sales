@@ -49,46 +49,53 @@ const BULK_UPLOAD_STORAGE_KEY = 'bulk_upload_usage';
 const compressImage = async (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const imageUrl = URL.createObjectURL(file);
     img.onload = () => {
-      let { width, height } = img;
-      if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-        if (width > height) {
-          height = (height / width) * MAX_IMAGE_DIMENSION;
-          width = MAX_IMAGE_DIMENSION;
-        } else {
-          width = (width / height) * MAX_IMAGE_DIMENSION;
-          height = MAX_IMAGE_DIMENSION;
-        }
-      }
+      URL.revokeObjectURL(imageUrl);
+      const scale = Math.min(1, MAX_IMAGE_DIMENSION / img.naturalWidth, MAX_IMAGE_DIMENSION / img.naturalHeight);
+      let width = Math.max(1, Math.round(img.naturalWidth * scale));
+      let height = Math.max(1, Math.round(img.naturalHeight * scale));
       const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
       const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0, width, height);
-      const tryCompress = (quality: number): void => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) { reject(new Error('Failed to compress image')); return; }
-            if (blob.size <= MAX_IMAGE_SIZE || quality <= 0.1) {
-              if (blob.size > MAX_IMAGE_SIZE && width > 800) {
-                const ratio = 800 / Math.max(width, height);
-                canvas.width = width * ratio;
-                canvas.height = height * ratio;
-                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob(
-                  (smallBlob) => { if (smallBlob) resolve(smallBlob); else resolve(blob); },
-                  'image/jpeg', 0.7
-                );
-              } else { resolve(blob); }
-            } else { tryCompress(Math.round((quality - 0.1) * 10) / 10); }
-          },
-          'image/jpeg', quality
-        );
-      };
-      tryCompress(0.9);
+      if (!ctx) {
+        reject(new Error('Your browser could not prepare this image. Try another photo.'));
+        return;
+      }
+
+      const encode = (quality: number): Promise<Blob> => new Promise((resolveBlob, rejectBlob) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolveBlob(blob);
+          else rejectBlob(new Error('Failed to compress image'));
+        }, 'image/jpeg', quality);
+      });
+
+      void (async () => {
+        try {
+          while (width >= 160 && height >= 160) {
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            for (let quality = 0.9; quality >= 0.2; quality = Math.round((quality - 0.1) * 10) / 10) {
+              const blob = await encode(quality);
+              if (blob.size <= MAX_IMAGE_SIZE) {
+                resolve(blob);
+                return;
+              }
+            }
+            width = Math.round(width * 0.8);
+            height = Math.round(height * 0.8);
+          }
+          reject(new Error('This image could not be reduced below 5MB. Please choose another photo.'));
+        } catch (error) {
+          reject(error);
+        }
+      })();
     };
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error('Could not open this image. Please choose a JPG, PNG, or WebP photo.'));
+    };
+    img.src = imageUrl;
   });
 };
 
@@ -510,7 +517,7 @@ const AdminProducts = () => {
       resetForm(); setIsDialogOpen(false); setUploadProgress(''); setProgressValue(0);
     },
     onError: (error) => {
-      toast({ title: "Error creating product", description: error.message, variant: "destructive" });
+      toast({ title: "Error creating product", description: error.message || 'The product could not be saved. Please try again.', variant: "destructive" });
       setUploadProgress(''); setProgressValue(0);
     },
   });
@@ -568,7 +575,7 @@ const AdminProducts = () => {
       resetForm(); setIsDialogOpen(false); setUploadProgress(''); setProgressValue(0);
     },
     onError: (error) => {
-      toast({ title: "Error updating product", description: error.message, variant: "destructive" });
+      toast({ title: "Error updating product", description: error.message || 'The product could not be updated. Please try again.', variant: "destructive" });
       setUploadProgress(''); setProgressValue(0);
     },
   });
@@ -682,7 +689,22 @@ const AdminProducts = () => {
 
   // ===== BULK UPLOAD LOGIC =====
   const handleBulkFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []).slice(0, MAX_BULK_FILES);
+    const input = e.currentTarget;
+    const selectedFiles = Array.from(input.files || []);
+    input.value = '';
+    const files = selectedFiles.slice(0, MAX_BULK_FILES).filter((file) => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      return (isImage && file.size <= MAX_IMAGE_SIZE) || (isVideo && file.size <= MAX_VIDEO_SIZE);
+    });
+
+    if (selectedFiles.length > MAX_BULK_FILES || files.length < Math.min(selectedFiles.length, MAX_BULK_FILES)) {
+      toast({
+        title: 'Some files were skipped',
+        description: `Choose up to ${MAX_BULK_FILES} images under 5MB or videos under 50MB.`,
+        variant: 'destructive',
+      });
+    }
     if (files.length === 0) return;
 
     const items: BulkItem[] = [];
