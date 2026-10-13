@@ -72,7 +72,7 @@ const compressImage = async (file: File): Promise<Blob> => {
 
       void (async () => {
         try {
-          while (width >= 160 && height >= 160) {
+          while (width >= 1 && height >= 1) {
             canvas.width = width;
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
@@ -354,7 +354,7 @@ const AdminProducts = () => {
           const blob = new Blob([item.imageFile], { type: item.imageType || 'image/jpeg' });
           const sourceFile = new File([blob], item.imageName, { type: blob.type || 'image/jpeg' });
           const compressedImage = await compressImage(sourceFile);
-          const fileName = `${Math.random()}.${item.imageName.split('.').pop() || 'jpg'}`;
+          const fileName = `${crypto.randomUUID()}.jpg`;
           await retryWithBackoff(async () => {
             const { error } = await supabase.storage.from('product-images').upload(fileName, compressedImage, { contentType: 'image/jpeg' });
             if (error) throw error;
