@@ -37,6 +37,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 // Constants
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_SOURCE_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 800;
 const MAX_RETRIES = 5;
@@ -351,15 +352,23 @@ const AdminProducts = () => {
         let video_url: string | null = null;
         if (item.imageFile && item.imageName) {
           const blob = new Blob([item.imageFile], { type: item.imageType || 'image/jpeg' });
+          const sourceFile = new File([blob], item.imageName, { type: blob.type || 'image/jpeg' });
+          const compressedImage = await compressImage(sourceFile);
           const fileName = `${Math.random()}.${item.imageName.split('.').pop() || 'jpg'}`;
-          const { error: imgErr } = await supabase.storage.from('product-images').upload(fileName, blob);
-          if (!imgErr) image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
+          await retryWithBackoff(async () => {
+            const { error } = await supabase.storage.from('product-images').upload(fileName, compressedImage, { contentType: 'image/jpeg' });
+            if (error) throw error;
+          });
+          image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
         }
         if (item.videoFile && item.videoName) {
           const blob = new Blob([item.videoFile], { type: item.videoType || 'video/mp4' });
           const fileName = `${Math.random()}.${item.videoName.split('.').pop() || 'mp4'}`;
-          const { error: vidErr } = await supabase.storage.from('product-videos').upload(fileName, blob);
-          if (!vidErr) video_url = supabase.storage.from('product-videos').getPublicUrl(fileName).data.publicUrl;
+          await retryWithBackoff(async () => {
+            const { error } = await supabase.storage.from('product-videos').upload(fileName, blob);
+            if (error) throw error;
+          });
+          video_url = supabase.storage.from('product-videos').getPublicUrl(fileName).data.publicUrl;
         }
         const { data: newProduct, error } = await supabase.from('products').insert([{
           name: item.name, description: item.description, price: item.price,
@@ -451,7 +460,7 @@ const AdminProducts = () => {
       if (!navigator.onLine) throw new Error('You appear to be offline.');
       let image_url = null;
       if (formData.image) {
-        if (formData.image.size > MAX_IMAGE_SIZE) throw new Error('Image is too large.');
+        if (formData.image.size > MAX_SOURCE_IMAGE_SIZE) throw new Error('Choose an image under 20MB.');
         setUploadProgress('Compressing image...'); setProgressValue(10);
         const compressedBlob = await compressImage(formData.image);
         const compressedFile = new File([compressedBlob], formData.image.name, { type: 'image/jpeg' });
@@ -532,7 +541,7 @@ const AdminProducts = () => {
       let image_url: string | undefined = undefined;
       let video_url: string | undefined = undefined;
       if (formData.image) {
-        if (formData.image.size > MAX_IMAGE_SIZE) throw new Error('Image is too large.');
+        if (formData.image.size > MAX_SOURCE_IMAGE_SIZE) throw new Error('Choose an image under 20MB.');
         setUploadProgress('Compressing image...'); setProgressValue(10);
         const compressedBlob = await compressImage(formData.image);
         const compressedFile = new File([compressedBlob], formData.image.name, { type: 'image/jpeg' });
@@ -695,13 +704,13 @@ const AdminProducts = () => {
     const files = selectedFiles.slice(0, MAX_BULK_FILES).filter((file) => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      return (isImage && file.size <= MAX_IMAGE_SIZE) || (isVideo && file.size <= MAX_VIDEO_SIZE);
+      return (isImage && file.size <= MAX_SOURCE_IMAGE_SIZE) || (isVideo && file.size <= MAX_VIDEO_SIZE);
     });
 
     if (selectedFiles.length > MAX_BULK_FILES || files.length < Math.min(selectedFiles.length, MAX_BULK_FILES)) {
       toast({
         title: 'Some files were skipped',
-        description: `Choose up to ${MAX_BULK_FILES} images under 5MB or videos under 50MB.`,
+        description: `Choose up to ${MAX_BULK_FILES} images under 20MB or videos under 50MB. Images are compressed before upload.`,
         variant: 'destructive',
       });
     }
@@ -1248,10 +1257,10 @@ const AdminProducts = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="image">Product Image (max 5MB)</Label>
+                      <Label htmlFor="image">Product Image (up to 20MB before compression)</Label>
                       <Input id="image" type="file" accept="image/*" onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file && file.size > MAX_IMAGE_SIZE) { toast({ title: "Image too large", description: "Please select an image under 5MB.", variant: "destructive" }); e.target.value = ''; return; }
+                        if (file && file.size > MAX_SOURCE_IMAGE_SIZE) { toast({ title: "Image too large", description: "Please select an image under 20MB. It will be compressed before upload.", variant: "destructive" }); e.target.value = ''; return; }
                         setFormData({ ...formData, image: file || null });
                       }} disabled={isSubmitting} />
                       <p className="text-xs text-muted-foreground mt-1">{!isOnline ? 'Image will be cached locally and uploaded when online.' : 'Images will be automatically compressed.'}</p>
