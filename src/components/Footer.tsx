@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Twitter, Mail, ArrowRight } from 'lucide-react';
+import { Instagram, MessageCircle, Mail, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -69,14 +69,11 @@ export const Footer = () => {
               </li>
             </ul>
             <div className="flex gap-4 mt-6">
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+              <a href="https://instagram.com/bigsales3313?psln=a3d1dGd3azg2bDE2" target="_blank" rel="noopener noreferrer" aria-label="Follow BIG SALES on Instagram" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a href="https://whatsapp.com/channel/0029VbCiW8yKAwEjEeodvb0X" target="_blank" rel="noopener noreferrer" aria-label="Follow BIG SALES on WhatsApp" className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                <MessageCircle className="w-5 h-5" />
               </a>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { ShoppingCart, Instagram, Facebook, Search, HelpCircle } from 'lucide-react';
+import { ShoppingCart, Instagram, Facebook, Search, HelpCircle, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCartContext } from '@/components/ui/cart-provider';
@@ -10,6 +10,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const INSTAGRAM_URL = 'https://instagram.com/bigsales3313?psln=a3d1dGd3azg2bDE2';
+const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029VbCiW8yKAwEjEeodvb0X';
 
 export const Header = () => {
   const { getTotalItems } = useCartContext();
@@ -44,12 +47,6 @@ export const Header = () => {
     return { deepLink, webLink, apiLink };
   };
 
-  const generateInstagramLink = () => {
-    if (!storeConfig?.instagram_username) return null;
-    const username = storeConfig.instagram_username.replace(/@/g, '').trim();
-    return `https://www.instagram.com/${username}/`;
-  };
-
   const generateFacebookLink = () => {
     if (!storeConfig?.facebook_username) return null;
     const username = storeConfig.facebook_username.replace(/@/g, '').trim();
@@ -57,7 +54,6 @@ export const Header = () => {
   };
 
   const whatsappLinks = generateWhatsAppLinks();
-  const instagramLink = generateInstagramLink();
   const facebookLink = generateFacebookLink();
 
   const HelpButton = () => {
@@ -182,7 +178,8 @@ export const Header = () => {
             {/* Actions */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <div className="hidden md:flex items-center gap-1 mr-1 border-r border-border pr-2">
-                <SocialButton href={instagramLink} icon={Instagram} label="Follow us on Instagram" />
+                <SocialButton href={INSTAGRAM_URL} icon={Instagram} label="Follow us on Instagram" />
+                <SocialButton href={WHATSAPP_CHANNEL_URL} icon={MessageCircle} label="Follow us on WhatsApp" />
                 <SocialButton href={facebookLink} icon={Facebook} label="Follow us on Facebook" />
               </div>
 
