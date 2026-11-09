@@ -1,0 +1,3 @@
+- [x] Diagnose and repair product creation, including category-save partial failures.
+- [x] Repair verified admin CRUD failures in order deletion and related catalog management.
+- [ ] Verify the implemented flows and review the latest preview diagnostics.

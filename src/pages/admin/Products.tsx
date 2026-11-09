@@ -240,7 +240,9 @@ const SortableProduct = ({ product, categories, productCategories, collections, 
   const collection = collections.find(c => c.id === product.collection_id);
 
   const hasDiscount = product.original_price != null && product.discount_price != null;
-  const discountPercent = hasDiscount ? Math.round((1 - product.discount_price! / product.original_price!) * 100) : 0;
+  const discountPercent = hasDiscount && product.original_price > 0
+    ? Math.round((1 - product.discount_price / product.original_price) * 100)
+    : 0;
 
   return (
     <Card ref={setNodeRef} style={style} className="mb-2">
@@ -346,6 +348,7 @@ const AdminProducts = () => {
     if (queue.length === 0) return;
     setIsSyncing(true);
     let synced = 0;
+    let categoryLinkFailures = 0;
     for (const item of queue) {
       try {
         let image_url: string | null = null;
@@ -356,7 +359,7 @@ const AdminProducts = () => {
           const compressedImage = await compressImage(sourceFile);
           const fileName = `${crypto.randomUUID()}.jpg`;
           await retryWithBackoff(async () => {
-            const { error } = await supabase.storage.from('product-images').upload(fileName, compressedImage, { contentType: 'image/jpeg' });
+            const { error } = await supabase.storage.from('product-images').upload(fileName, compressedImage, { contentType: 'image/jpeg', upsert: true });
             if (error) throw error;
           });
           image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
@@ -379,7 +382,8 @@ const AdminProducts = () => {
         }]).select().single();
         if (error) throw error;
         if (item.selectedCategories.length > 0) {
-          await supabase.from('product_categories').insert(item.selectedCategories.map(catId => ({ product_id: newProduct.id, category_id: catId })));
+          const { error: categoryError } = await supabase.from('product_categories').insert(item.selectedCategories.map(catId => ({ product_id: newProduct.id, category_id: catId })));
+          if (categoryError) categoryLinkFailures++;
         }
         supabase.auth.getSession().then(({ data: sessionData }) => {
           const token = sessionData?.session?.access_token;
@@ -407,7 +411,13 @@ const AdminProducts = () => {
     if (synced > 0) {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['product-categories'] });
-      toast({ title: `${synced} offline product${synced > 1 ? 's' : ''} synced!`, description: remaining > 0 ? `${remaining} still pending.` : 'All caught up.' });
+      toast({
+        title: `${synced} offline product${synced > 1 ? 's' : ''} synced!`,
+        description: categoryLinkFailures > 0
+          ? `${remaining > 0 ? `${remaining} still pending. ` : ''}${categoryLinkFailures} product${categoryLinkFailures > 1 ? 's were' : ' was'} saved without category links; edit them to retry.`
+          : remaining > 0 ? `${remaining} still pending.` : 'All caught up.',
+        variant: categoryLinkFailures > 0 ? 'destructive' : undefined,
+      });
     }
   }, [isSyncing, queryClient, toast]);
 
@@ -465,16 +475,17 @@ const AdminProducts = () => {
         const compressedBlob = await compressImage(formData.image);
         const compressedFile = new File([compressedBlob], formData.image.name, { type: 'image/jpeg' });
         setUploadProgress('Uploading image...'); setProgressValue(30);
-        const fileName = `${Math.random()}.jpg`;
-        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-images').upload(fileName, compressedFile); if (error) throw error; });
+        const fileName = `${crypto.randomUUID()}.jpg`;
+        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-images').upload(fileName, compressedFile, { contentType: 'image/jpeg', upsert: true }); if (error) throw error; });
         setProgressValue(60);
         image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
       }
       let video_url = null;
-      if (formData.video) {
+      const videoFile = formData.video;
+      if (videoFile) {
         setUploadProgress('Uploading video...'); setProgressValue(50);
-        const videoFileName = `${Math.random()}.${formData.video.name.split('.').pop() || 'mp4'}`;
-        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-videos').upload(videoFileName, formData.video!); if (error) throw error; });
+        const videoFileName = `${crypto.randomUUID()}.${videoFile.name.split('.').pop() || 'mp4'}`;
+        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-videos').upload(videoFileName, videoFile, { upsert: true }); if (error) throw error; });
         video_url = supabase.storage.from('product-videos').getPublicUrl(videoFileName).data.publicUrl;
       }
       setUploadProgress('Saving product...'); setProgressValue(70);
@@ -497,11 +508,10 @@ const AdminProducts = () => {
         return result;
       });
       setProgressValue(85);
+      let categoryError: string | undefined;
       if (formData.selectedCategories.length > 0) {
-        await retryWithBackoff(async () => {
-          const { error } = await supabase.from('product_categories').insert(formData.selectedCategories.map(catId => ({ product_id: newProduct.id, category_id: catId })));
-          if (error) throw error;
-        });
+        const { error } = await supabase.from('product_categories').insert(formData.selectedCategories.map(catId => ({ product_id: newProduct.id, category_id: catId })));
+        if (error) categoryError = error.message;
       }
       setUploadProgress('Product saved! AI categorizing in background...'); setProgressValue(100);
       supabase.auth.getSession().then(({ data: sessionData }) => {
@@ -517,12 +527,16 @@ const AdminProducts = () => {
             }
           }).catch(() => {});
       });
-      return newProduct;
+      return { product: newProduct, categoryError };
     },
-    onSuccess: () => {
+    onSuccess: ({ categoryError }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['product-categories'] });
-      toast({ title: "Product created successfully" });
+      toast({
+        title: categoryError ? "Product created, but categories weren't saved" : "Product created successfully",
+        description: categoryError ? `The product is saved. Edit it to retry the category links. ${categoryError}` : undefined,
+        variant: categoryError ? 'destructive' : undefined,
+      });
       resetForm(); setIsDialogOpen(false); setUploadProgress(''); setProgressValue(0);
     },
     onError: (error) => {
@@ -546,41 +560,49 @@ const AdminProducts = () => {
         const compressedBlob = await compressImage(formData.image);
         const compressedFile = new File([compressedBlob], formData.image.name, { type: 'image/jpeg' });
         setUploadProgress('Uploading image...'); setProgressValue(40);
-        const fileName = `${Math.random()}.jpg`;
-        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-images').upload(fileName, compressedFile); if (error) throw error; });
+        const fileName = `${crypto.randomUUID()}.jpg`;
+        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-images').upload(fileName, compressedFile, { contentType: 'image/jpeg', upsert: true }); if (error) throw error; });
         image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
       }
-      if (formData.video) {
+      const videoFile = formData.video;
+      if (videoFile) {
         setUploadProgress('Uploading video...'); setProgressValue(55);
-        const videoFileName = `${Math.random()}.${formData.video.name.split('.').pop() || 'mp4'}`;
-        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-videos').upload(videoFileName, formData.video!); if (error) throw error; });
+        const videoFileName = `${crypto.randomUUID()}.${videoFile.name.split('.').pop() || 'mp4'}`;
+        await retryWithBackoff(async () => { const { error } = await supabase.storage.from('product-videos').upload(videoFileName, videoFile, { upsert: true }); if (error) throw error; });
         video_url = supabase.storage.from('product-videos').getPublicUrl(videoFileName).data.publicUrl;
       }
       setUploadProgress('Updating product...'); setProgressValue(70);
+      const activeProduct = editingProduct;
+      if (!activeProduct) throw new Error('Choose a product to update, then try again.');
       const { data, error } = await retryWithBackoff(async () => {
         const result = await supabase.from('products').update({
           ...productData,
           ...(image_url ? { image_url } : {}),
           ...(video_url ? { video_url } : {}),
-        }).eq('id', editingProduct!.id).select().single();
+        }).eq('id', activeProduct.id).select().single();
         if (result.error) throw result.error;
         return result;
       });
       setProgressValue(85);
-      await supabase.from('product_categories').delete().eq('product_id', editingProduct!.id);
+      const { error: removeCategoriesError } = await supabase.from('product_categories').delete().eq('product_id', activeProduct.id);
+      let categoryError = removeCategoriesError?.message;
       if (formData.selectedCategories.length > 0) {
-        await retryWithBackoff(async () => {
-          const { error } = await supabase.from('product_categories').insert(formData.selectedCategories.map(catId => ({ product_id: editingProduct!.id, category_id: catId })));
-          if (error) throw error;
-        });
+        if (!categoryError) {
+          const { error } = await supabase.from('product_categories').insert(formData.selectedCategories.map(catId => ({ product_id: activeProduct.id, category_id: catId })));
+          if (error) categoryError = error.message;
+        }
       }
       setProgressValue(100);
-      return data;
+      return { product: data, categoryError };
     },
-    onSuccess: () => {
+    onSuccess: ({ categoryError }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['product-categories'] });
-      toast({ title: "Product updated successfully" });
+      toast({
+        title: categoryError ? "Product updated, but categories need attention" : "Product updated successfully",
+        description: categoryError ? `The product details are saved. Edit the categories again to retry. ${categoryError}` : undefined,
+        variant: categoryError ? 'destructive' : undefined,
+      });
       resetForm(); setIsDialogOpen(false); setUploadProgress(''); setProgressValue(0);
     },
     onError: (error) => {
@@ -593,7 +615,6 @@ const AdminProducts = () => {
     mutationFn: async (productId: string) => {
       queryClient.setQueryData(['admin-products'], (old: Product[] | undefined) => old?.filter(p => p.id !== productId));
       await retryWithBackoff(async () => {
-        await supabase.from('product_categories').delete().eq('product_id', productId);
         const { error } = await supabase.from('products').delete().eq('id', productId);
         if (error) throw error;
       });
@@ -617,10 +638,15 @@ const AdminProducts = () => {
 
   const reorderMutation = useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const updates = orderedIds.map((id, index) => supabase.from('products').update({ display_order: index }).eq('id', id));
-      await Promise.all(updates);
+      const updates = await Promise.all(orderedIds.map((id, index) => supabase.from('products').update({ display_order: index }).eq('id', id)));
+      const failedUpdate = updates.find(result => result.error);
+      if (failedUpdate?.error) throw failedUpdate.error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-products'] }); },
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: 'Could not reorder products', description: error.message, variant: 'destructive' });
+    },
   });
 
   const resetForm = () => {
