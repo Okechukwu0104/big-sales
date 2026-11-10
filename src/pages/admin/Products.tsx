@@ -366,9 +366,9 @@ const AdminProducts = () => {
         }
         if (item.videoFile && item.videoName) {
           const blob = new Blob([item.videoFile], { type: item.videoType || 'video/mp4' });
-          const fileName = `${Math.random()}.${item.videoName.split('.').pop() || 'mp4'}`;
+          const fileName = `${crypto.randomUUID()}.${item.videoName.split('.').pop() || 'mp4'}`;
           await retryWithBackoff(async () => {
-            const { error } = await supabase.storage.from('product-videos').upload(fileName, blob);
+            const { error } = await supabase.storage.from('product-videos').upload(fileName, blob, { upsert: true });
             if (error) throw error;
           });
           video_url = supabase.storage.from('product-videos').getPublicUrl(fileName).data.publicUrl;
@@ -392,9 +392,10 @@ const AdminProducts = () => {
             body: { productName: item.name, productDescription: item.description },
             headers: { Authorization: `Bearer ${token}` },
           })
-            .then(({ data: categoryData }) => {
+            .then(async ({ data: categoryData }) => {
               if (categoryData?.category && categoryData.category !== 'Uncategorized') {
-                supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id);
+                const { error: categoryUpdateError } = await supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id);
+                if (categoryUpdateError) console.error('Could not save AI category for offline product:', categoryUpdateError);
               }
             }).catch(() => {});
         });
@@ -490,8 +491,7 @@ const AdminProducts = () => {
       }
       setUploadProgress('Saving product...'); setProgressValue(70);
 
-      const { data: newProduct, error } = await retryWithBackoff(async () => {
-        const result = await supabase.from('products').insert([{
+      const { data: newProduct, error } = await supabase.from('products').insert([{
           name: productData.name,
           description: productData.description,
           price: productData.price,
@@ -504,9 +504,7 @@ const AdminProducts = () => {
           category: 'Uncategorized' as string,
           display_order: (products?.length || 0) + 1,
         }]).select().single();
-        if (result.error) throw result.error;
-        return result;
-      });
+      if (error) throw error;
       setProgressValue(85);
       let categoryError: string | undefined;
       if (formData.selectedCategories.length > 0) {
@@ -523,7 +521,10 @@ const AdminProducts = () => {
         })
           .then(({ data: categoryData }) => {
             if (categoryData?.category && categoryData.category !== 'Uncategorized') {
-              supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id).then(() => { queryClient.invalidateQueries({ queryKey: ['admin-products'] }); });
+              supabase.from('products').update({ category: categoryData.category }).eq('id', newProduct.id).then(({ error }) => {
+                if (error) console.error('Could not save AI category for product:', error);
+                else queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+              });
             }
           }).catch(() => {});
       });
@@ -584,12 +585,22 @@ const AdminProducts = () => {
         return result;
       });
       setProgressValue(85);
-      const { error: removeCategoriesError } = await supabase.from('product_categories').delete().eq('product_id', activeProduct.id);
-      let categoryError = removeCategoriesError?.message;
-      if (formData.selectedCategories.length > 0) {
-        if (!categoryError) {
-          const { error } = await supabase.from('product_categories').insert(formData.selectedCategories.map(catId => ({ product_id: activeProduct.id, category_id: catId })));
+      const { data: existingCategories, error: categoriesReadError } = await supabase
+        .from('product_categories')
+        .select('category_id')
+        .eq('product_id', activeProduct.id);
+      let categoryError = categoriesReadError?.message;
+      if (!categoryError) {
+        const existingCategoryIds = (existingCategories || []).map((entry) => entry.category_id);
+        const categoriesToAdd = formData.selectedCategories.filter((id) => !existingCategoryIds.includes(id));
+        const categoriesToRemove = existingCategoryIds.filter((id) => !formData.selectedCategories.includes(id));
+        if (categoriesToAdd.length > 0) {
+          const { error } = await supabase.from('product_categories').insert(categoriesToAdd.map((categoryId) => ({ product_id: activeProduct.id, category_id: categoryId })));
           if (error) categoryError = error.message;
+        }
+        if (categoriesToRemove.length > 0) {
+          const { error } = await supabase.from('product_categories').delete().eq('product_id', activeProduct.id).in('category_id', categoriesToRemove);
+          if (error) categoryError = categoryError ? `${categoryError}; ${error.message}` : error.message;
         }
       }
       setProgressValue(100);
@@ -841,9 +852,9 @@ const AdminProducts = () => {
         let video_url: string | null = null;
 
         if (item.isVideo) {
-          const videoFileName = `${Math.random()}.${item.file.name.split('.').pop() || 'mp4'}`;
+          const videoFileName = `${crypto.randomUUID()}.${item.file.name.split('.').pop() || 'mp4'}`;
           await retryWithBackoff(async () => {
-            const { error } = await supabase.storage.from('product-videos').upload(videoFileName, item.file);
+            const { error } = await supabase.storage.from('product-videos').upload(videoFileName, item.file, { upsert: true });
             if (error) throw error;
           });
           video_url = supabase.storage.from('product-videos').getPublicUrl(videoFileName).data.publicUrl;
@@ -851,15 +862,16 @@ const AdminProducts = () => {
           // Also upload thumbnail as product image
           try {
             const thumb = await extractVideoThumbnail(item.file);
-            const thumbName = `${Math.random()}.jpg`;
-            await supabase.storage.from('product-images').upload(thumbName, thumb);
+            const thumbName = `${crypto.randomUUID()}.jpg`;
+            const { error } = await supabase.storage.from('product-images').upload(thumbName, thumb, { contentType: 'image/jpeg', upsert: true });
+            if (error) throw error;
             image_url = supabase.storage.from('product-images').getPublicUrl(thumbName).data.publicUrl;
           } catch {}
         } else {
           const compressed = await compressImage(item.file);
-          const fileName = `${Math.random()}.jpg`;
+          const fileName = `${crypto.randomUUID()}.jpg`;
           await retryWithBackoff(async () => {
-            const { error } = await supabase.storage.from('product-images').upload(fileName, compressed);
+            const { error } = await supabase.storage.from('product-images').upload(fileName, compressed, { contentType: 'image/jpeg', upsert: true });
             if (error) throw error;
           });
           image_url = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
@@ -953,7 +965,8 @@ const AdminProducts = () => {
             if (/^IMG[-_]/i.test(product.name) && data?.name) {
               updateData.name = data.name;
             }
-            await supabase.from('products').update(updateData).eq('id', product.id);
+            const { error: updateError } = await supabase.from('products').update(updateData).eq('id', product.id);
+            if (updateError) throw updateError;
             fixed++;
           }
         }

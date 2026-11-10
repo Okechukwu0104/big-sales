@@ -75,9 +75,11 @@ const AdminOrders = () => {
         .eq('id', orderId);
       
       if (error) throw error;
+      return orderId;
     },
-    onSuccess: () => {
+    onSuccess: (orderId) => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      setOrderToDelete((current) => current === orderId ? null : current);
       setOrderToDelete(null);
       toast({ title: "Order deleted successfully" });
     },
@@ -172,6 +174,7 @@ const AdminOrders = () => {
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => deleteOrderMutation.mutate(order.id)}
+                            disabled={deleteOrderMutation.isPending && orderToDelete === order.id}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           >
                             Delete

@@ -28,6 +28,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+const MAX_COLLECTION_IMAGE_SIZE = 5 * 1024 * 1024;
+
 interface Collection {
   id: string;
   name: string;
@@ -207,15 +209,14 @@ const AdminCollections = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // First, remove collection_id from products in this collection
-      await supabase.from('products').update({ collection_id: null }).eq('collection_id', id);
-      
+      // The products foreign key clears collection_id as part of this delete.
       const { error } = await supabase.from('collections').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-collections'] });
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-product-counts'] });
       toast({ title: "Collection deleted successfully" });
     },
     onError: (error) => {
@@ -225,13 +226,18 @@ const AdminCollections = () => {
 
   const reorderMutation = useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const updates = orderedIds.map((id, index) => 
+      const updates = await Promise.all(orderedIds.map((id, index) => 
         supabase.from('collections').update({ display_order: index }).eq('id', id)
-      );
-      await Promise.all(updates);
+      ));
+      const failedUpdate = updates.find(result => result.error);
+      if (failedUpdate?.error) throw failedUpdate.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-collections'] });
+    },
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-collections'] });
+      toast({ title: 'Could not reorder collections', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -261,8 +267,12 @@ const AdminCollections = () => {
     let image_url: string | null = editingCollection?.image_url || null;
     
     if (formData.image) {
+      if (formData.image.size > MAX_COLLECTION_IMAGE_SIZE) {
+        toast({ title: 'Image is too large', description: 'Choose an image under 5MB.', variant: 'destructive' });
+        return;
+      }
       const fileExt = formData.image.name.split('.').pop();
-      const fileName = `collection-${Date.now()}.${fileExt}`;
+      const fileName = `collection-${crypto.randomUUID()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('product-images')

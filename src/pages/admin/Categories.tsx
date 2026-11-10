@@ -207,6 +207,8 @@ const AdminCategories = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['category-product-counts'] });
       toast({ title: "Category deleted successfully" });
     },
     onError: (error) => {
@@ -216,13 +218,18 @@ const AdminCategories = () => {
 
   const reorderMutation = useMutation({
     mutationFn: async (orderedIds: string[]) => {
-      const updates = orderedIds.map((id, index) => 
+      const updates = await Promise.all(orderedIds.map((id, index) => 
         supabase.from('categories').update({ display_order: index }).eq('id', id)
-      );
-      await Promise.all(updates);
+      ));
+      const failedUpdate = updates.find(result => result.error);
+      if (failedUpdate?.error) throw failedUpdate.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+    },
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      toast({ title: 'Could not reorder categories', description: error.message, variant: 'destructive' });
     },
   });
 
